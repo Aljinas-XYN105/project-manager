@@ -278,27 +278,6 @@
                 <span x-show="sidebarOpen || mobileSidebar" class="truncate leading-none">Help & Docs</span>
             </a>
 
-            <!-- User avatar row -->
-            <a href="{{ route('settings.profile') }}"
-               class="flex items-center gap-2.5 px-2.5 py-2 mt-1 rounded-xl
-                      hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all duration-150 group">
-                @if(auth()->user()->avatar)
-                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}"
-                     class="w-7 h-7 rounded-full flex-shrink-0 ring-2 ring-slate-200 dark:ring-white/15">
-                @else
-                <div class="w-7 h-7 rounded-full flex-shrink-0 ring-2 ring-slate-200 dark:ring-white/15 bg-gradient-to-br from-violet-500 to-indigo-600
-                            flex items-center justify-center text-[10px] font-bold text-white">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(explode(' ', trim(auth()->user()->name))[1] ?? '', 0, 1)) }}
-                </div>
-                @endif
-                <div x-show="sidebarOpen || mobileSidebar" class="flex-1 min-w-0">
-                    <p class="text-[12px] font-semibold text-slate-800 dark:text-white/75 truncate leading-none group-hover:text-slate-900 dark:group-hover:text-white/90 transition-colors">{{ auth()->user()->name }}</p>
-                    <p class="text-[10px] text-slate-400 dark:text-white/25 mt-0.5 truncate leading-none capitalize">{{ auth()->user()->getRoleNames()->first() ?? 'member' }}</p>
-                </div>
-                <i x-show="sidebarOpen || mobileSidebar"
-                   class="bi bi-box-arrow-right text-[11px] text-slate-300 dark:text-white/20 group-hover:text-slate-500 dark:group-hover:text-white/50 flex-shrink-0 transition-colors"></i>
-            </a>
-
             <!-- Expand toggle (collapsed state) -->
             <button @click="sidebarOpen = !sidebarOpen"
                     x-show="!sidebarOpen && !mobileSidebar"
