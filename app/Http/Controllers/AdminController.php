@@ -40,7 +40,7 @@ class AdminController extends Controller
 
         // Total hours logged in period
         $totalHours = TimeEntry::where('started_at', '>=', $since)
-                               ->whereNotNull('ended_at')
+                               ->whereNotNull('stopped_at')
                                ->get()
                                ->sum(fn($e) => $e->duration_hours ?? 0);
 
@@ -56,7 +56,7 @@ class AdminController extends Controller
             ->map(function ($user) use ($since) {
                 $hours = $user->timeEntries()
                     ->where('started_at', '>=', $since)
-                    ->whereNotNull('ended_at')
+                    ->whereNotNull('stopped_at')
                     ->get()
                     ->sum(fn($e) => $e->duration_hours ?? 0);
 
@@ -88,7 +88,7 @@ class AdminController extends Controller
                 $estimated      = $project->tasks()->whereNull('parent_id')->sum('estimated_hours') ?: 0;
                 $logged         = $project->timeEntries()
                     ->where('started_at', '>=', $since)
-                    ->whereNotNull('ended_at')
+                    ->whereNotNull('stopped_at')
                     ->get()
                     ->sum(fn($e) => $e->duration_hours ?? 0);
 
@@ -114,7 +114,7 @@ class AdminController extends Controller
         $dailyHours = collect(range(13, 0))->map(function ($daysAgo) {
             $date = now()->subDays($daysAgo)->toDateString();
             $hours = TimeEntry::whereDate('started_at', $date)
-                               ->whereNotNull('ended_at')
+                               ->whereNotNull('stopped_at')
                                ->get()
                                ->sum(fn($e) => $e->duration_hours ?? 0);
             return ['date' => $date, 'label' => now()->subDays($daysAgo)->format('M j'), 'hours' => round($hours, 1)];
@@ -147,7 +147,7 @@ class AdminController extends Controller
         $timeEntries = $user->timeEntries()
             ->with('task.project')
             ->where('started_at', '>=', $since)
-            ->whereNotNull('ended_at')
+            ->whereNotNull('stopped_at')
             ->orderByDesc('started_at')
             ->get();
 

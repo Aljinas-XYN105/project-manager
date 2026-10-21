@@ -20,7 +20,8 @@ class ProjectController extends Controller
             'status', 'priority', 'search', 'team_id',
         ]));
 
-        $teams = $request->user()->teams;
+        $user  = $request->user();
+        $teams = $user->hasRole('admin') ? Team::orderBy('name')->get() : $user->teams;
 
         return view('projects.index', compact('projects', 'teams'));
     }
@@ -28,7 +29,8 @@ class ProjectController extends Controller
     public function create()
     {
         $this->authorize('create', Project::class);
-        $teams = auth()->user()->teams;
+        $user  = auth()->user();
+        $teams = $user->hasRole('admin') ? Team::orderBy('name')->get() : $user->teams;
         return view('projects.create', compact('teams'));
     }
 
@@ -53,7 +55,8 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
-        $teams = auth()->user()->teams;
+        $user  = auth()->user();
+        $teams = $user->hasRole('admin') ? Team::orderBy('name')->get() : $user->teams;
         return view('projects.edit', compact('project', 'teams'));
     }
 

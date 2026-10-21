@@ -13,7 +13,8 @@ class TimeEntry extends Model
 
     protected $fillable = [
         'task_id', 'user_id', 'project_id', 'description',
-        'started_at', 'stopped_at', 'duration_seconds', 'is_billable', 'hourly_rate',
+        'status', 'started_at', 'stopped_at', 'paused_at',
+        'duration_seconds', 'paused_seconds', 'is_billable', 'hourly_rate', 'auto_paused',
     ];
 
     protected function casts(): array
@@ -21,7 +22,9 @@ class TimeEntry extends Model
         return [
             'started_at'  => 'datetime',
             'stopped_at'  => 'datetime',
+            'paused_at'   => 'datetime',
             'is_billable' => 'boolean',
+            'auto_paused' => 'boolean',
         ];
     }
 
@@ -63,10 +66,40 @@ class TimeEntry extends Model
 
     public function scopeRunning($query)
     {
-        return $query->whereNull('stopped_at');
+        return $query->where('status', 'running');
+    }
+
+    public function scopePaused($query)
+    {
+        return $query->where('status', 'paused');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['running', 'paused']);
     }
 
     // Accessors
+    public function getIsRunningAttribute(): bool
+    {
+        return $this->status === 'running';
+    }
+
+    public function getIsPausedAttribute(): bool
+    {
+        return $this->status === 'paused';
+    }
+
+    /** Elapsed seconds including any paused time already accumulated */
+    public function getElapsedSecondsAttribute(): int
+    {
+        if ($this->status === 'stopped') {
+            return $this->duration_seconds ?? 0;
+        }
+        $base = $this->started_at->diffInSeconds(now());
+        return max(0, $base - ($this->paused_seconds ?? 0));
+    }
+
     public function getDurationFormattedAttribute(): string
     {
         $seconds = $this->duration_seconds ?? 0;
@@ -74,6 +107,17 @@ class TimeEntry extends Model
         $minutes = floor(($seconds % 3600) / 60);
         $secs    = $seconds % 60;
         return sprintf('%02d:%02d:%02d', $hours, $minutes, $secs);
+    }
+
+    public function getElapsedFormattedAttribute(): string
+    {
+        $s = $this->elapsed_seconds;
+        return sprintf('%02d:%02d:%02d', floor($s / 3600), floor(($s % 3600) / 60), $s % 60);
+    }
+
+    public function getDurationHoursAttribute(): float
+    {
+        return round($this->elapsed_seconds / 3600, 4);
     }
 
     public function getBilledAmountAttribute(): float

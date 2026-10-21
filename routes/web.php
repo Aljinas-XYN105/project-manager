@@ -91,9 +91,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('time-entries', [TimeEntryController::class, 'store'])->name('time-entries.store');
     Route::patch('time-entries/{time_entry}', [TimeEntryController::class, 'update'])->name('time-entries.update');
     Route::delete('time-entries/{time_entry}', [TimeEntryController::class, 'destroy'])->name('time-entries.destroy');
+    Route::get('time-entries/running', [TimeEntryController::class, 'running'])->name('time-entries.running');
+    Route::get('time-entries/active', [TimeEntryController::class, 'active'])->name('time-entries.active');
     Route::post('time-entries/start', [TimeEntryController::class, 'start'])->name('time-entries.start');
     Route::post('time-entries/{time_entry}/stop', [TimeEntryController::class, 'stop'])->name('time-entries.stop');
-    Route::get('time-entries/running', [TimeEntryController::class, 'running'])->name('time-entries.running');
+    Route::patch('time-entries/{time_entry}/pause', [TimeEntryController::class, 'pause'])->name('time-entries.pause');
+    Route::patch('time-entries/{time_entry}/resume', [TimeEntryController::class, 'resume'])->name('time-entries.resume');
 
     // Comments
     Route::post('comments', [CommentController::class, 'store'])->name('comments.store');

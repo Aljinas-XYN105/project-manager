@@ -32,7 +32,15 @@
             <div class="border rounded-xl p-4 space-y-3 transition-colors"
                  :class="task.task_id === '__new__'
                     ? 'border-violet-300 dark:border-violet-700 bg-violet-50/40 dark:bg-violet-900/10'
-                    : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30'">
+                    : (task.from_timer
+                        ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30')">
+                <template x-if="task.from_timer">
+                    <div class="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-1">
+                        <i class="bi bi-stopwatch-fill"></i>
+                        <span>Auto-filled from timer — feel free to edit</span>
+                    </div>
+                </template>
                 <div class="flex items-start gap-3">
                     <div class="flex-1 min-w-0 space-y-3">
                         {{-- Task selector --}}
@@ -186,6 +194,7 @@ function dailyReportForm(opts) {
         notes: t.notes ?? '',
         status_update: t.status_update ?? '',
         is_blocked: !!t.is_blocked && t.is_blocked !== '0',
+        from_timer: !!t.from_timer,
         new_task: Object.assign(blankNewTask(), t.new_task || {}),
     });
 

@@ -28,7 +28,7 @@
     <form method="POST" action="{{ route('daily-reports.store') }}"
           x-data="dailyReportForm({{ Js::from([
               'myTasks'  => $taskOptions,
-              'rows'     => array_values(old('tasks', [])),
+              'rows'     => old('tasks') ? array_values(old('tasks')) : $timedTaskRows,
               'summary'  => old('summary', ''),
               'plan'     => old('plan_for_tomorrow', ''),
               'blockers' => old('blockers', ''),

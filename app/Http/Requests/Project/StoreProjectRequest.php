@@ -16,7 +16,7 @@ class StoreProjectRequest extends FormRequest
         return [
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'team_id'     => ['required', 'exists:teams,id'],
+            'team_id'     => ['nullable', 'exists:teams,id'],
             'status'      => ['nullable', 'in:planning,active,on_hold,completed,archived'],
             'priority'    => ['nullable', 'in:low,medium,high,critical'],
             'color'       => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],

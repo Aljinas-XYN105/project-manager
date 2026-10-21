@@ -88,56 +88,121 @@ window.notificationsDropdown = function() {
     };
 };
 
-window.timerWidget = function() {
+window.multiTimerWidget = function() {
     return {
-        running: false,
-        entryId: null,
-        startedAt: null,
-        elapsed: '00:00:00',
+        open: false,
+        entries: [],
+        count: 0,
+        runningCount: 0,
+        pausedCount: 0,
+        hasActive: false,
         _tick: null,
+        _poll: null,
+
+        _sync() {
+            this.count        = this.entries.length;
+            this.runningCount = this.entries.filter(e => e.status === 'running').length;
+            this.pausedCount  = this.entries.filter(e => e.status === 'paused').length;
+            this.hasActive    = this.entries.length > 0;
+        },
+
         init() {
-            this.check();
-        },
-        check() {
-            fetch('/time-entries/running', { headers: { 'Accept': 'application/json' } })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.entry) {
-                        this.running = true;
-                        this.entryId = data.entry.id;
-                        this.startedAt = new Date(data.entry.started_at);
-                        this.startTick();
-                    }
-                }).catch(() => {});
-        },
-        startTick() {
-            clearInterval(this._tick);
-            this._tick = setInterval(() => {
-                const diff = Math.max(0, Math.floor((Date.now() - this.startedAt) / 1000));
-                const h = String(Math.floor(diff / 3600)).padStart(2, '0');
-                const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-                const s = String(diff % 60).padStart(2, '0');
-                this.elapsed = `${h}:${m}:${s}`;
-            }, 1000);
-        },
-        stop() {
-            if (!this.entryId) return;
-            fetch(`/time-entries/${this.entryId}/stop`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                    'Accept': 'application/json',
-                }
-            }).then(() => {
-                this.running = false;
-                clearInterval(this._tick);
-                this.elapsed = '00:00:00';
-                this.entryId = null;
-                window.toast('Timer stopped and logged', 'success');
+            this.refresh();
+            this._poll = setInterval(() => this.refresh(), 30000);
+            this._tick = setInterval(() => this.tick(), 1000);
+            document.addEventListener('click', e => {
+                if (!this.$el.contains(e.target)) this.open = false;
             });
-        }
+        },
+
+        async refresh() {
+            try {
+                const r = await fetch('/time-entries/active', { headers: { 'Accept': 'application/json' } });
+                const d = await r.json();
+                this.entries = (d.entries || []).map(e => ({
+                    ...e,
+                    elapsed_formatted: this.fmt(e.elapsed_seconds),
+                    loading: false,
+                }));
+                this._sync();
+            } catch (_) {}
+        },
+
+        tick() {
+            this.entries = this.entries.map(e => {
+                if (e.status !== 'running') return e;
+                const now   = Math.floor(Date.now() / 1000);
+                const start = Math.floor(new Date(e.started_at).getTime() / 1000);
+                const elapsed = Math.max(0, now - start - (e.paused_seconds || 0));
+                return { ...e, elapsed_seconds: elapsed, elapsed_formatted: this.fmt(elapsed) };
+            });
+            this._sync();
+        },
+
+        fmt(s) {
+            s = Math.max(0, Math.floor(s || 0));
+            return [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60]
+                .map(n => String(n).padStart(2, '0')).join(':');
+        },
+
+        csrf() {
+            return document.querySelector('meta[name=csrf-token]')?.content ?? '';
+        },
+
+        async pauseEntry(entry) {
+            if (entry.loading) return;
+            entry.loading = true;
+            try {
+                const r = await fetch(`/time-entries/${entry.id}/pause`, {
+                    method: 'PATCH',
+                    headers: { 'X-CSRF-TOKEN': this.csrf(), 'Accept': 'application/json' }
+                });
+                const d = await r.json();
+                const idx = this.entries.findIndex(e => e.id === entry.id);
+                if (idx >= 0) { this.entries[idx] = { ...this.entries[idx], ...d.entry, elapsed_formatted: this.fmt(d.entry.elapsed_seconds), loading: false }; this._sync(); }
+                window.toast?.('Timer paused', 'info');
+            } catch (_) { entry.loading = false; }
+        },
+
+        async resumeEntry(entry) {
+            if (entry.loading) return;
+            entry.loading = true;
+            try {
+                const r = await fetch(`/time-entries/${entry.id}/resume`, {
+                    method: 'PATCH',
+                    headers: { 'X-CSRF-TOKEN': this.csrf(), 'Accept': 'application/json' }
+                });
+                const d = await r.json();
+                const idx = this.entries.findIndex(e => e.id === entry.id);
+                if (idx >= 0) { this.entries[idx] = { ...this.entries[idx], ...d.entry, elapsed_formatted: this.fmt(d.entry.elapsed_seconds), loading: false }; this._sync(); }
+                window.toast?.('Timer resumed', 'success');
+            } catch (_) { entry.loading = false; }
+        },
+
+        async stopEntry(entry) {
+            if (entry.loading) return;
+            entry.loading = true;
+            try {
+                await fetch(`/time-entries/${entry.id}/stop`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': this.csrf(), 'Accept': 'application/json' },
+                });
+                this.entries = this.entries.filter(e => e.id !== entry.id);
+                this._sync();
+                window.toast?.('Timer stopped', 'success');
+            } catch (_) { entry.loading = false; }
+        },
+
+        async stopAll() {
+            for (const e of [...this.entries]) {
+                await this.stopEntry(e);
+            }
+        },
     };
 };
+
+// Legacy alias kept for backwards compat (old blade templates reference timerWidget)
+window.timerWidget = window.multiTimerWidget;
 
 window.globalSearch = function() {
     return {

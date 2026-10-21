@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\ActivityLog;
 use App\Models\Attendance;
 use App\Models\User;
+use App\Services\TimeTrackingService;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -25,6 +26,9 @@ class AuthActivitySubscriber
         Attendance::clockIn($user, request()->ip());
         $user->forceFill(['availability' => 'available', 'last_seen_at' => now()])->saveQuietly();
 
+        // Auto-resume any timers that were paused on last logout
+        app(TimeTrackingService::class)->resumeAutoPaused($user);
+
         $this->log('logged in', $user, ['remember' => $event->remember]);
     }
 
@@ -37,6 +41,9 @@ class AuthActivitySubscriber
 
         Attendance::clockOut($user, request()->ip());
         $user->forceFill(['availability' => 'offline'])->saveQuietly();
+
+        // Auto-pause any running timers so elapsed time is preserved
+        app(TimeTrackingService::class)->pauseAllRunning($user, autoPaused: true);
 
         $this->log('logged out', $user);
     }

@@ -81,7 +81,33 @@ class DailyReportController extends Controller
 
         $projects = $this->reportableProjects($user);
 
-        return view('daily-reports.create', compact('myTasks', 'today', 'projects'));
+        // Pre-populate rows from today's timer entries (running, paused, or stopped today)
+        $timedTaskRows = \App\Models\TimeEntry::with(['task.project'])
+            ->where('user_id', $user->id)
+            ->where(function ($q) use ($today) {
+                $q->whereIn('status', ['running', 'paused'])
+                  ->orWhere(fn($q2) => $q2->where('status', 'stopped')->whereDate('started_at', $today));
+            })
+            ->get()
+            ->groupBy('task_id')
+            ->map(function ($entries) {
+                $task         = $entries->first()->task;
+                $totalSeconds = $entries->sum(fn($e) => max(0, $e->elapsed_seconds));
+                $hours        = max(0.5, round($totalSeconds / 3600, 1));
+                return [
+                    'task_id'    => (string) ($task?->id ?? ''),
+                    'task_title' => $task?->title ?? '',
+                    'description'=> $task?->title ?? '',
+                    'hours'      => $hours,
+                    'from_timer' => true,
+                ];
+            })
+            ->values()
+            ->filter(fn($r) => $r['task_id'] !== '')
+            ->values()
+            ->all();
+
+        return view('daily-reports.create', compact('myTasks', 'today', 'projects', 'timedTaskRows'));
     }
 
     public function store(Request $request)

@@ -36,7 +36,7 @@
             {{ \Carbon\Carbon::parse($date)->format('l, M j') }}
         </h3>
         <span class="text-xs text-slate-500">
-            {{ gmdate('H:i:s', $entries->sum('duration_seconds')) }}
+            {{ gmdate('H:i:s', $entries->sum(fn($e) => max(0, $e->elapsed_seconds))) }}
         </span>
     </div>
     <div class="card overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
@@ -51,7 +51,7 @@
             <p class="text-xs text-slate-400 truncate max-w-xs hidden md:block">{{ $entry->description }}</p>
             @endif
             <span class="text-sm font-mono font-medium text-slate-900 dark:text-white flex-shrink-0">
-                {{ $entry->duration_formatted }}
+                {{ $entry->elapsed_formatted }}
             </span>
             <span class="text-xs text-slate-400 flex-shrink-0">
                 {{ $entry->started_at->format('g:i A') }} – {{ $entry->stopped_at?->format('g:i A') ?? 'running' }}

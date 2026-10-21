@@ -50,7 +50,8 @@ class DashboardController extends Controller
 
         $recentActivity = $this->activityLogService->getRecentLogs(15);
 
-        $runningTimer = $this->timeTrackingService->getRunningEntry($user);
+        $activeTimers = $this->timeTrackingService->getActiveEntries($user);
+        $runningTimer = $activeTimers->firstWhere('status', 'running');
 
         $unreadCount = $this->notificationService->getUnreadCount($user);
 
@@ -71,7 +72,7 @@ class DashboardController extends Controller
 
         return view('dashboard.index', compact(
             'stats', 'upcomingTasks', 'recentActivity',
-            'runningTimer', 'unreadCount', 'myProjects',
+            'activeTimers', 'runningTimer', 'unreadCount', 'myProjects',
             'announcements', 'offToday', 'nextHoliday', 'celebrations'
         ));
     }

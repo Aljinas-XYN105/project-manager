@@ -81,23 +81,225 @@
     </div>
 </div>
 
-{{-- Timer banner if running --}}
-@if($runningTimer)
-<div class="mb-6 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-4 flex items-center gap-4 text-white shadow-lg shadow-violet-200 dark:shadow-violet-900/20">
-    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-        <i class="bi bi-stopwatch-fill text-xl animate-pulse"></i>
+{{-- Active Timers Widget --}}
+@if($activeTimers->isNotEmpty())
+@php
+$activeTimersJson = $activeTimers->map(function($e) {
+    return [
+        'id'             => $e->id,
+        'status'         => $e->status,
+        'task_id'        => $e->task_id,
+        'task_title'     => $e->task?->title ?? $e->description ?? 'Untitled',
+        'project_name'   => $e->task?->project?->name ?? '',
+        'project_color'  => $e->task?->project?->color ?? '#6366f1',
+        'started_at'     => $e->started_at?->toIso8601String(),
+        'paused_seconds' => $e->paused_seconds ?? 0,
+        'elapsed_seconds'=> $e->elapsed_seconds,
+        'pause_url'      => route('time-entries.pause', $e),
+        'resume_url'     => route('time-entries.resume', $e),
+        'stop_url'       => route('time-entries.stop', $e),
+        'task_url'       => $e->task_id ? route('projects.tasks.show', $e->task_id) : null,
+    ];
+});
+@endphp
+<div x-data="dashTimers(window.__dashTimersData)" class="mb-6">
+    {{-- Header --}}
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" x-show="runningCount > 0"></div>
+            <div class="w-2 h-2 rounded-full bg-amber-400" x-show="runningCount === 0"></div>
+            <span class="text-sm font-semibold text-slate-800 dark:text-white">
+                Active Timers
+            </span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300"
+                  x-text="entries.length + ' active'"></span>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <span x-show="runningCount > 0">
+                <i class="bi bi-play-circle-fill text-emerald-500 mr-1"></i>
+                <span x-text="runningCount + ' running'"></span>
+            </span>
+            <span x-show="pausedCount > 0">
+                <i class="bi bi-pause-circle-fill text-amber-400 mr-1"></i>
+                <span x-text="pausedCount + ' paused'"></span>
+            </span>
+        </div>
     </div>
-    <div class="flex-1 min-w-0">
-        <p class="font-semibold text-sm">Timer running</p>
-        <p class="text-xs text-white/70 truncate">{{ $runningTimer->task?->title ?? $runningTimer->description ?? 'Untitled entry' }}</p>
+
+    {{-- Timer cards --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        <template x-for="entry in entries" :key="entry.id">
+            <div class="rounded-2xl border p-4 flex flex-col gap-3 transition-all"
+                 :class="entry.status === 'running'
+                     ? 'bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 border-violet-200 dark:border-violet-800 shadow-sm'
+                     : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'">
+
+                {{-- Top row: project dot + task name + elapsed --}}
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5"
+                              :style="'background:' + entry.project_color"></span>
+                        <div class="min-w-0">
+                            <a :href="entry.task_url ?? '#'"
+                               class="text-sm font-semibold text-slate-800 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 truncate block leading-tight"
+                               x-text="entry.task_title"></a>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5" x-text="entry.project_name"></p>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0 text-right">
+                        <span class="font-mono text-base font-bold tabular-nums"
+                              :class="entry.status === 'running' ? 'text-violet-700 dark:text-violet-300' : 'text-slate-500 dark:text-slate-400'"
+                              x-text="entry.elapsed_formatted"></span>
+                    </div>
+                </div>
+
+                {{-- Status badge --}}
+                <div class="flex items-center justify-between">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                          :class="entry.status === 'running'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
+                              : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'">
+                        <i :class="entry.status === 'running' ? 'bi bi-play-fill' : 'bi bi-pause-fill'"></i>
+                        <span x-text="entry.status === 'running' ? 'Running' : 'Paused'"></span>
+                    </span>
+
+                    {{-- Action buttons --}}
+                    <div class="flex items-center gap-1.5">
+                        {{-- Pause --}}
+                        <button x-show="entry.status === 'running'"
+                                @click="pauseTimer(entry)"
+                                :disabled="entry.loading"
+                                class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400 border border-slate-200 dark:border-slate-600 transition-colors disabled:opacity-50"
+                                title="Pause">
+                            <i class="bi bi-pause-fill text-sm"></i>
+                        </button>
+                        {{-- Resume --}}
+                        <button x-show="entry.status === 'paused'"
+                                @click="resumeTimer(entry)"
+                                :disabled="entry.loading"
+                                class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-600 transition-colors disabled:opacity-50"
+                                title="Resume">
+                            <i class="bi bi-play-fill text-sm"></i>
+                        </button>
+                        {{-- Stop --}}
+                        <button @click="stopTimer(entry)"
+                                :disabled="entry.loading"
+                                class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 border border-slate-200 dark:border-slate-600 transition-colors disabled:opacity-50"
+                                title="Stop">
+                            <i class="bi bi-stop-fill text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
-    <form method="POST" action="{{ route('time-entries.stop', $runningTimer) }}">
-        @csrf @method('PATCH')
-        <button type="submit" class="flex-shrink-0 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors">
-            <i class="bi bi-stop-circle"></i> Stop
-        </button>
-    </form>
 </div>
+@push('scripts')
+<script>
+window.__dashTimersData = @json($activeTimersJson);
+
+function dashTimers(initial) {
+    function _map(e) {
+        return { ...e, elapsed_formatted: formatSeconds(e.elapsed_seconds), loading: false };
+    }
+    const mapped = initial.map(_map);
+    return {
+        entries: mapped,
+        runningCount: mapped.filter(e => e.status === 'running').length,
+        pausedCount:  mapped.filter(e => e.status === 'paused').length,
+
+        _sync() {
+            this.runningCount = this.entries.filter(e => e.status === 'running').length;
+            this.pausedCount  = this.entries.filter(e => e.status === 'paused').length;
+        },
+
+        init() {
+            this.tick();
+            setInterval(() => this.tick(), 1000);
+        },
+
+        tick() {
+            this.entries = this.entries.map(e => {
+                if (e.status !== 'running') return e;
+                const now   = Math.floor(Date.now() / 1000);
+                const start = Math.floor(new Date(e.started_at).getTime() / 1000);
+                const elapsed = Math.max(0, now - start - (e.paused_seconds || 0));
+                return { ...e, elapsed_seconds: elapsed, elapsed_formatted: formatSeconds(elapsed) };
+            });
+            this._sync();
+        },
+
+        async pauseTimer(entry) {
+            entry.loading = true;
+            try {
+                const r = await fetch(entry.pause_url, {
+                    method: 'PATCH',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' }
+                });
+                const d = await r.json();
+                const idx = this.entries.findIndex(e => e.id === entry.id);
+                if (idx >= 0) {
+                    this.entries[idx] = {
+                        ...this.entries[idx],
+                        status: d.entry.status,
+                        paused_seconds: d.entry.paused_seconds,
+                        elapsed_seconds: d.entry.elapsed_seconds,
+                        elapsed_formatted: formatSeconds(d.entry.elapsed_seconds),
+                        loading: false,
+                    };
+                    this._sync();
+                }
+            } catch (e) { entry.loading = false; }
+        },
+
+        async resumeTimer(entry) {
+            entry.loading = true;
+            try {
+                const r = await fetch(entry.resume_url, {
+                    method: 'PATCH',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' }
+                });
+                const d = await r.json();
+                const idx = this.entries.findIndex(e => e.id === entry.id);
+                if (idx >= 0) {
+                    this.entries[idx] = {
+                        ...this.entries[idx],
+                        status: d.entry.status,
+                        paused_seconds: d.entry.paused_seconds,
+                        started_at: d.entry.started_at,
+                        elapsed_seconds: d.entry.elapsed_seconds,
+                        elapsed_formatted: formatSeconds(d.entry.elapsed_seconds),
+                        loading: false,
+                    };
+                    this._sync();
+                }
+            } catch (e) { entry.loading = false; }
+        },
+
+        async stopTimer(entry) {
+            if (!confirm('Stop this timer?')) return;
+            entry.loading = true;
+            try {
+                await fetch(entry.stop_url, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+                });
+                this.entries = this.entries.filter(e => e.id !== entry.id);
+                this._sync();
+            } catch (e) { entry.loading = false; }
+        },
+    };
+}
+
+function formatSeconds(s) {
+    s = Math.max(0, Math.floor(s));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+</script>
+@endpush
 @endif
 
 {{-- Daily report reminder --}}
