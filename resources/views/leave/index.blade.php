@@ -109,8 +109,8 @@
 </div>
 
 {{-- Apply modal --}}
-<div x-show="apply" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" @keydown.escape.window="apply = false">
-    <form method="POST" action="{{ route('leave.store') }}" @click.away="apply = false"
+<div x-show="apply" x-cloak @click.self="apply = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" @keydown.escape.window="apply = false">
+    <form method="POST" action="{{ route('leave.store') }}"
           x-data="{ start: @js(old('start_date', today()->toDateString())), end: @js(old('end_date', today()->toDateString())), half: {{ old('is_half_day') ? 'true' : 'false' }} }"
           class="card w-full max-w-md p-6 space-y-4">
         @csrf

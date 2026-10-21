@@ -25,6 +25,15 @@
         'label' => '['.($t->project->name ?? '?').'] '.$t->title.($t->ticket_key ? ' ('.$t->ticket_key.')' : ''),
     ])->values();
 @endphp
+    @if(count($timedTaskRows))
+    <div class="mb-4 flex items-start gap-3 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-800 dark:text-emerald-300">
+        <i class="bi bi-stopwatch-fill mt-0.5 flex-shrink-0"></i>
+        <div>
+            <span class="font-semibold">{{ count($timedTaskRows) }} task{{ count($timedTaskRows) > 1 ? 's' : '' }} pre-filled from your timer</span>
+            — hours and descriptions are auto-populated from today's tracked time. You can edit any field before submitting.
+        </div>
+    </div>
+    @endif
     <form method="POST" action="{{ route('daily-reports.store') }}"
           x-data="dailyReportForm({{ Js::from([
               'myTasks'  => $taskOptions,

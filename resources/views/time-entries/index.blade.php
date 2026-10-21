@@ -6,6 +6,10 @@
         <h1 class="page-title">Time Tracking</h1>
         <p class="text-sm text-slate-500 mt-0.5">Week of {{ \Carbon\Carbon::parse($from)->format('M j') }} – {{ \Carbon\Carbon::parse($to)->format('M j, Y') }}</p>
     </div>
+    <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <i class="bi bi-info-circle"></i>
+        <span>Start timers from any task page or the <strong>⏱</strong> icon on task cards.</span>
+    </div>
 </div>
 
 {{-- Summary Cards --}}

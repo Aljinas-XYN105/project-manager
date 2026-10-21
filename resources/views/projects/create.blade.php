@@ -74,11 +74,14 @@
                     <input type="number" name="budget" value="{{ old('budget') }}" min="0" step="0.01"
                            class="form-input" placeholder="0.00">
                 </div>
-                <div class="flex items-center gap-3">
-                    <input type="checkbox" name="is_public" id="is_public" value="1"
-                           {{ old('is_public') ? 'checked' : '' }}
-                           class="w-4 h-4 text-violet-600 border-slate-300 rounded focus:ring-violet-500">
-                    <label for="is_public" class="text-sm text-slate-700 dark:text-slate-300">Make project public</label>
+                <div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" name="is_public" id="is_public" value="1"
+                               {{ old('is_public') ? 'checked' : '' }}
+                               class="w-4 h-4 text-violet-600 border-slate-300 rounded focus:ring-violet-500">
+                        <label for="is_public" class="text-sm text-slate-700 dark:text-slate-300">Make project public</label>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1 ml-7">All members can view this project, even if they're not assigned to it.</p>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">

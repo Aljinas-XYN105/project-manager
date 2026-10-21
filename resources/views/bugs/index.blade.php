@@ -104,9 +104,14 @@ $statsConfig = [
         @if(request()->anyFilled(['status','severity','priority','project_id']))
             Try adjusting your filters
         @else
-            Create a task with type "Bug" and it will appear here
+            Use <strong>Report Bug</strong> above or create a task with type "Bug" inside any project.
         @endif
     </p>
+    @unless(request()->anyFilled(['status','severity','priority','project_id']))
+    <a href="{{ route('projects.index') }}" class="mt-4 btn-secondary btn-sm">
+        <i class="bi bi-arrow-right"></i> Go to a project to report a bug
+    </a>
+    @endunless
 </div>
 @else
 <div class="card overflow-hidden">

@@ -27,7 +27,7 @@
 <div class="empty-state">
     <div class="empty-icon"><i class="bi bi-speedometer2"></i></div>
     <h3>No sprints yet</h3>
-    <p>Create a sprint to plan your team's work in time-boxed iterations.</p>
+    <p>Create a sprint to plan your team's work in time-boxed iterations.<br><span class="text-xs text-slate-400 mt-1 block">A sprint is a fixed period (e.g. 2 weeks) during which tasks from the backlog are worked on.</span></p>
     @can('update', $project)
     <a href="{{ route('projects.sprints.create', $project) }}" class="btn-primary btn-sm mt-2">
         <i class="bi bi-plus-lg"></i> Create First Sprint

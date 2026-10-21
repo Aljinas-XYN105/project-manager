@@ -74,12 +74,20 @@
                     <input type="date" name="due_date" value="{{ old('due_date') }}" class="form-input">
                 </div>
                 <div>
-                    <label class="form-label">Estimated Hours</label>
-                    <input type="number" name="estimated_hours" value="{{ old('estimated_hours') }}" min="0" step="0.5" class="form-input" placeholder="0">
+                    <label class="form-label flex items-center gap-1">
+                        Estimated Hours
+                        <span class="text-slate-400 font-normal text-xs">(optional)</span>
+                    </label>
+                    <input type="number" name="estimated_hours" value="{{ old('estimated_hours') }}" min="0" step="0.5" class="form-input" placeholder="e.g. 4">
+                    <p class="text-xs text-slate-400 mt-1">Used in burn-rate reports and project tracking.</p>
                 </div>
                 <div>
-                    <label class="form-label">Story Points</label>
-                    <input type="number" name="story_points" value="{{ old('story_points') }}" min="0" max="100" class="form-input" placeholder="0">
+                    <label class="form-label flex items-center gap-1">
+                        Story Points
+                        <span class="text-slate-400 font-normal text-xs">(optional)</span>
+                    </label>
+                    <input type="number" name="story_points" value="{{ old('story_points') }}" min="0" max="100" class="form-input" placeholder="e.g. 3">
+                    <p class="text-xs text-slate-400 mt-1">Relative effort estimate (Fibonacci: 1, 2, 3, 5, 8…).</p>
                 </div>
                 @if($project->sprints()->where('status','!=','completed')->exists())
                 <div>

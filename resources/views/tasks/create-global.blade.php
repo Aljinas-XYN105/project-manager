@@ -103,12 +103,14 @@
                     <input type="date" name="due_date" value="{{ old('due_date') }}" class="form-input">
                 </div>
                 <div>
-                    <label class="form-label">Estimated Hours</label>
-                    <input type="number" name="estimated_hours" value="{{ old('estimated_hours') }}" min="0" step="0.5" class="form-input" placeholder="0">
+                    <label class="form-label">Estimated Hours <span class="text-slate-400 font-normal text-xs">(optional)</span></label>
+                    <input type="number" name="estimated_hours" value="{{ old('estimated_hours') }}" min="0" step="0.5" class="form-input" placeholder="e.g. 4">
+                    <p class="text-xs text-slate-400 mt-1">Used in burn-rate and project reports.</p>
                 </div>
                 <div>
-                    <label class="form-label">Story Points</label>
-                    <input type="number" name="story_points" value="{{ old('story_points') }}" min="0" max="100" class="form-input" placeholder="0">
+                    <label class="form-label">Story Points <span class="text-slate-400 font-normal text-xs">(optional)</span></label>
+                    <input type="number" name="story_points" value="{{ old('story_points') }}" min="0" max="100" class="form-input" placeholder="e.g. 3">
+                    <p class="text-xs text-slate-400 mt-1">Relative effort estimate (Fibonacci: 1, 2, 3, 5, 8…).</p>
                 </div>
                 <div x-show="sprints.length > 0" x-cloak>
                     <label class="form-label">Sprint</label>
@@ -215,7 +217,7 @@
 <script>
 function globalTaskCreate(defaultProjectId, projects) {
     return {
-        type: '{{ old('type', 'task') }}',
+        type: '{{ old('type', request('type', 'task')) }}',
         projectId: defaultProjectId ? String(defaultProjectId) : '',
         members: [],
         labels: [],
