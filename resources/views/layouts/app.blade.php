@@ -110,7 +110,8 @@
         </div>
 
         <!-- ── Nav ── -->
-        <nav class="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5 scrollbar-hide">
+        <nav class="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5 scrollbar-hide"
+             x-init="$nextTick(() => { const a = $el.querySelector('.sidebar-nav-active'); if (a) a.scrollIntoView({ block: 'nearest' }); })">
 
             @php
             $navGroups = [
