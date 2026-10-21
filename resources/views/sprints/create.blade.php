@@ -29,7 +29,7 @@
             @csrf
 
             <div>
-                <label class="form-label">Sprint Name *</label>
+                <label class="form-label">Sprint Name <span class="text-rose-500">*</span></label>
                 <input type="text" name="name"
                        value="{{ old('name', 'Sprint '.($project->sprints()->count()+1)) }}"
                        required class="form-input text-base font-medium"
@@ -46,14 +46,14 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="form-label">Start Date *</label>
+                    <label class="form-label">Start Date <span class="text-rose-500">*</span></label>
                     <input type="date" name="start_date"
                            value="{{ old('start_date', today()->toDateString()) }}"
                            required class="form-input">
                     @error('start_date')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
                 <div>
-                    <label class="form-label">End Date *</label>
+                    <label class="form-label">End Date <span class="text-rose-500">*</span></label>
                     <input type="date" name="end_date"
                            value="{{ old('end_date', today()->addDays(13)->toDateString()) }}"
                            required class="form-input">

@@ -16,7 +16,7 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="form-label">Team Name <span class="text-red-500">*</span></label>
+                    <label class="form-label">Team Name <span class="text-rose-500">*</span></label>
                     <input type="text" name="name" value="{{ old('name', $team->name) }}" class="form-input" required autofocus>
                     @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>

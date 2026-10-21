@@ -12,26 +12,28 @@
             @csrf @method('PUT')
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="sm:col-span-2">
-                    <label class="form-label">Project Name *</label>
+                    <label class="form-label">Project Name <span class="text-rose-500">*</span></label>
                     <input type="text" name="name" value="{{ old('name', $project->name) }}" required class="form-input">
+                    @error('name')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
                 <div class="sm:col-span-2">
                     <label class="form-label">Description</label>
-                    <textarea name="description" rows="3" class="form-input resize-none">{{ old('description', $project->description) }}</textarea>
+                    <textarea name="description" rows="3" class="form-input resize-none"
+                              placeholder="What is this project about?">{{ old('description', $project->description) }}</textarea>
                 </div>
                 <div>
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
-                        @foreach(['planning','active','on_hold','completed','archived'] as $s)
-                        <option value="{{ $s }}" {{ old('status', $project->status) === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$s)) }}</option>
+                        @foreach(['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold','completed'=>'Completed','archived'=>'Archived'] as $s=>$l)
+                        <option value="{{ $s }}" {{ old('status', $project->status) === $s ? 'selected' : '' }}>{{ $l }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
                     <label class="form-label">Priority</label>
                     <select name="priority" class="form-select">
-                        @foreach(['low','medium','high','critical'] as $p)
-                        <option value="{{ $p }}" {{ old('priority', $project->priority) === $p ? 'selected' : '' }}>{{ ucfirst($p) }}</option>
+                        @foreach(['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical'] as $p=>$l)
+                        <option value="{{ $p }}" {{ old('priority', $project->priority) === $p ? 'selected' : '' }}>{{ $l }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -45,8 +47,8 @@
                     </div>
                 </div>
                 <div>
-                    <label class="form-label">Budget ($)</label>
-                    <input type="number" name="budget" value="{{ old('budget', $project->budget) }}" min="0" step="0.01" class="form-input">
+                    <label class="form-label">Budget <span class="text-slate-400 font-normal text-xs">($, optional)</span></label>
+                    <input type="number" name="budget" value="{{ old('budget', $project->budget) }}" min="0" step="0.01" class="form-input" placeholder="0.00">
                 </div>
                 <div>
                     <label class="form-label">Start Date</label>
@@ -55,6 +57,14 @@
                 <div>
                     <label class="form-label">Due Date</label>
                     <input type="date" name="due_date" value="{{ old('due_date', $project->due_date?->format('Y-m-d')) }}" class="form-input">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="is_public" value="1" class="w-4 h-4 rounded text-violet-600 border-slate-300 dark:border-slate-600 focus:ring-violet-500"
+                               {{ old('is_public', $project->is_public) ? 'checked' : '' }}>
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Make project public</span>
+                    </label>
+                    <p class="text-xs text-slate-400 mt-1 ml-7">All members can view this project, even if they're not assigned to it.</p>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">

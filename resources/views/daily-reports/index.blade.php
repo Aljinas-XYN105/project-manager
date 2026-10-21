@@ -60,18 +60,22 @@
 
 {{-- Reports list --}}
 @if($reports->isEmpty())
-<div class="card p-12 text-center">
-    <i class="bi bi-journal-x text-4xl text-gray-300 block mb-3"></i>
-    <p class="text-gray-500 font-medium">No reports submitted yet</p>
+<div class="card p-14 text-center">
+    <i class="bi bi-journal-text text-5xl text-slate-200 dark:text-slate-700 block mb-4"></i>
+    <h3 class="text-base font-semibold text-slate-700 dark:text-slate-300 mb-1">No reports submitted yet</h3>
+    <p class="text-sm text-slate-400 mb-4">Submit your first daily standup to start tracking your progress.</p>
+    <a href="{{ route('daily-reports.create') }}" class="btn-primary btn-sm mx-auto">
+        <i class="bi bi-plus-lg"></i> Submit Today's Report
+    </a>
 </div>
 @else
-<div class="space-y-4">
+<div class="space-y-3">
     @foreach($reports as $report)
-    <div class="card p-5 hover:shadow-md transition-shadow">
+    <div class="card p-5 hover:shadow-card-md transition-shadow">
         <div class="flex items-start justify-between gap-4">
             <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 mb-2">
-                    <span class="font-semibold text-gray-900 dark:text-white">
+                <div class="flex items-center gap-3 mb-1.5 flex-wrap">
+                    <span class="font-semibold text-slate-900 dark:text-white">
                         {{ $report->report_date->format('l, F j, Y') }}
                     </span>
                     @if($report->report_date->isToday())
@@ -79,37 +83,38 @@
                     @elseif($report->report_date->isYesterday())
                     <span class="badge badge-secondary text-[10px]">Yesterday</span>
                     @endif
-                    <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                        {{ $report->total_hours }}h worked
+                    <span class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                        {{ $report->total_hours }}h logged
                     </span>
+                    <span class="text-xs text-slate-400">{{ $report->reportTasks->count() }} task(s)</span>
                 </div>
-                <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{{ $report->summary }}</p>
+                <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">{{ $report->summary }}</p>
                 @if($report->blockers)
-                <div class="flex items-center gap-1.5 mt-2 text-xs text-orange-600 dark:text-orange-400">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <span class="truncate">{{ Str::limit($report->blockers, 80) }}</span>
+                <div class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mb-2">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <span class="truncate">{{ Str::limit($report->blockers, 100) }}</span>
                 </div>
                 @endif
                 @if($report->reportTasks->count())
-                <div class="flex flex-wrap gap-1.5 mt-2">
-                    @foreach($report->reportTasks->take(4) as $rt)
-                    <span class="text-[11px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
+                <div class="flex flex-wrap gap-1.5">
+                    @foreach($report->reportTasks->take(5) as $rt)
+                    <span class="text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full">
                         {{ Str::limit($rt->task_description, 30) }} · {{ $rt->hours_spent }}h
                     </span>
                     @endforeach
-                    @if($report->reportTasks->count() > 4)
-                    <span class="text-[11px] text-gray-400">+{{ $report->reportTasks->count()-4 }} more</span>
+                    @if($report->reportTasks->count() > 5)
+                    <span class="text-[11px] text-slate-400">+{{ $report->reportTasks->count()-5 }} more</span>
                     @endif
                 </div>
                 @endif
             </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
+            <div class="flex items-center gap-1.5 flex-shrink-0">
                 <a href="{{ route('daily-reports.show', $report) }}" class="btn-ghost btn-sm">View</a>
-                <a href="{{ route('daily-reports.edit', $report) }}" class="btn-ghost btn-sm"><i class="bi bi-pencil"></i></a>
+                <a href="{{ route('daily-reports.edit', $report) }}" class="btn-ghost btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>
                 <form method="POST" action="{{ route('daily-reports.destroy', $report) }}">
                     @csrf @method('DELETE')
-                    <button type="submit" class="btn-ghost btn-sm text-red-500"
-                            onclick="return confirm('Delete this report?')">
+                    <button type="submit" class="btn-ghost btn-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                            onclick="return confirm('Delete this report?')" title="Delete">
                         <i class="bi bi-trash3"></i>
                     </button>
                 </form>

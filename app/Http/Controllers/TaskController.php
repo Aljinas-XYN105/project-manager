@@ -234,8 +234,9 @@ class TaskController extends Controller
         $columns = $task->project->columns()->orderBy('position')->get();
         $members = $task->project->members;
         $labels  = $task->project->labels;
+        $sprints = $task->project->sprints()->whereIn('status', ['planning', 'active'])->get();
 
-        return view('tasks.edit', compact('task', 'columns', 'members', 'labels'));
+        return view('tasks.edit', compact('task', 'columns', 'members', 'labels', 'sprints'));
     }
 
     public function update(UpdateTaskRequest $request, Task $task)
