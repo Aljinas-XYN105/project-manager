@@ -119,7 +119,7 @@
         <div class="alert-danger text-sm"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ $errors->first() }}</span></div>
         @endif
         <div>
-            <label class="form-label">Leave type</label>
+            <label class="form-label">Leave type <span class="text-rose-500">*</span></label>
             <select name="leave_type_id" required class="form-select">
                 @foreach($balances as $b)
                 <option value="{{ $b->type->id }}" @selected(old('leave_type_id') == $b->type->id)>
@@ -130,11 +130,11 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div>
-                <label class="form-label">From</label>
+                <label class="form-label">From <span class="text-rose-500">*</span></label>
                 <input type="date" name="start_date" x-model="start" @change="if (end < start) end = start" required class="form-input">
             </div>
             <div>
-                <label class="form-label">To</label>
+                <label class="form-label">To <span class="text-rose-500">*</span></label>
                 <input type="date" name="end_date" x-model="end" :min="start" required class="form-input">
             </div>
         </div>

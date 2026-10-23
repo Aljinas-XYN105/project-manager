@@ -2,7 +2,7 @@
 
 <div class="space-y-2 mb-8">
     <h2 class="text-2xl font-bold text-white">Welcome back</h2>
-    <p class="text-slate-400 text-sm">Sign in to your ProManage workspace</p>
+    <p class="text-slate-400 text-sm">Sign in to your Project Manager workspace</p>
 </div>
 
 {{-- Session status (e.g. password reset success) --}}

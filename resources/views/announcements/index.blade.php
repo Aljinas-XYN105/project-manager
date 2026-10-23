@@ -67,8 +67,8 @@
     @endif
 
     @if($canManage)
-    <div x-show="modal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" @keydown.escape.window="modal = false">
-        <form method="POST" :action="action" @click.away="modal = false" class="card w-full max-w-lg p-6 space-y-4">
+    <div x-show="modal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" @keydown.escape.window="modal = false" @click.self="modal = false">
+        <form method="POST" :action="action" class="card w-full max-w-lg p-6 space-y-4">
             @csrf
             <input type="hidden" name="_method" :value="method">
             <h3 class="font-semibold text-slate-900 dark:text-white" x-text="method === 'PUT' ? 'Edit announcement' : 'New announcement'"></h3>
@@ -76,12 +76,12 @@
             <div class="alert-danger text-sm"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ $errors->first() }}</span></div>
             @endif
             <div>
-                <label class="form-label">Title</label>
-                <input name="title" x-model="form.title" required maxlength="160" class="form-input">
+                <label class="form-label">Title <span class="text-rose-500">*</span></label>
+                <input name="title" x-model="form.title" required maxlength="160" class="form-input" placeholder="e.g. Office closed on Monday">
             </div>
             <div>
-                <label class="form-label">Message</label>
-                <textarea name="body" x-model="form.body" rows="6" required maxlength="5000" class="form-input resize-y"></textarea>
+                <label class="form-label">Message <span class="text-rose-500">*</span></label>
+                <textarea name="body" x-model="form.body" rows="6" required maxlength="5000" class="form-input resize-y" placeholder="Write the full announcement here…"></textarea>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>

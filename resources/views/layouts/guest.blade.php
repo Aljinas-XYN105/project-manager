@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'ProManage') }} — {{ $title ?? 'Sign in' }}</title>
+    <title>{{ config('app.name', 'Project Manager') }} — {{ $title ?? 'Sign in' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -36,7 +36,7 @@
         <div class="w-9 h-9 bg-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-900/50">
             <i class="bi bi-layers-half text-white text-lg"></i>
         </div>
-        <span class="text-xl font-bold text-white tracking-tight">ProManage</span>
+        <span class="text-xl font-bold text-white tracking-tight">Project Manager</span>
     </div>
 
     {{-- Hero copy --}}
@@ -77,7 +77,7 @@
 
     {{-- Footer --}}
     <div class="relative z-10 text-slate-600 text-sm">
-        &copy; {{ date('Y') }} ProManage. Built for teams.
+        &copy; {{ date('Y') }} Project Manager. Built for teams.
     </div>
 </div>
 
@@ -89,7 +89,7 @@
         <div class="w-8 h-8 bg-violet-600 rounded-xl flex items-center justify-center">
             <i class="bi bi-layers-half text-white"></i>
         </div>
-        <span class="text-lg font-bold text-white">ProManage</span>
+        <span class="text-lg font-bold text-white">Project Manager</span>
     </div>
 
     <div class="w-full max-w-md">
@@ -97,7 +97,7 @@
     </div>
 
     <p class="mt-8 text-center text-xs text-slate-600">
-        &copy; {{ date('Y') }} ProManage &mdash; Secure connection
+        &copy; {{ date('Y') }} Project Manager &mdash; Secure connection
         <span class="inline-flex items-center gap-1 ml-1 text-emerald-600">
             <i class="bi bi-shield-check"></i>
         </span>

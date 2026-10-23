@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', config('app.name')) — ProManage</title>
+    <title>@yield('title', config('app.name')) — Project Manager</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -65,7 +65,7 @@
                 <i class="bi bi-kanban-fill text-[13px] text-white"></i>
             </div>
             <div x-show="sidebarOpen || mobileSidebar" x-transition.opacity.duration.150ms class="min-w-0 flex-1">
-                <p class="font-bold text-[13px] text-slate-900 dark:text-white/90 truncate leading-none tracking-tight">ProManage</p>
+                <p class="font-bold text-[13px] text-slate-900 dark:text-white/90 truncate leading-none tracking-tight">Project Manager</p>
                 <p class="text-[10px] text-slate-400 dark:text-white/25 mt-0.5 leading-none font-medium tracking-wide uppercase">Workspace</p>
             </div>
             <!-- Collapse on desktop -->
