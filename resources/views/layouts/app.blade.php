@@ -60,14 +60,10 @@
 
         <!-- ── Workspace Header ── -->
         <div class="flex items-center h-14 px-3 border-b border-slate-200 dark:border-white/[0.05] flex-shrink-0 gap-2.5">
-            {{-- Logo icon: overflow-hidden crops to the W mark --}}
-            <div class="w-8 h-8 flex-shrink-0 overflow-hidden rounded-xl"
-                 style="background: url('{{ asset('images/workzen-logo.png') }}') left center / auto 100% no-repeat;"></div>
-            <div x-show="sidebarOpen || mobileSidebar" x-transition.opacity.duration.150ms class="min-w-0 flex-1">
-                {{-- Light mode: full logo image; dark mode: white text --}}
+            <div class="min-w-0 flex-1 flex items-center">
                 <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen"
-                     class="h-[18px] w-auto dark:hidden" style="max-width:120px;">
-                <p class="hidden dark:block font-bold text-[13px] text-white/90 truncate leading-none tracking-tight">Workzen</p>
+                     class="h-6 w-auto dark:hidden" style="max-width:130px;">
+                <p class="hidden dark:block font-bold text-[15px] text-white/90 truncate leading-none tracking-tight">Workzen</p>
             </div>
             <!-- Collapse on desktop -->
             <button @click="sidebarOpen = !sidebarOpen"
