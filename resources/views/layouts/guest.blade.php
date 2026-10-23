@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Project Manager') }} — {{ $title ?? 'Sign in' }}</title>
+    <title>{{ config('app.name', 'Workzen') }} — {{ $title ?? 'Sign in' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -33,10 +33,10 @@
 
     {{-- Logo / wordmark --}}
     <div class="relative z-10 flex items-center gap-3">
-        <div class="w-9 h-9 bg-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-900/50">
-            <i class="bi bi-layers-half text-white text-lg"></i>
+        <div class="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
+            <span class="text-[15px] font-black text-white leading-none">W</span>
         </div>
-        <span class="text-xl font-bold text-white tracking-tight">Project Manager</span>
+        <span class="text-xl font-bold text-white tracking-tight">Workzen</span>
     </div>
 
     {{-- Hero copy --}}
@@ -44,7 +44,7 @@
         <div class="space-y-4">
             <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-600/20 border border-violet-500/30 rounded-full text-violet-300 text-xs font-medium">
                 <span class="w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse"></span>
-                Project Management &amp; HR Platform
+                Work Smart. Stay in Sync.
             </div>
             <h1 class="text-4xl xl:text-5xl font-bold text-white leading-tight">
                 Everything your<br>
@@ -77,7 +77,7 @@
 
     {{-- Footer --}}
     <div class="relative z-10 text-slate-600 text-sm">
-        &copy; {{ date('Y') }} Project Manager. Built for teams.
+        &copy; {{ date('Y') }} Workzen. Built for teams.
     </div>
 </div>
 
@@ -86,10 +86,10 @@
 
     {{-- Mobile logo --}}
     <div class="lg:hidden flex items-center gap-2 mb-10">
-        <div class="w-8 h-8 bg-violet-600 rounded-xl flex items-center justify-center">
-            <i class="bi bi-layers-half text-white"></i>
+        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center">
+            <span class="text-[13px] font-black text-white leading-none">W</span>
         </div>
-        <span class="text-lg font-bold text-white">Project Manager</span>
+        <span class="text-lg font-bold text-white">Workzen</span>
     </div>
 
     <div class="w-full max-w-md">
@@ -97,7 +97,7 @@
     </div>
 
     <p class="mt-8 text-center text-xs text-slate-600">
-        &copy; {{ date('Y') }} Project Manager &mdash; Secure connection
+        &copy; {{ date('Y') }} Workzen &mdash; Secure connection
         <span class="inline-flex items-center gap-1 ml-1 text-emerald-600">
             <i class="bi bi-shield-check"></i>
         </span>

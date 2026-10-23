@@ -2,7 +2,7 @@
 
 <div class="space-y-2 mb-8">
     <h2 class="text-2xl font-bold text-white">Create your account</h2>
-    <p class="text-slate-400 text-sm">Join your team on Project Manager</p>
+    <p class="text-slate-400 text-sm">Join your team on Workzen</p>
 </div>
 
 <form method="POST" action="{{ route('register') }}" class="space-y-5">
