@@ -32,11 +32,10 @@
     </div>
 
     {{-- Logo / wordmark --}}
-    <div class="relative z-10 flex items-center gap-3">
-        <div class="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
-            <span class="text-[15px] font-black text-white leading-none">W</span>
+    <div class="relative z-10">
+        <div class="inline-block bg-white rounded-2xl px-4 py-2 shadow-xl shadow-black/30">
+            <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen" class="h-9 w-auto">
         </div>
-        <span class="text-xl font-bold text-white tracking-tight">Workzen</span>
     </div>
 
     {{-- Hero copy --}}
@@ -85,11 +84,10 @@
 <div class="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:px-12 bg-[#0D0F14]">
 
     {{-- Mobile logo --}}
-    <div class="lg:hidden flex items-center gap-2 mb-10">
-        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-700 rounded-xl flex items-center justify-center">
-            <span class="text-[13px] font-black text-white leading-none">W</span>
+    <div class="lg:hidden flex items-center justify-center mb-10">
+        <div class="bg-white rounded-2xl px-4 py-2 shadow-lg">
+            <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen" class="h-8 w-auto">
         </div>
-        <span class="text-lg font-bold text-white">Workzen</span>
     </div>
 
     <div class="w-full max-w-md">

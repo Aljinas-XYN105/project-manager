@@ -60,13 +60,14 @@
 
         <!-- ── Workspace Header ── -->
         <div class="flex items-center h-14 px-3 border-b border-slate-200 dark:border-white/[0.05] flex-shrink-0 gap-2.5">
-            <div class="w-8 h-8 flex-shrink-0 rounded-xl bg-gradient-to-br from-blue-400 via-blue-500 to-blue-700
-                        flex items-center justify-center shadow-lg shadow-blue-900/30 ring-1 ring-blue-400/20">
-                <span class="text-[13px] font-black text-white leading-none tracking-tight">W</span>
-            </div>
+            {{-- Logo icon: overflow-hidden crops to the W mark --}}
+            <div class="w-8 h-8 flex-shrink-0 overflow-hidden rounded-xl"
+                 style="background: url('{{ asset('images/workzen-logo.png') }}') left center / auto 100% no-repeat;"></div>
             <div x-show="sidebarOpen || mobileSidebar" x-transition.opacity.duration.150ms class="min-w-0 flex-1">
-                <p class="font-bold text-[13px] text-slate-900 dark:text-white/90 truncate leading-none tracking-tight">Workzen</p>
-                <p class="text-[10px] text-slate-400 dark:text-white/25 mt-0.5 leading-none font-medium tracking-wide uppercase">Workspace</p>
+                {{-- Light mode: full logo image; dark mode: white text --}}
+                <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen"
+                     class="h-[18px] w-auto dark:hidden" style="max-width:120px;">
+                <p class="hidden dark:block font-bold text-[13px] text-white/90 truncate leading-none tracking-tight">Workzen</p>
             </div>
             <!-- Collapse on desktop -->
             <button @click="sidebarOpen = !sidebarOpen"
