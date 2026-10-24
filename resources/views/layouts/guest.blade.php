@@ -101,8 +101,8 @@
     </div>
 
     {{-- Form area --}}
-    <div class="flex-1 flex items-center justify-center px-8 py-10 lg:px-14">
-        <div class="w-full max-w-[400px]">
+    <div class="flex-1 flex items-center justify-center p-8 lg:p-16">
+        <div class="w-full" style="max-width: 400px;">
             {{ $slot }}
         </div>
     </div>
