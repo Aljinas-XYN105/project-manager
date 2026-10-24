@@ -62,7 +62,7 @@
         <div class="flex items-center h-14 px-3 border-b border-slate-200 dark:border-white/[0.05] flex-shrink-0 gap-2.5">
             <div class="min-w-0 flex-1 flex items-center">
                 <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen"
-                     class="h-7 w-auto dark:hidden" style="max-width:none; width:100%; object-fit:contain; object-position:left center;">
+                     class="h-9 w-auto dark:hidden" style="max-width:none; width:100%; object-fit:contain; object-position:left center;">
                 <p class="hidden dark:block font-bold text-[15px] text-white/90 truncate leading-none tracking-tight">Workzen</p>
             </div>
             <!-- Collapse on desktop -->
