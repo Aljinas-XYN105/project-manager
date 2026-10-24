@@ -51,14 +51,14 @@ class ReportController extends Controller
             return response()->download($path)->deleteFileAfterSend();
         }
 
-        $entries = $query->orderByDesc('started_at')->paginate(25);
-        $all     = $query->get();
-
+        // Aggregate in DB — avoids loading all rows into memory
         $summary = [
-            'total_hours'    => round($all->sum('duration_seconds') / 3600, 1),
-            'billable_hours' => round($all->where('is_billable', true)->sum('duration_seconds') / 3600, 1),
-            'entry_count'    => $all->count(),
+            'total_hours'    => round((clone $query)->sum('duration_seconds') / 3600, 1),
+            'billable_hours' => round((clone $query)->where('is_billable', true)->sum('duration_seconds') / 3600, 1),
+            'entry_count'    => (clone $query)->count(),
         ];
+
+        $entries = $query->orderByDesc('started_at')->paginate(25);
 
         $byProject = TimeEntry::query()
             ->join('projects', 'time_entries.project_id', '=', 'projects.id')

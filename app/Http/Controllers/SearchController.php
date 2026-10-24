@@ -17,11 +17,12 @@ class SearchController extends Controller
         $results = ['projects' => collect(), 'tasks' => collect(), 'people' => collect()];
 
         if (mb_strlen($term) >= 2) {
-            $projects = $this->accessibleProjects($request->user());
-            $results  = [
-                'projects' => $projects->filter(fn (Project $p) => str_contains(mb_strtolower($p->name.' '.$p->description), mb_strtolower($term)))
-                    ->take($limit)->values(),
-                'tasks'    => $this->searchTasks($term, $projects, $limit),
+            $accessibleProjectIds = $this->accessibleProjectIds($request->user());
+            $results = [
+                'projects' => Project::whereIn('id', $accessibleProjectIds)
+                    ->where(fn ($q) => $q->where('name', 'like', "%{$term}%")->orWhere('description', 'like', "%{$term}%"))
+                    ->orderBy('name')->limit($limit)->get(),
+                'tasks'    => $this->searchTasks($term, $accessibleProjectIds, $limit),
                 'people'   => User::active()
                     ->where(fn ($q) => $q->where('name', 'like', "%{$term}%")
                         ->orWhere('email', 'like', "%{$term}%")
@@ -51,32 +52,35 @@ class SearchController extends Controller
         return view('search.index', ['term' => $term] + $results);
     }
 
-    private function accessibleProjects(User $user)
+    /** Returns only the IDs — lean query used for both project and task searches. */
+    private function accessibleProjectIds(User $user)
     {
         return Project::query()
             ->when(! $user->hasRole('admin'), fn ($q) => $q->where(fn ($q) => $q
                 ->where('is_public', true)
                 ->orWhere('owner_id', $user->id)
                 ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))
-            ->orderBy('name')
-            ->get();
+            ->pluck('id');
     }
 
-    private function searchTasks(string $term, $projects, int $limit)
+    private function searchTasks(string $term, $projectIds, int $limit)
     {
-        $ids = $projects->pluck('id');
-
-        // Ticket keys like "MOBILE-12" map to a project prefix + ticket number.
+        // Ticket key shortcut: "MOBILE-12" → match by prefix + number
         if (preg_match('/^([A-Za-z0-9]+)-(\d+)$/', $term, $m)) {
-            $project = $projects->first(fn ($p) => strcasecmp($p->key_prefix, $m[1]) === 0);
+            $project = Project::whereIn('id', $projectIds)
+                ->whereRaw('lower(key_prefix) = ?', [strtolower($m[1])])
+                ->first();
             if ($project) {
-                return Task::with('project')->where('project_id', $project->id)
-                    ->where('ticket_number', (int) $m[2])->limit($limit)->get();
+                return Task::with('project')
+                    ->where('project_id', $project->id)
+                    ->where('ticket_number', (int) $m[2])
+                    ->limit($limit)
+                    ->get();
             }
         }
 
         return Task::with('project')
-            ->whereIn('project_id', $ids)
+            ->whereIn('project_id', $projectIds)
             ->where(fn ($q) => $q->where('title', 'like', "%{$term}%")->orWhere('description', 'like', "%{$term}%"))
             ->orderByRaw("case when status in ('done','cancelled') then 1 else 0 end")
             ->latest('updated_at')

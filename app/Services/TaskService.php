@@ -112,11 +112,12 @@ class TaskService
                 'position'  => $position,
             ]);
 
-            // Re-sequence old column
-            Task::where('column_id', $oldColumnId)
-                ->orderBy('position')
-                ->get()
-                ->each(fn($t, $i) => $t->update(['position' => $i]));
+            // Re-sequence old column with a single CASE WHEN statement
+            $remaining = Task::where('column_id', $oldColumnId)->orderBy('position')->pluck('id');
+            if ($remaining->isNotEmpty()) {
+                $cases = $remaining->map(fn ($id, $i) => "WHEN {$id} THEN {$i}")->implode(' ');
+                DB::statement("UPDATE tasks SET position = CASE id {$cases} END WHERE column_id = {$oldColumnId}");
+            }
 
             $this->activityLogService->log(
                 "moved task \"{$task->title}\" to column \"{$newColumn->name}\"",
@@ -133,17 +134,14 @@ class TaskService
 
     public function assignUsers(Task $task, array $userIds, User $assignedBy): void
     {
-        $pivot = collect($userIds)->mapWithKeys(fn($id) => [$id => ['assigned_by' => $assignedBy->id]])->all();
+        $pivot = collect($userIds)->mapWithKeys(fn ($id) => [$id => ['assigned_by' => $assignedBy->id]])->all();
         $task->assignees()->sync($pivot);
 
-        foreach ($userIds as $userId) {
-            if ($userId !== $assignedBy->id) {
-                $assignee = User::find($userId);
-                if ($assignee) {
-                    $this->notificationService->sendTaskAssigned($task, $assignee, $assignedBy);
-                }
-            }
-        }
+        // Single query for all assignees instead of N User::find() calls
+        User::whereIn('id', $userIds)
+            ->where('id', '!=', $assignedBy->id)
+            ->get()
+            ->each(fn ($assignee) => $this->notificationService->sendTaskAssigned($task, $assignee, $assignedBy));
     }
 
     public function syncLabels(Task $task, array $labelIds): void
