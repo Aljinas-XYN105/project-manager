@@ -10,57 +10,55 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="font-sans antialiased min-h-screen bg-[#0D0F14] text-slate-100 flex">
+<body class="font-sans antialiased min-h-screen flex">
 
 {{-- Left panel: branding (hidden on mobile) --}}
-<div class="hidden lg:flex lg:w-[52%] xl:w-[55%] relative overflow-hidden flex-col justify-between p-12 bg-gradient-to-br from-[#0a0c1a] via-[#120d2e] to-[#0d1022]">
+<div class="hidden lg:flex lg:w-[48%] xl:w-[50%] relative overflow-hidden flex-col p-12"
+     style="background: linear-gradient(135deg, #0b0d1f 0%, #13103a 55%, #0c0f28 100%)">
 
-    {{-- Background decoration --}}
+    {{-- Background blobs --}}
     <div class="absolute inset-0 pointer-events-none select-none">
-        {{-- Primary glow blobs --}}
-        <div class="absolute -top-40 -left-24 w-[500px] h-[500px] bg-violet-700/25 rounded-full blur-3xl"></div>
-        <div class="absolute top-1/3 right-[-100px] w-[400px] h-[400px] bg-indigo-600/20 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-32 left-1/4 w-[420px] h-[420px] bg-purple-800/20 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-56 h-56 bg-violet-500/10 rounded-full blur-2xl"></div>
-        {{-- Subtle grid --}}
-        <svg class="absolute inset-0 w-full h-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
+        <div class="absolute -top-48 -left-32 w-[520px] h-[520px] bg-violet-700/30 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 -right-24 w-[380px] h-[380px] bg-indigo-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 left-1/3 w-[440px] h-[440px] bg-purple-800/25 rounded-full blur-3xl"></div>
+        {{-- Dot grid --}}
+        <svg class="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
-                    <path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" stroke-width="0.8"/>
+                <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+                    <circle cx="1.5" cy="1.5" r="1.5" fill="white"/>
                 </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
+            <rect width="100%" height="100%" fill="url(#dots)" />
         </svg>
-        {{-- Top border glow --}}
-        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent"></div>
+        <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-black/20"></div>
     </div>
 
-    {{-- Logo / wordmark --}}
-    <div class="relative z-10">
-        <div class="inline-block bg-white rounded-[20px] px-7 py-[18px] shadow-2xl shadow-violet-950/60"
-             style="box-shadow: 0 8px 40px rgba(109,40,217,0.35), 0 2px 8px rgba(0,0,0,0.5);">
-            <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen" class="h-16 w-auto">
+    {{-- Logo --}}
+    <div class="relative z-10 mb-16">
+        <div class="inline-flex items-center bg-white rounded-2xl px-5 py-3 shadow-xl"
+             style="box-shadow: 0 4px 32px rgba(109,40,217,0.4), 0 1px 4px rgba(0,0,0,0.4);">
+            <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen" class="h-10 w-auto">
         </div>
     </div>
 
-    {{-- Hero copy --}}
-    <div class="relative z-10 space-y-8">
+    {{-- Hero --}}
+    <div class="relative z-10 flex-1 flex flex-col justify-center space-y-10">
         <div class="space-y-5">
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-violet-500/15 border border-violet-400/25 rounded-full text-violet-300 text-xs font-medium tracking-wide">
-                <span class="w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse"></span>
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-violet-300 border border-violet-500/30 bg-violet-500/10">
+                <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse"></span>
                 Work Smart. Stay in Sync.
-            </div>
-            <h1 class="text-4xl xl:text-[52px] font-bold text-white leading-[1.1] tracking-tight">
+            </span>
+            <h1 class="text-4xl xl:text-5xl font-bold text-white leading-[1.1] tracking-tight">
                 Everything your<br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400">team needs</span>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-300 to-indigo-400">team needs</span>
             </h1>
-            <p class="text-slate-400 text-base leading-relaxed max-w-[340px]">
-                Sprints, tasks, time tracking, daily standups, leave management, and people — all in one place.
+            <p class="text-slate-400 text-base leading-relaxed max-w-xs">
+                Sprints, tasks, time tracking, daily standups, leave management — all in one place.
             </p>
         </div>
 
-        {{-- Feature bullets --}}
-        <div class="grid grid-cols-2 gap-2.5">
+        {{-- Feature grid --}}
+        <div class="grid grid-cols-2 gap-3">
             @foreach([
                 ['bi-kanban', 'Kanban & Sprints'],
                 ['bi-clock-history', 'Time Tracking'],
@@ -69,9 +67,9 @@
                 ['bi-bug', 'Bug Tracker'],
                 ['bi-bar-chart-line', 'Reports'],
             ] as [$icon, $label])
-            <div class="flex items-center gap-2.5 text-slate-300/80 text-sm">
-                <div class="w-8 h-8 bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <i class="bi {{ $icon }} text-violet-400 text-sm"></i>
+            <div class="flex items-center gap-3 text-slate-300 text-sm font-medium">
+                <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <i class="bi {{ $icon }} text-violet-400"></i>
                 </div>
                 {{ $label }}
             </div>
@@ -80,31 +78,33 @@
     </div>
 
     {{-- Footer --}}
-    <div class="relative z-10 text-slate-600 text-xs">
-        &copy; {{ date('Y') }} Workzen. Built for teams.
-    </div>
+    <p class="relative z-10 mt-12 text-slate-600 text-xs">&copy; {{ date('Y') }} Workzen. Built for teams.</p>
 </div>
 
-{{-- Right panel: form --}}
-<div class="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:px-12 bg-[#0D0F14]">
+{{-- Right panel: form (white background) --}}
+<div class="flex-1 flex flex-col bg-white">
 
     {{-- Mobile logo --}}
-    <div class="lg:hidden flex items-center justify-center mb-10">
-        <div class="bg-white rounded-2xl px-4 py-2 shadow-lg">
-            <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen" class="h-8 w-auto">
+    <div class="lg:hidden flex items-center justify-center pt-10 pb-6">
+        <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen" class="h-9 w-auto">
+    </div>
+
+    {{-- Centered form area --}}
+    <div class="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:px-16">
+        <div class="w-full max-w-md">
+            {{ $slot }}
         </div>
     </div>
 
-    <div class="w-full max-w-md">
-        {{ $slot }}
+    {{-- Footer --}}
+    <div class="flex items-center justify-center pb-8">
+        <p class="text-center text-xs text-slate-400">
+            &copy; {{ date('Y') }} Workzen &mdash; Secure connection
+            <span class="inline-flex items-center gap-1 ml-1 text-emerald-500">
+                <i class="bi bi-shield-check"></i>
+            </span>
+        </p>
     </div>
-
-    <p class="mt-8 text-center text-xs text-slate-600">
-        &copy; {{ date('Y') }} Workzen &mdash; Secure connection
-        <span class="inline-flex items-center gap-1 ml-1 text-emerald-600">
-            <i class="bi bi-shield-check"></i>
-        </span>
-    </p>
 </div>
 
 </body>
