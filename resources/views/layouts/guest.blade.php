@@ -98,18 +98,19 @@
     {{-- Mobile: full-page layout --}}
     <div class="lg:hidden flex flex-col min-h-screen">
 
-        {{-- Mobile top bar with logo on purple bg --}}
-        <div class="flex flex-col items-center justify-center pt-12 pb-10 px-6"
-             style="background: linear-gradient(160deg, #1e1b4b 0%, #2d2572 100%);">
-            <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen"
-                 class="h-10 w-auto" style="filter: brightness(0) invert(1);">
-            <p class="mt-3 text-xs font-medium tracking-widest uppercase"
-               style="color: rgba(255,255,255,0.5);">Your team workspace</p>
-        </div>
+        {{-- Centered content --}}
+        <div class="flex-1 flex flex-col items-center justify-center px-6 py-12">
 
-        {{-- Mobile form --}}
-        <div class="flex-1 px-6 py-8">
-            {{ $slot }}
+            {{-- Logo --}}
+            <div class="mb-8 text-center">
+                <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen"
+                     class="h-9 w-auto mx-auto">
+            </div>
+
+            {{-- Form card --}}
+            <div class="w-full" style="max-width: 380px;">
+                {{ $slot }}
+            </div>
         </div>
 
         {{-- Mobile footer --}}
