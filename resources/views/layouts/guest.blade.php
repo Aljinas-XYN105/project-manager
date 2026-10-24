@@ -93,26 +93,47 @@
 {{-- ═══════════════════════════════════════════
      RIGHT PANEL — Form (white)
 ════════════════════════════════════════════ --}}
-<div class="flex-1 flex flex-col bg-white">
+<div class="flex-1 flex flex-col bg-white min-h-screen lg:min-h-0">
 
-    {{-- Mobile logo --}}
-    <div class="lg:hidden flex items-center justify-center pt-10 pb-4">
-        <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen" class="h-9 w-auto">
-    </div>
+    {{-- Mobile: full-page layout --}}
+    <div class="lg:hidden flex flex-col min-h-screen">
 
-    {{-- Form area --}}
-    <div class="flex-1 flex items-center justify-center p-8 lg:p-16">
-        <div class="w-full" style="max-width: 400px;">
+        {{-- Mobile top bar with logo on purple bg --}}
+        <div class="flex flex-col items-center justify-center pt-12 pb-10 px-6"
+             style="background: linear-gradient(160deg, #1e1b4b 0%, #2d2572 100%);">
+            <img src="{{ asset('images/workzen-logo.png') }}" alt="Workzen"
+                 class="h-10 w-auto" style="filter: brightness(0) invert(1);">
+            <p class="mt-3 text-xs font-medium tracking-widest uppercase"
+               style="color: rgba(255,255,255,0.5);">Your team workspace</p>
+        </div>
+
+        {{-- Mobile form --}}
+        <div class="flex-1 px-6 py-8">
             {{ $slot }}
+        </div>
+
+        {{-- Mobile footer --}}
+        <div class="pb-8 text-center">
+            <p class="text-xs text-slate-400">
+                &copy; {{ date('Y') }} Workzen &mdash; Secure connection
+                <i class="bi bi-shield-check ml-1 text-emerald-500"></i>
+            </p>
         </div>
     </div>
 
-    {{-- Footer --}}
-    <div class="pb-8 text-center">
-        <p class="text-xs text-slate-400">
-            &copy; {{ date('Y') }} Workzen &mdash; Secure connection
-            <i class="bi bi-shield-check ml-1 text-emerald-500"></i>
-        </p>
+    {{-- Desktop: centered form --}}
+    <div class="hidden lg:flex flex-1 flex-col">
+        <div class="flex-1 flex items-center justify-center p-16">
+            <div class="w-full" style="max-width: 400px;">
+                {{ $slot }}
+            </div>
+        </div>
+        <div class="pb-8 text-center">
+            <p class="text-xs text-slate-400">
+                &copy; {{ date('Y') }} Workzen &mdash; Secure connection
+                <i class="bi bi-shield-check ml-1 text-emerald-500"></i>
+            </p>
+        </div>
     </div>
 </div>
 
