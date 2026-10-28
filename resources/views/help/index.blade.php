@@ -12,7 +12,7 @@
                 </span>
                 Help & Documentation
             </h1>
-            <p class="text-sm text-slate-500 mt-1">Everything you need to know about ProManage — no onboarding required.</p>
+            <p class="text-sm text-slate-500 mt-1">Everything you need to know about Workzen — no onboarding required.</p>
         </div>
     </div>
 
@@ -71,9 +71,9 @@
             <div x-show="activeSection === 'overview'" x-transition>
                 <div class="card p-6">
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-                        <i class="bi bi-house-fill text-violet-500"></i> ProManage Overview
+                        <i class="bi bi-house-fill text-violet-500"></i> Workzen Overview
                     </h2>
-                    <p class="text-slate-500 text-sm mb-5">ProManage combines project management for development teams with everyday HR: attendance, leave, people and announcements.</p>
+                    <p class="text-slate-500 text-sm mb-5">Workzen combines project management for development teams with everyday HR: attendance, leave, people and announcements.</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                         @foreach([
@@ -140,7 +140,7 @@
                         <i class="bi bi-list-task text-blue-500"></i> Tasks
                     </h2>
                     <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                        Tasks are the unit of work in ProManage. They belong to a project and can be of different types, assigned to team members, and tracked across statuses.
+                        Tasks are the unit of work in Workzen. They belong to a project and can be of different types, assigned to team members, and tracked across statuses.
                     </p>
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
@@ -272,10 +272,13 @@
                     </p>
                     @include('help._section', [
                         'items' => [
-                            ['q' => 'How do I log time?', 'a' => 'Go to Time Tracking → Log Time, or use the timer widget in the header (▶ icon). The timer starts a session; stop it when done and confirm the task it should be logged against.'],
+                            ['q' => 'How do I start a timer?', 'a' => 'Open any task page and click the ⏱ Start Timer button, or click the stopwatch icon on a task card in the Kanban board. There is no separate "Log Time" page — timers are always started from a task. A new timer appears in the ⏱ button in the top navigation bar.'],
+                            ['q' => 'How do I pause, resume or stop a timer?', 'a' => 'Click the ⏱ icon in the top navigation bar to open the active timers dropdown. Each timer shows a Pause ⏸ button (while running) or a Resume ▶ button (while paused), and a Stop ⏹ button. Paused timers freeze at the current elapsed time and do not count further seconds until resumed.'],
+                            ['q' => 'Where do I see all my time entries?', 'a' => 'Go to Time Tracking in the sidebar. Entries are grouped by date and show a live ticking counter for any still-running (green) or paused (amber) entry. Stopped entries (violet) show the final recorded duration.'],
+                            ['q' => 'Can I run more than one timer at once?', 'a' => 'Yes. Each task can have its own timer. All active timers appear in the nav-bar dropdown. Starting a second timer does not stop the first.'],
                             ['q' => 'What is a burn rate?', 'a' => 'Burn rate is the ratio of hours logged to hours estimated for a project. A rate above 100% means the project is consuming more time than planned. Admins see this in the Admin Panel.'],
-                            ['q' => 'Can I edit or delete a time entry?', 'a' => 'Yes — on the Time Tracking page, click a time entry to open it. Admins can edit any entry; members can only edit their own.'],
-                            ['q' => 'Does the daily report auto-log time?', 'a' => 'No — the hours you enter in the daily report Task Breakdown are for record-keeping in the report. To log billable/tracked time, use the Time Tracking feature directly.'],
+                            ['q' => 'Can I edit or delete a time entry?', 'a' => 'On the Time Tracking page, click the trash icon next to any entry you own to delete it. Admins can delete any entry.'],
+                            ['q' => 'Does the daily report auto-log time?', 'a' => 'No — the hours you enter in the daily report Task Breakdown are for record-keeping in the report. To log tracked time, use the timer on a task directly.'],
                         ]
                     ])
                 </div>
@@ -292,7 +295,10 @@
                     </p>
                     @include('help._section', [
                         'items' => [
-                            ['q' => 'How do I create a team?', 'a' => 'Go to Teams in the sidebar → New Team. Give it a name and add members. Teams can be reused across multiple projects.'],
+                            ['q' => 'How do I create a team?', 'a' => 'Go to Teams in the sidebar → New Team. Give it a name and description, then add members. Teams can be reused across multiple projects.'],
+                            ['q' => 'How do I add a member to a team?', 'a' => 'Open the team → click the "Add" button in the Members card (top right of the member list). Select the user from the dropdown and choose their team role (Member, Admin, or Viewer). Only the team owner and members with the Admin role within that team can add or remove members.'],
+                            ['q' => 'What are team roles?', 'a' => 'Member — can see the team and its projects. Admin — can add/remove members and manage the team. Viewer — read-only access. These are separate from the global Workzen roles (admin, manager, member).'],
+                            ['q' => 'How do I remove a member from a team?', 'a' => 'Open the team → find the member in the list → click the × next to their name. The team owner cannot be removed this way; transfer ownership first if needed.'],
                             ['q' => 'What is the difference between a team member and a project member?', 'a' => 'Team members belong to a named group (e.g., "Frontend Team"). Project members are users directly associated with a specific project. A team can be assigned to a project, adding all its members at once.'],
                         ]
                     ])
@@ -363,6 +369,7 @@
                             ['q' => 'How do I set my status?', 'a' => 'Click the status pill in the top bar and choose Available, Busy, In a meeting, Away or Offline. You show as offline after 5 minutes without activity.'],
                             ['q' => 'Where do I see my hours?', 'a' => "My Attendance shows each day's sign-in and sign-out times and your monthly totals."],
                             ['q' => 'What if I forgot to sign in?', 'a' => 'Ask an admin to add or correct the entry from Admin → Team Attendance. Edited entries show who changed them.'],
+                            ['q' => 'Can an admin clock out everyone at once?', 'a' => 'Yes. On the Admin → Team Attendance page, the "Today" section shows a "Clock out all" button when one or more members are still clocked in. Clicking it clocks out every currently clocked-in member in one action. Only admins and users with the attendance.manage permission can see this button.'],
                         ]
                     ])
                 </div>
