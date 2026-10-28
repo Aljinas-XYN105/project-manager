@@ -12,58 +12,55 @@ class UserSeeder extends Seeder
     {
         // Admin
         $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'admin@xynosoft.in'],
             [
-                'name'       => 'Alex Admin',
-                'password'   => Hash::make('password'),
-                'job_title'  => 'Product Manager',
-                'timezone'   => 'America/New_York',
-                'is_active'  => true,
-                'email_verified_at' => now(),
+                'name'               => 'Admin',
+                'password'           => Hash::make('Golden_123'),
+                'job_title'          => 'System Administrator',
+                'department'         => 'Management',
+                'timezone'           => 'Asia/Kolkata',
+                'is_active'          => true,
+                'email_verified_at'  => now(),
             ]
         );
         $admin->assignRole('admin');
 
-        // Managers
-        $managers = [
-            ['name' => 'Maria Chen',   'email' => 'maria@example.com',   'job_title' => 'Engineering Manager'],
-            ['name' => 'James Rivera', 'email' => 'james@example.com',   'job_title' => 'Design Lead'],
-            ['name' => 'Priya Nair',   'email' => 'priya@example.com',   'job_title' => 'QA Manager'],
-        ];
-
-        foreach ($managers as $data) {
-            $u = User::firstOrCreate(
-                ['email' => $data['email']],
-                array_merge($data, [
-                    'password' => Hash::make('password'),
-                    'timezone' => 'America/Chicago',
-                    'is_active' => true,
-                    'email_verified_at' => now(),
-                ])
-            );
-            $u->assignRole('manager');
-        }
+        // Manager
+        $manager = User::firstOrCreate(
+            ['email' => 'aljinas@xynosoft.in'],
+            [
+                'name'               => 'Aljinas',
+                'password'           => Hash::make('Golden_123'),
+                'job_title'          => 'Project Manager',
+                'department'         => 'Engineering',
+                'timezone'           => 'Asia/Kolkata',
+                'is_active'          => true,
+                'email_verified_at'  => now(),
+                'manager_id'         => null,
+            ]
+        );
+        $manager->assignRole('manager');
 
         // Members
         $members = [
-            ['name' => 'Sam Torres',    'email' => 'sam@example.com',    'job_title' => 'Frontend Developer'],
-            ['name' => 'Lily Zhang',    'email' => 'lily@example.com',   'job_title' => 'Backend Developer'],
-            ['name' => 'Carlos Gomez',  'email' => 'carlos@example.com', 'job_title' => 'Full-Stack Developer'],
-            ['name' => 'Aisha Patel',   'email' => 'aisha@example.com',  'job_title' => 'UI Designer'],
-            ['name' => 'Tom Wilson',    'email' => 'tom@example.com',    'job_title' => 'DevOps Engineer'],
-            ['name' => 'Nadia Kowalski','email' => 'nadia@example.com',  'job_title' => 'Frontend Developer'],
-            ['name' => 'Omar Hassan',   'email' => 'omar@example.com',   'job_title' => 'Mobile Developer'],
-            ['name' => 'Zoe Bennett',   'email' => 'zoe@example.com',    'job_title' => 'UX Researcher'],
+            ['name' => 'Sunitha',   'email' => 'sunitha@xynosoft.in',   'job_title' => 'Frontend Developer',   'department' => 'Engineering'],
+            ['name' => 'Pranathi',  'email' => 'pranathi@xynosoft.in',  'job_title' => 'Backend Developer',    'department' => 'Engineering'],
+            ['name' => 'Sajin',     'email' => 'sajin@xynosoft.in',     'job_title' => 'Full-Stack Developer', 'department' => 'Engineering'],
+            ['name' => 'Lidiya',    'email' => 'lidiya@xynosoft.in',    'job_title' => 'UI/UX Designer',       'department' => 'Design'],
+            ['name' => 'Jinu',      'email' => 'jinu@xynosoft.in',      'job_title' => 'Mobile Developer',     'department' => 'Engineering'],
+            ['name' => 'Suhana',    'email' => 'suhana@xynosoft.in',    'job_title' => 'QA Engineer',          'department' => 'Quality'],
+            ['name' => 'Annmaria',  'email' => 'annmaria@xynosoft.in',  'job_title' => 'DevOps Engineer',      'department' => 'Engineering'],
         ];
 
         foreach ($members as $data) {
             $u = User::firstOrCreate(
                 ['email' => $data['email']],
                 array_merge($data, [
-                    'password' => Hash::make('password'),
-                    'timezone' => 'America/Los_Angeles',
-                    'is_active' => true,
+                    'password'          => Hash::make('112233'),
+                    'timezone'          => 'Asia/Kolkata',
+                    'is_active'         => true,
                     'email_verified_at' => now(),
+                    'manager_id'        => $manager->id,
                 ])
             );
             $u->assignRole('member');

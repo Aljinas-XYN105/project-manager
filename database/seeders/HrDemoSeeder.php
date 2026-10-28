@@ -12,32 +12,27 @@ class HrDemoSeeder extends Seeder
     {
         // email => [department, manager email, employee code, joining date, date of birth]
         $profiles = [
-            'admin@example.com' => ['Management',  null,                 'EMP-001', '2021-03-01', '1988-05-14'],
-            'maria@example.com' => ['Engineering', 'admin@example.com',  'EMP-002', '2021-06-14', '1990-02-20'],
-            'james@example.com' => ['Design',      'admin@example.com',  'EMP-003', '2022-01-10', null],
-            'priya@example.com' => ['Quality',     'admin@example.com',  'EMP-004', '2022-04-04', '1991-11-30'],
-            'sam@example.com'   => ['Engineering', 'maria@example.com',  'EMP-005', '2023-02-01', '1996-07-08'],
-            'lily@example.com'  => ['Engineering', 'maria@example.com',  'EMP-006', '2023-05-15', '1995-01-22'],
-            'carlos@example.com'=> ['Engineering', 'maria@example.com',  'EMP-007', '2022-10-24', '1993-10-22'],
-            'aisha@example.com' => ['Design',      'james@example.com',  'EMP-008', '2023-08-21', '1997-12-12'],
-            'tom@example.com'   => ['Engineering', 'maria@example.com',  'EMP-009', '2022-11-07', '1989-04-17'],
-            'nadia@example.com' => ['Engineering', 'maria@example.com',  'EMP-010', '2024-01-08', '1998-06-25'],
-            'omar@example.com'  => ['Engineering', 'maria@example.com',  'EMP-011', '2024-03-18', '1994-10-05'],
-            'zoe@example.com'   => ['Design',      'james@example.com',  'EMP-012', '2024-06-03', '1996-03-29'],
+            'admin@xynosoft.in'    => ['Management',  null,                    'EMP-001', '2021-03-01', '1988-05-14'],
+            'aljinas@xynosoft.in'  => ['Engineering', 'admin@xynosoft.in',     'EMP-002', '2022-01-10', '1995-09-15'],
+            'sunitha@xynosoft.in'  => ['Engineering', 'aljinas@xynosoft.in',   'EMP-003', '2022-06-01', '1997-03-22'],
+            'pranathi@xynosoft.in' => ['Engineering', 'aljinas@xynosoft.in',   'EMP-004', '2023-01-16', '1998-07-08'],
+            'sajin@xynosoft.in'    => ['Engineering', 'aljinas@xynosoft.in',   'EMP-005', '2023-04-03', '1996-11-30'],
+            'lidiya@xynosoft.in'   => ['Design',      'aljinas@xynosoft.in',   'EMP-006', '2023-08-21', '1997-12-12'],
+            'jinu@xynosoft.in'     => ['Engineering', 'aljinas@xynosoft.in',   'EMP-007', '2024-02-05', '1999-04-17'],
+            'suhana@xynosoft.in'   => ['Quality',     'aljinas@xynosoft.in',   'EMP-008', '2024-05-13', '1998-06-25'],
+            'annmaria@xynosoft.in' => ['Engineering', 'aljinas@xynosoft.in',   'EMP-009', '2024-09-01', '1997-10-05'],
         ];
 
         foreach ($profiles as $email => [$dept, $managerEmail, $code, $joined, $dob]) {
             $user = User::where('email', $email)->first();
-            if (! $user) {
-                continue;
-            }
+            if (! $user) continue;
 
             $fill = array_filter([
-                'department'    => $user->department ? null : $dept,
-                'manager_id'    => $user->manager_id || ! $managerEmail ? null : User::where('email', $managerEmail)->value('id'),
+                'department'    => $user->department  ? null : $dept,
+                'manager_id'    => ($user->manager_id || ! $managerEmail) ? null : User::where('email', $managerEmail)->value('id'),
                 'employee_code' => $user->employee_code ? null : $code,
-                'joined_on'     => $user->joined_on ? null : $joined,
-                'date_of_birth' => $user->date_of_birth || ! $dob ? null : $dob,
+                'joined_on'     => $user->joined_on   ? null : $joined,
+                'date_of_birth' => ($user->date_of_birth || ! $dob) ? null : $dob,
             ]);
 
             if ($fill) {
@@ -45,13 +40,21 @@ class HrDemoSeeder extends Seeder
             }
         }
 
-        // Sample US public holidays; admins can edit these under Admin → Leave & Holidays.
+        // Indian & general public holidays
         $holidays = [
-            '2026-11-26' => 'Thanksgiving Day', '2026-11-27' => 'Day after Thanksgiving',
-            '2026-12-25' => 'Christmas Day',    '2027-01-01' => "New Year's Day",
-            '2027-01-18' => 'Martin Luther King Jr. Day', '2027-05-31' => 'Memorial Day',
-            '2027-07-05' => 'Independence Day (observed)', '2027-09-06' => 'Labor Day',
+            '2026-11-04' => 'Diwali',
+            '2026-12-25' => 'Christmas Day',
+            '2027-01-01' => "New Year's Day",
+            '2027-01-14' => 'Makar Sankranti / Pongal',
+            '2027-01-26' => 'Republic Day',
+            '2027-03-17' => 'Holi',
+            '2027-04-02' => 'Good Friday',
+            '2027-05-01' => 'Labour Day',
+            '2027-08-15' => 'Independence Day',
+            '2027-10-02' => 'Gandhi Jayanti',
+            '2027-10-20' => 'Dussehra',
         ];
+
         foreach ($holidays as $date => $name) {
             Holiday::firstOrCreate(['date' => $date], ['name' => $name]);
         }

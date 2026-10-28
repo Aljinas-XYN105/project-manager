@@ -10,39 +10,35 @@ class TeamSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin  = User::where('email', 'admin@example.com')->first();
-        $maria  = User::where('email', 'maria@example.com')->first();
-        $james  = User::where('email', 'james@example.com')->first();
+        $manager = User::where('email', 'aljinas@xynosoft.in')->firstOrFail();
 
-        // Engineering team
-        $eng = Team::firstOrCreate(
-            ['slug' => 'engineering'],
-            ['name' => 'Engineering', 'owner_id' => $maria->id]
-        );
-
-        $engMembers = User::whereIn('email', [
-            'maria@example.com', 'sam@example.com', 'lily@example.com',
-            'carlos@example.com', 'tom@example.com', 'omar@example.com',
+        $devMembers = User::whereIn('email', [
+            'sunitha@xynosoft.in', 'pranathi@xynosoft.in', 'sajin@xynosoft.in',
+            'jinu@xynosoft.in', 'annmaria@xynosoft.in',
         ])->get();
 
-        foreach ($engMembers as $member) {
-            $role = $member->email === 'maria@example.com' ? 'owner' : 'member';
-            $eng->users()->syncWithoutDetaching([$member->id => ['role' => $role]]);
+        $qaDesignMembers = User::whereIn('email', [
+            'lidiya@xynosoft.in', 'suhana@xynosoft.in',
+        ])->get();
+
+        // Development team
+        $dev = Team::firstOrCreate(
+            ['slug' => 'development'],
+            ['name' => 'Development', 'owner_id' => $manager->id]
+        );
+        $dev->users()->syncWithoutDetaching([$manager->id => ['role' => 'owner']]);
+        foreach ($devMembers as $m) {
+            $dev->users()->syncWithoutDetaching([$m->id => ['role' => 'member']]);
         }
 
-        // Design team
-        $design = Team::firstOrCreate(
-            ['slug' => 'design'],
-            ['name' => 'Design', 'owner_id' => $james->id]
+        // Design & QA team
+        $qa = Team::firstOrCreate(
+            ['slug' => 'design-qa'],
+            ['name' => 'Design & QA', 'owner_id' => $manager->id]
         );
-
-        $designMembers = User::whereIn('email', [
-            'james@example.com', 'aisha@example.com', 'nadia@example.com', 'zoe@example.com',
-        ])->get();
-
-        foreach ($designMembers as $member) {
-            $role = $member->email === 'james@example.com' ? 'owner' : 'member';
-            $design->users()->syncWithoutDetaching([$member->id => ['role' => $role]]);
+        $qa->users()->syncWithoutDetaching([$manager->id => ['role' => 'owner']]);
+        foreach ($qaDesignMembers as $m) {
+            $qa->users()->syncWithoutDetaching([$m->id => ['role' => 'member']]);
         }
     }
 }
