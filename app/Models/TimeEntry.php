@@ -96,8 +96,15 @@ class TimeEntry extends Model
         if ($this->status === 'stopped') {
             return $this->duration_seconds ?? 0;
         }
-        $base = $this->started_at->diffInSeconds(now());
-        return max(0, $base - ($this->paused_seconds ?? 0));
+        $base         = $this->started_at->diffInSeconds(now());
+        $pausedSeconds = $this->paused_seconds ?? 0;
+
+        // If currently paused, freeze elapsed at the moment pause began
+        if ($this->status === 'paused' && $this->paused_at) {
+            $pausedSeconds += $this->paused_at->diffInSeconds(now());
+        }
+
+        return max(0, $base - $pausedSeconds);
     }
 
     public function getDurationFormattedAttribute(): string

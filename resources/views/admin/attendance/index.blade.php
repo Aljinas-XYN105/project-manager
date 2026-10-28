@@ -49,7 +49,19 @@
 <div class="card overflow-hidden mb-6">
     <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <h2 class="font-semibold text-slate-900 dark:text-white">Today</h2>
-        <span class="text-xs text-slate-400">Shown as offline after 5 minutes without activity</span>
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400">Shown as offline after 5 minutes without activity</span>
+            @php $clockedInCount = $board->where('clocked_in', true)->count(); @endphp
+            @if($clockedInCount)
+            <form method="POST" action="{{ route('admin.attendance.clock-out-all') }}"
+                  onsubmit="return confirm('Clock out all {{ $clockedInCount }} clocked-in member(s)?')">
+                @csrf
+                <button type="submit" class="btn-secondary btn-sm text-red-600 border-red-200 hover:bg-red-50">
+                    <i class="bi bi-box-arrow-right"></i> Clock out all
+                </button>
+            </form>
+            @endif
+        </div>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 divide-y sm:divide-y-0 divide-slate-50 dark:divide-slate-800">
         @foreach($board as $row)

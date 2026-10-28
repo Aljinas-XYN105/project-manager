@@ -45,8 +45,42 @@
     </div>
     <div class="card overflow-hidden divide-y divide-slate-50 dark:divide-slate-700">
         @foreach($entries as $entry)
-        <div class="flex items-center gap-4 px-4 py-3" x-data="{editing: false}">
-            <div class="w-2 h-8 rounded-full bg-violet-200 dark:bg-violet-800 flex-shrink-0"></div>
+        @php
+            $isLive = in_array($entry->status, ['running', 'paused']);
+        @endphp
+        <div class="flex items-center gap-4 px-4 py-3"
+             @if($isLive)
+             x-data="{
+                 elapsed: {{ $entry->elapsed_seconds }},
+                 status: '{{ $entry->status }}',
+                 startedAt: {{ $entry->started_at->getTimestamp() }},
+                 pausedSeconds: {{ $entry->paused_seconds ?? 0 }},
+                 _tick: null,
+                 get display() {
+                     const s = Math.max(0, this.elapsed);
+                     return [Math.floor(s/3600), Math.floor((s%3600)/60), s%60].map(n=>String(n).padStart(2,'0')).join(':');
+                 },
+                 init() {
+                     if (this.status === 'running') {
+                         this._tick = setInterval(() => {
+                             this.elapsed = Math.max(0, Math.floor(Date.now()/1000) - this.startedAt - this.pausedSeconds);
+                         }, 1000);
+                     }
+                 },
+                 destroy() { if (this._tick) clearInterval(this._tick); }
+             }"
+             x-init="init()"
+             @else
+             x-data="{}"
+             @endif
+             >
+            <div class="w-2 h-8 rounded-full flex-shrink-0"
+                 @if($isLive)
+                 :class="status === 'running' ? 'bg-emerald-400 dark:bg-emerald-600' : 'bg-amber-300 dark:bg-amber-600'"
+                 @else
+                 class="bg-violet-200 dark:bg-violet-800"
+                 @endif
+                 ></div>
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $entry->task->title }}</p>
                 <p class="text-xs text-slate-400 truncate">{{ $entry->project->name }}</p>
@@ -54,11 +88,20 @@
             @if($entry->description)
             <p class="text-xs text-slate-400 truncate max-w-xs hidden md:block">{{ $entry->description }}</p>
             @endif
-            <span class="text-sm font-mono font-medium text-slate-900 dark:text-white flex-shrink-0">
-                {{ $entry->elapsed_formatted }}
-            </span>
+            <span class="text-sm font-mono font-medium flex-shrink-0"
+                  @if($isLive)
+                  :class="status === 'running' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500 dark:text-amber-400'"
+                  x-text="display"
+                  @else
+                  class="text-slate-900 dark:text-white"
+                  @endif
+                  >@if(!$isLive){{ $entry->elapsed_formatted }}@endif</span>
             <span class="text-xs text-slate-400 flex-shrink-0">
-                {{ $entry->started_at->format('g:i A') }} – {{ $entry->stopped_at?->format('g:i A') ?? 'running' }}
+                {{ $entry->started_at->format('g:i A') }} –
+                @if($entry->stopped_at) {{ $entry->stopped_at->format('g:i A') }}
+                @elseif($isLive) <span @if($entry->status === 'running') class="text-emerald-600 dark:text-emerald-400 font-medium" @else class="text-amber-500 dark:text-amber-400 font-medium" @endif>{{ $entry->status }}</span>
+                @else running
+                @endif
             </span>
             @can('delete', $entry)
             <button onclick="if(confirm('Delete this entry?')) { axios.delete('/time-entries/{{ $entry->id }}').then(()=>location.reload()); }"

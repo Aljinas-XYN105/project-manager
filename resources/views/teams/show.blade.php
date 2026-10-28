@@ -53,4 +53,45 @@
         @endif
     </div>
 </div>
+@can('manageMember', $team)
+<div x-data="{ open: false }" x-on:open-add-member.window="open = true" x-show="open" x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div @click.outside="open = false" class="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="font-semibold text-slate-900 dark:text-white">Add Member</h3>
+            <button @click="open = false" class="text-slate-400 hover:text-slate-600"><i class="bi bi-x-lg"></i></button>
+        </div>
+        @if($availableUsers->isEmpty())
+            <p class="text-sm text-slate-500">All users are already in this team.</p>
+        @else
+        <form method="POST" action="{{ route('teams.members.add', $team) }}">
+            @csrf
+            <div class="space-y-4">
+                <div>
+                    <label class="form-label">Member</label>
+                    <select name="user_id" class="form-input" required>
+                        <option value="">Select a user…</option>
+                        @foreach($availableUsers as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Role</label>
+                    <select name="role" class="form-input" required>
+                        <option value="member">Member</option>
+                        <option value="admin">Admin</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 pt-1">
+                    <button type="button" @click="open = false" class="btn-secondary btn-sm">Cancel</button>
+                    <button type="submit" class="btn-primary btn-sm">Add Member</button>
+                </div>
+            </div>
+        </form>
+        @endif
+    </div>
+</div>
+@endcan
 @endsection

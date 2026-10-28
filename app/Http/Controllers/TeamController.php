@@ -34,7 +34,9 @@ class TeamController extends Controller
     {
         $this->authorize('view', $team);
         $team->load(['owner', 'teamMembers.user', 'projects']);
-        return view('teams.show', compact('team'));
+        $memberIds = $team->teamMembers->pluck('user_id');
+        $availableUsers = User::whereNotIn('id', $memberIds)->orderBy('name')->get();
+        return view('teams.show', compact('team', 'availableUsers'));
     }
 
     public function edit(Team $team)

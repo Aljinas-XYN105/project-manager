@@ -72,6 +72,20 @@ class AttendanceController extends Controller
         return back()->with('success', 'Attendance entry deleted.');
     }
 
+    public function clockOutAll(Request $request)
+    {
+        $open = Attendance::open()->with('user')->get();
+        $count = 0;
+
+        foreach ($open as $attendance) {
+            $attendance->update(['clock_out_at' => now(), 'clock_out_ip' => $request->ip(), 'note' => trim(($attendance->note ?? '').' (bulk clock-out by admin)')]);
+            $attendance->user?->forceFill(['availability' => 'offline'])->saveQuietly();
+            $count++;
+        }
+
+        return back()->with('success', $count > 0 ? "Clocked out {$count} member(s)." : 'No members were clocked in.');
+    }
+
     private function validated(Request $request): array
     {
         $v = $request->validate([

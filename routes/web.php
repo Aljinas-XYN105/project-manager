@@ -190,6 +190,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('role_or_permission:admin|attendance.view|attendance.manage')->name('attendance.index');
         Route::middleware('role_or_permission:admin|attendance.manage')->group(function () {
             Route::post('attendance', [AdminAttendanceController::class, 'store'])->name('attendance.store');
+            Route::post('attendance/clock-out-all', [AdminAttendanceController::class, 'clockOutAll'])->name('attendance.clock-out-all');
             Route::put('attendance/{attendance}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
             Route::delete('attendance/{attendance}', [AdminAttendanceController::class, 'destroy'])->name('attendance.destroy');
         });
