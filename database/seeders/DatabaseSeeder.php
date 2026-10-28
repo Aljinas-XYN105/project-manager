@@ -12,10 +12,6 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             UserSeeder::class,
             TeamSeeder::class,
-            ProjectSeeder::class,
-            TaskSeeder::class,
-            TimeEntrySeeder::class,
-            CommentSeeder::class,
             HrDemoSeeder::class,
         ]);
     }
