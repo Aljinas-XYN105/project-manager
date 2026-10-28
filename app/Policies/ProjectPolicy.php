@@ -25,7 +25,7 @@ class ProjectPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole(['admin', 'manager']);
+        return true;
     }
 
     public function update(User $user, Project $project): bool
