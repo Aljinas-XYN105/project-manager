@@ -18,7 +18,7 @@ class TeamSeeder extends Seeder
         ])->get();
 
         $qaDesignMembers = User::whereIn('email', [
-            'lidiya@xynosoft.in', 'suhana@xynosoft.in',
+            'lidiya@xynosoft.in', 'suhana@xynosoft.in', 'aishwarya@xynosoft.in',
         ])->get();
 
         // Development team

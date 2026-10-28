@@ -20,7 +20,8 @@ class HrDemoSeeder extends Seeder
             'lidiya@xynosoft.in'   => ['Design',      'aljinas@xynosoft.in',   'EMP-006', '2023-08-21', '1997-12-12'],
             'jinu@xynosoft.in'     => ['Engineering', 'aljinas@xynosoft.in',   'EMP-007', '2024-02-05', '1999-04-17'],
             'suhana@xynosoft.in'   => ['Quality',     'aljinas@xynosoft.in',   'EMP-008', '2024-05-13', '1998-06-25'],
-            'annmaria@xynosoft.in' => ['Engineering', 'aljinas@xynosoft.in',   'EMP-009', '2024-09-01', '1997-10-05'],
+            'annmaria@xynosoft.in'  => ['Engineering', 'aljinas@xynosoft.in',   'EMP-009', '2024-09-01', '1997-10-05'],
+            'aishwarya@xynosoft.in' => ['Design',      'aljinas@xynosoft.in',   'EMP-010', '2025-01-06', '1998-02-19'],
         ];
 
         foreach ($profiles as $email => [$dept, $managerEmail, $code, $joined, $dob]) {

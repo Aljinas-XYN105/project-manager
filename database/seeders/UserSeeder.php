@@ -43,13 +43,14 @@ class UserSeeder extends Seeder
 
         // Members
         $members = [
-            ['name' => 'Sunitha',   'email' => 'sunitha@xynosoft.in',   'job_title' => 'Frontend Developer',   'department' => 'Engineering'],
-            ['name' => 'Pranathi',  'email' => 'pranathi@xynosoft.in',  'job_title' => 'Backend Developer',    'department' => 'Engineering'],
-            ['name' => 'Sajin',     'email' => 'sajin@xynosoft.in',     'job_title' => 'Full-Stack Developer', 'department' => 'Engineering'],
-            ['name' => 'Lidiya',    'email' => 'lidiya@xynosoft.in',    'job_title' => 'UI/UX Designer',       'department' => 'Design'],
-            ['name' => 'Jinu',      'email' => 'jinu@xynosoft.in',      'job_title' => 'Mobile Developer',     'department' => 'Engineering'],
-            ['name' => 'Suhana',    'email' => 'suhana@xynosoft.in',    'job_title' => 'QA Engineer',          'department' => 'Quality'],
-            ['name' => 'Annmaria',  'email' => 'annmaria@xynosoft.in',  'job_title' => 'DevOps Engineer',      'department' => 'Engineering'],
+            ['name' => 'Sunitha',   'email' => 'sunitha@xynosoft.in',   'job_title' => 'Full-Stack Developer',   'department' => 'Engineering'],
+            ['name' => 'Pranathi',  'email' => 'pranathi@xynosoft.in',  'job_title' => 'Full-Stack Developer',    'department' => 'Engineering'],
+            ['name' => 'Sajin',     'email' => 'sajin@xynosoft.in',     'job_title' => 'Mobile Developer', 'department' => 'Engineering'],
+            ['name' => 'Lidiya',    'email' => 'lidiya@xynosoft.in',    'job_title' => 'Backend Developer',       'department' => 'Engineering'],
+            ['name' => 'Jinu',      'email' => 'jinu@xynosoft.in',      'job_title' => 'QA Engineer',     'department' => 'Quality'],
+            ['name' => 'Suhana',    'email' => 'suhana@xynosoft.in',    'job_title' => 'Frontend Developer',          'department' => 'Engineering'],
+            ['name' => 'Annmaria',  'email' => 'annmaria@xynosoft.in',  'job_title' => 'Frontend Developer',      'department' => 'Engineering'],
+            ['name' => 'Aishwarya', 'email' => 'aishwarya@xynosoft.in', 'job_title' => 'UI/UX Designer',       'department' => 'Design'],
         ];
 
         foreach ($members as $data) {
