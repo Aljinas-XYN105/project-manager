@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Models\Project;
-use App\Models\Team;
 use App\Models\User;
 use App\Services\ProjectService;
 use Illuminate\Http\Request;
@@ -17,21 +16,16 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $projects = $this->projectService->getProjectsForUser($request->user(), $request->only([
-            'status', 'priority', 'search', 'team_id',
+            'status', 'priority', 'search',
         ]));
 
-        $user  = $request->user();
-        $teams = $user->hasRole('admin') ? Team::orderBy('name')->get() : $user->teams;
-
-        return view('projects.index', compact('projects', 'teams'));
+        return view('projects.index', compact('projects'));
     }
 
     public function create()
     {
         $this->authorize('create', Project::class);
-        $user  = auth()->user();
-        $teams = $user->hasRole('admin') ? Team::orderBy('name')->get() : $user->teams;
-        return view('projects.create', compact('teams'));
+        return view('projects.create');
     }
 
     public function store(StoreProjectRequest $request)
@@ -46,7 +40,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['columns.tasks.assignees', 'members', 'owner', 'team', 'labels']);
+        $project->load(['columns.tasks.assignees', 'members', 'owner', 'labels']);
         $stats = $this->projectService->getProjectStats($project);
 
         return view('projects.show', compact('project', 'stats'));
@@ -55,9 +49,7 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
-        $user  = auth()->user();
-        $teams = $user->hasRole('admin') ? Team::orderBy('name')->get() : $user->teams;
-        return view('projects.edit', compact('project', 'teams'));
+        return view('projects.edit', compact('project'));
     }
 
     public function update(UpdateProjectRequest $request, Project $project)

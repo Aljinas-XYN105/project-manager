@@ -28,15 +28,6 @@
                               placeholder="Brief description of the project...">{{ old('description') }}</textarea>
                 </div>
                 <div>
-                    <label class="form-label">Team</label>
-                    <select name="team_id" class="form-select">
-                        <option value="">No team</option>
-                        @foreach($teams as $team)
-                        <option value="{{ $team->id }}" {{ old('team_id') == $team->id ? 'selected' : '' }}>{{ $team->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
                         @foreach(['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold'] as $val => $label)

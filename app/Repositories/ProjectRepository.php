@@ -76,8 +76,5 @@ class ProjectRepository implements ProjectRepositoryInterface
         if (!empty($filters['search'])) {
             $query->search($filters['search']);
         }
-        if (!empty($filters['team_id'])) {
-            $query->where('team_id', $filters['team_id']);
-        }
     }
 }

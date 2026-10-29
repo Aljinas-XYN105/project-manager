@@ -34,16 +34,8 @@
             <option value="{{ $p }}" {{ request('priority') === $p ? 'selected' : '' }}>{{ ucfirst($p) }}</option>
             @endforeach
         </select>
-        @if($teams->count() > 1)
-        <select name="team_id" class="form-select w-auto text-sm">
-            <option value="">All Teams</option>
-            @foreach($teams as $team)
-            <option value="{{ $team->id }}" {{ request('team_id') == $team->id ? 'selected' : '' }}>{{ $team->name }}</option>
-            @endforeach
-        </select>
-        @endif
         <button type="submit" class="btn-primary btn-sm">Filter</button>
-        @if(request()->anyFilled(['search','status','priority','team_id']))
+        @if(request()->anyFilled(['search','status','priority']))
         <a href="{{ route('projects.index') }}" class="btn-ghost btn-sm">Clear</a>
         @endif
     </form>
@@ -80,7 +72,7 @@
                        class="font-semibold text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 text-sm truncate block">
                         {{ $project->name }}
                     </a>
-                    <p class="text-xs text-slate-400 mt-0.5">{{ $project->team?->name ?? 'No team' }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ $project->owner->name }}</p>
                 </div>
             </div>
             <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-medium flex-shrink-0 {{ $statusColors[$project->status] ?? $statusColors['planning'] }}">
@@ -178,20 +170,20 @@
 <div class="empty-state">
     <i class="bi bi-folder-plus text-4xl text-slate-300 dark:text-slate-600 block mb-4"></i>
     <p class="font-semibold text-slate-600 dark:text-slate-400 text-lg">
-        @if(request()->anyFilled(['search','status','priority','team_id']))
+        @if(request()->anyFilled(['search','status','priority']))
             No projects match your filters
         @else
             No projects yet
         @endif
     </p>
     <p class="text-sm text-slate-400 mt-1">
-        @if(request()->anyFilled(['search','status','priority','team_id']))
+        @if(request()->anyFilled(['search','status','priority']))
             Try adjusting your search criteria
         @else
             Create your first project to start tracking work
         @endif
     </p>
-    @if(!request()->anyFilled(['search','status','priority','team_id']))
+    @if(!request()->anyFilled(['search','status','priority']))
     <a href="{{ route('projects.create') }}" class="btn-primary mt-4">
         <i class="bi bi-plus-lg"></i> Create Project
     </a>
