@@ -11,6 +11,15 @@ class UpdateTaskRequest extends FormRequest
         return $this->user()->can('update', $this->route('task'));
     }
 
+    protected function prepareForValidation(): void
+    {
+        // HTML forms omit unchecked checkboxes; ensure the key is always present
+        // so updateTask() can detect "clear all assignees" vs "don't touch assignees"
+        if (!$this->has('assignee_ids')) {
+            $this->merge(['assignee_ids' => []]);
+        }
+    }
+
     public function rules(): array
     {
         return [

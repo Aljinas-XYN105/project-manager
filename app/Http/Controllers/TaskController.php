@@ -65,7 +65,7 @@ class TaskController extends Controller
             ->where('subject_id', $task->id)
             ->with('causer')
             ->latest()
-            ->limit(20)
+            ->limit(50)
             ->get();
 
         return view('tasks.show', compact('task', 'members', 'activityLogs'));
@@ -265,6 +265,35 @@ class TaskController extends Controller
     {
         $column = Column::findOrFail($request->column_id);
         $this->taskService->moveTask($task, $column, $request->position);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function addAssignee(Request $request, Task $task)
+    {
+        $this->authorize('update', $task);
+        $request->validate(['user_id' => 'required|exists:users,id']);
+
+        $user       = \App\Models\User::findOrFail($request->user_id);
+        $currentIds = $task->assignees()->pluck('users.id')->toArray();
+
+        if (!in_array($user->id, $currentIds)) {
+            $this->taskService->assignUsers($task, [...$currentIds, $user->id], $request->user());
+        }
+
+        return response()->json([
+            'id'     => $user->id,
+            'name'   => $user->name,
+            'avatar' => $user->avatar_url,
+        ]);
+    }
+
+    public function removeAssignee(Request $request, Task $task, \App\Models\User $user)
+    {
+        $this->authorize('update', $task);
+
+        $newIds = $task->assignees()->pluck('users.id')->reject(fn ($id) => $id === $user->id)->values()->toArray();
+        $this->taskService->assignUsers($task, $newIds, $request->user());
 
         return response()->json(['success' => true]);
     }

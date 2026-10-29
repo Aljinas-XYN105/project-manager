@@ -60,6 +60,21 @@ class TaskService
     {
         return DB::transaction(function () use ($task, $data) {
             $oldStatus = $task->status;
+            $actor     = auth()->user();
+
+            // Log human-readable field changes
+            foreach ([
+                'title'    => ['title', fn ($v) => "\"{$v}\""],
+                'priority' => ['priority', fn ($v) => $v],
+                'type'     => ['type', fn ($v) => $v],
+                'due_date' => ['due date', fn ($v) => $v ? \Carbon\Carbon::parse($v)->format('M j, Y') : 'none'],
+            ] as $field => [$label, $fmt]) {
+                if (isset($data[$field]) && (string) $data[$field] !== (string) $task->$field) {
+                    $old = $task->$field ? $fmt($task->$field) : 'none';
+                    $new = $data[$field]  ? $fmt($data[$field])  : 'none';
+                    $this->activityLogService->log("changed {$label} from {$old} to {$new}", $task, $actor);
+                }
+            }
 
             if (isset($data['status']) && $data['status'] === 'done' && $oldStatus !== 'done') {
                 $data['completed_at'] = now();
@@ -67,8 +82,9 @@ class TaskService
 
             $updated = $this->taskRepository->update($task, $data);
 
-            if (!empty($data['assignee_ids'])) {
-                $this->assignUsers($updated, $data['assignee_ids'], auth()->user());
+            // array_key_exists so an empty array (all unchecked) also clears assignees
+            if (array_key_exists('assignee_ids', $data)) {
+                $this->assignUsers($updated, (array) ($data['assignee_ids'] ?? []), $actor);
             }
 
             if (!empty($data['label_ids'])) {
@@ -76,11 +92,11 @@ class TaskService
             }
 
             if (isset($data['status']) && $data['status'] !== $oldStatus) {
-                $this->notificationService->sendTaskStatusChanged($updated, $oldStatus, auth()->user());
+                $this->notificationService->sendTaskStatusChanged($updated, $oldStatus, $actor);
                 $this->activityLogService->log(
-                    "changed task status from {$oldStatus} to {$data['status']}",
+                    "changed status from {$oldStatus} to {$data['status']}",
                     $updated,
-                    auth()->user()
+                    $actor
                 );
             }
 
@@ -134,11 +150,25 @@ class TaskService
 
     public function assignUsers(Task $task, array $userIds, User $assignedBy): void
     {
+        $oldIds = $task->assignees()->pluck('users.id')->toArray();
+
         $pivot = collect($userIds)->mapWithKeys(fn ($id) => [$id => ['assigned_by' => $assignedBy->id]])->all();
         $task->assignees()->sync($pivot);
 
-        // Single query for all assignees instead of N User::find() calls
-        User::whereIn('id', $userIds)
+        $added   = array_diff($userIds, $oldIds);
+        $removed = array_diff($oldIds, $userIds);
+
+        if ($added) {
+            $names = User::whereIn('id', $added)->pluck('name')->join(', ');
+            $this->activityLogService->log("assigned {$names}", $task, $assignedBy);
+        }
+        if ($removed) {
+            $names = User::whereIn('id', $removed)->pluck('name')->join(', ');
+            $this->activityLogService->log("unassigned {$names}", $task, $assignedBy);
+        }
+
+        // Notify only newly added assignees
+        User::whereIn('id', $added)
             ->where('id', '!=', $assignedBy->id)
             ->get()
             ->each(fn ($assignee) => $this->notificationService->sendTaskAssigned($task, $assignee, $assignedBy));

@@ -473,23 +473,82 @@
             @endif
         </div>
 
-        {{-- Assignees --}}
-        <div class="card p-4">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2.5">Assignees</label>
-            @if($task->assignees->count())
-            <div class="space-y-2">
-                @foreach($task->assignees as $a)
-                <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-xs font-bold text-violet-600 dark:text-violet-400 flex-shrink-0">
-                        {{ strtoupper(substr($a->name, 0, 1)) }}
+        {{-- Assignees (interactive) --}}
+        <div class="card p-4"
+             x-data="{
+                 assignees: {{ Js::from($task->assignees->map(fn($a) => ['id'=>$a->id,'name'=>$a->name,'avatar'=>$a->avatar_url])) }},
+                 available: {{ Js::from($members->whereNotIn('id', $task->assignees->pluck('id'))->values()->map(fn($m) => ['id'=>$m->id,'name'=>$m->name,'avatar'=>$m->avatar_url])) }},
+                 open: false,
+                 canEdit: {{ auth()->user()->can('update', $task) ? 'true' : 'false' }},
+                 addUrl: '{{ route('tasks.assignees.add', $task) }}',
+                 removeBase: '{{ url('tasks/'.$task->id.'/assignees') }}',
+                 csrfToken: '{{ csrf_token() }}',
+                 async add(user) {
+                     this.open = false;
+                     const r = await fetch(this.addUrl, {
+                         method: 'POST',
+                         headers: {'Content-Type':'application/json','X-CSRF-TOKEN':this.csrfToken},
+                         body: JSON.stringify({user_id: user.id})
+                     });
+                     if (r.ok) {
+                         this.assignees.push(user);
+                         this.available = this.available.filter(u => u.id !== user.id);
+                     }
+                 },
+                 async remove(user) {
+                     const r = await fetch(this.removeBase+'/'+user.id, {
+                         method: 'DELETE',
+                         headers: {'X-CSRF-TOKEN':this.csrfToken}
+                     });
+                     if (r.ok) {
+                         this.assignees = this.assignees.filter(u => u.id !== user.id);
+                         this.available.push(user);
+                         this.available.sort((a,b) => a.name.localeCompare(b.name));
+                     }
+                 }
+             }">
+            <div class="flex items-center justify-between mb-2.5">
+                <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Assignees</label>
+                @can('update', $task)
+                <div class="relative" x-show="available.length > 0 || assignees.length > 0">
+                    <button @click="open = !open"
+                            class="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1">
+                        <i class="bi bi-person-plus text-sm"></i> Add
+                    </button>
+                    <div x-show="open" x-cloak @click.away="open = false"
+                         class="absolute right-0 top-6 z-30 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 max-h-48 overflow-y-auto">
+                        <template x-if="available.length === 0">
+                            <p class="text-xs text-slate-400 text-center py-3">All members assigned</p>
+                        </template>
+                        <template x-for="u in available" :key="u.id">
+                            <button @click="add(u)"
+                                    class="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                <img :src="u.avatar" class="w-6 h-6 rounded-full flex-shrink-0">
+                                <span class="text-sm text-slate-700 dark:text-slate-300 truncate" x-text="u.name"></span>
+                            </button>
+                        </template>
                     </div>
-                    <a href="{{ route('users.show', $a) }}" class="text-sm text-slate-700 dark:text-slate-300 hover:text-violet-600 transition-colors">{{ $a->name }}</a>
                 </div>
-                @endforeach
+                @endcan
             </div>
-            @else
-            <a href="{{ route('tasks.edit', $task) }}" class="text-xs text-slate-400 hover:text-violet-500 italic">No one assigned — click to assign</a>
-            @endif
+            <div class="space-y-2">
+                <template x-if="assignees.length === 0">
+                    <p class="text-xs text-slate-400 italic">No one assigned</p>
+                </template>
+                <template x-for="a in assignees" :key="a.id">
+                    <div class="flex items-center gap-2.5 group">
+                        <img :src="a.avatar" class="w-7 h-7 rounded-full flex-shrink-0">
+                        <span class="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate" x-text="a.name"></span>
+                        @can('update', $task)
+                        <button @click="remove(a)"
+                                class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-rose-500 flex-shrink-0"
+                                title="Remove">
+                            <i class="bi bi-x-circle text-sm"></i>
+                        </button>
+                        @endcan
+                    </div>
+                </template>
+            </div>
         </div>
 
         {{-- Labels --}}
