@@ -60,7 +60,7 @@ class TaskController extends Controller
         $this->authorize('view', $task);
 
         $task        = $this->taskRepository->findById($task->id);
-        $members     = $task->project->members;
+        $members     = \App\Models\User::active()->orderBy('name')->get();
         $activityLogs = ActivityLog::where('subject_type', Task::class)
             ->where('subject_id', $task->id)
             ->with('causer')
@@ -120,7 +120,7 @@ class TaskController extends Controller
         $this->authorize('view', $project);
 
         $column  = $project->columns()->where('is_default', true)->first() ?? $project->columns()->first();
-        $members = $project->members;
+        $members = \App\Models\User::active()->orderBy('name')->get();
         $labels  = $project->labels;
 
         return view('tasks.create', compact('project', 'column', 'members', 'labels'));
@@ -183,7 +183,7 @@ class TaskController extends Controller
         $this->authorize('view', $project);
 
         return response()->json([
-            'members' => $project->members->map(fn($m) => ['id' => $m->id, 'name' => $m->name, 'avatar' => $m->avatar_url]),
+            'members' => \App\Models\User::active()->orderBy('name')->get()->map(fn($m) => ['id' => $m->id, 'name' => $m->name, 'avatar' => $m->avatar_url]),
             'labels'  => $project->labels->map(fn($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color]),
             'columns' => $project->columns()->orderBy('position')->get()->map(fn($c) => ['id' => $c->id, 'name' => $c->name]),
             'sprints' => $project->sprints()->whereIn('status', ['planning', 'active'])->get()->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'status' => $s->status]),
@@ -232,7 +232,7 @@ class TaskController extends Controller
 
         $task    = $this->taskRepository->findById($task->id);
         $columns = $task->project->columns()->orderBy('position')->get();
-        $members = $task->project->members;
+        $members = \App\Models\User::active()->orderBy('name')->get();
         $labels  = $task->project->labels;
         $sprints = $task->project->sprints()->whereIn('status', ['planning', 'active'])->get();
 
