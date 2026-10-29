@@ -22,6 +22,7 @@ class ProjectService
     {
         return DB::transaction(function () use ($data, $owner) {
             $data['owner_id'] = $owner->id;
+            $data['is_public'] = $data['is_public'] ?? true; // default open to all teammates
             $project = $this->projectRepository->create($data);
 
             $this->createDefaultColumns($project);
@@ -104,7 +105,7 @@ class ProjectService
 
     public function getProjectsForUser(User $user, array $filters = []): LengthAwarePaginator
     {
-        return $this->projectRepository->forUser($user->id, $filters);
+        return $this->projectRepository->forUser($user->id, $filters, $user->hasRole('admin'));
     }
 
     public function getProjectStats(Project $project): array

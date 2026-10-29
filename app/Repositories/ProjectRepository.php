@@ -11,7 +11,7 @@ class ProjectRepository implements ProjectRepositoryInterface
 {
     public function findById(int $id): ?Project
     {
-        return Project::with(['owner', 'team', 'members', 'columns'])->find($id);
+        return Project::with(['owner', 'members', 'columns'])->find($id);
     }
 
     public function create(array $data): Project
@@ -30,13 +30,17 @@ class ProjectRepository implements ProjectRepositoryInterface
         return $project->delete();
     }
 
-    public function forUser(int $userId, array $filters = []): LengthAwarePaginator
+    public function forUser(int $userId, array $filters = [], bool $isAdmin = false): LengthAwarePaginator
     {
-        $query = Project::with(['owner', 'members', 'team'])
-            ->where(function ($q) use ($userId) {
+        $query = Project::with(['owner', 'members']);
+
+        if (!$isAdmin) {
+            $query->where(function ($q) use ($userId) {
                 $q->where('owner_id', $userId)
-                  ->orWhereHas('members', fn($m) => $m->where('users.id', $userId));
+                  ->orWhereHas('members', fn($m) => $m->where('users.id', $userId))
+                  ->orWhere('is_public', true);
             });
+        }
 
         $this->applyFilters($query, $filters);
 
@@ -53,14 +57,14 @@ class ProjectRepository implements ProjectRepositoryInterface
     public function withStats(int $projectId): ?Project
     {
         return Project::with([
-            'owner', 'team', 'members', 'columns.tasks.assignees',
+            'owner', 'members', 'columns.tasks.assignees',
             'labels', 'timeEntries',
         ])->find($projectId);
     }
 
     public function all(array $filters = []): LengthAwarePaginator
     {
-        $query = Project::with(['owner', 'team', 'members']);
+        $query = Project::with(['owner', 'members']);
         $this->applyFilters($query, $filters);
         return $query->latest()->paginate($filters['per_page'] ?? 15);
     }
