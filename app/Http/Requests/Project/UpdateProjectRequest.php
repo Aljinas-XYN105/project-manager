@@ -11,6 +11,13 @@ class UpdateProjectRequest extends FormRequest
         return $this->user()->can('update', $this->route('project'));
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (!$this->has('is_public')) {
+            $this->merge(['is_public' => false]);
+        }
+    }
+
     public function rules(): array
     {
         return [

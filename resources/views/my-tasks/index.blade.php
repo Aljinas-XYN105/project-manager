@@ -14,17 +14,28 @@
 @endphp
 <div class="page-header">
     <div>
-        <h1 class="page-title">My Tasks</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Everything assigned to you, across every project.</p>
+        <h1 class="page-title">{{ ($isManager && $scope === 'all') ? 'All Tasks' : 'My Tasks' }}</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            {{ ($isManager && $scope === 'all') ? 'All tasks across every project.' : 'Everything assigned to you, across every project.' }}
+        </p>
     </div>
-    <div class="tab-bar">
-        <a href="{{ route('my-tasks', ['view' => 'open'] + request()->except('view')) }}" class="tab-item {{ $view === 'open' ? 'active' : '' }}">Open <span class="text-slate-400">{{ $counts['open'] }}</span></a>
-        <a href="{{ route('my-tasks', ['view' => 'done'] + request()->except('view')) }}" class="tab-item {{ $view === 'done' ? 'active' : '' }}">Done <span class="text-slate-400">{{ $counts['done'] }}</span></a>
+    <div class="flex items-center gap-3 flex-wrap">
+        @if($isManager)
+        <div class="tab-bar">
+            <a href="{{ route('my-tasks', ['scope' => 'mine', 'view' => $view]) }}" class="tab-item {{ $scope === 'mine' ? 'active' : '' }}">My Tasks <span class="text-slate-400">{{ $counts['open'] }}</span></a>
+            <a href="{{ route('my-tasks', ['scope' => 'all', 'view' => $view]) }}" class="tab-item {{ $scope === 'all' ? 'active' : '' }}">All Tasks <span class="text-slate-400">{{ $counts['all_open'] }}</span></a>
+        </div>
+        @endif
+        <div class="tab-bar">
+            <a href="{{ route('my-tasks', ['view' => 'open', 'scope' => $scope] + request()->except('view')) }}" class="tab-item {{ $view === 'open' ? 'active' : '' }}">Open <span class="text-slate-400">{{ $isManager && $scope === 'all' ? $counts['all_open'] : $counts['open'] }}</span></a>
+            <a href="{{ route('my-tasks', ['view' => 'done', 'scope' => $scope] + request()->except('view')) }}" class="tab-item {{ $view === 'done' ? 'active' : '' }}">Done <span class="text-slate-400">{{ $isManager && $scope === 'all' ? $counts['all_done'] : $counts['done'] }}</span></a>
+        </div>
     </div>
 </div>
 
 <form method="GET" class="flex flex-wrap gap-2 mb-5">
     <input type="hidden" name="view" value="{{ $view }}">
+    <input type="hidden" name="scope" value="{{ $scope }}">
     <select name="project_id" onchange="this.form.submit()" class="form-select text-sm w-auto">
         <option value="">All projects</option>
         @foreach($projects as $p)
@@ -37,8 +48,16 @@
         <option value="{{ $pr }}" @selected(request('priority') === $pr)>{{ ucfirst($pr) }}</option>
         @endforeach
     </select>
-    @if(request()->hasAny(['project_id','priority']))
-    <a href="{{ route('my-tasks', ['view' => $view]) }}" class="btn-ghost btn-sm">Clear</a>
+    @if($isManager)
+    <select name="type" onchange="this.form.submit()" class="form-select text-sm w-auto">
+        <option value="">Any type</option>
+        @foreach(['bug' => 'Bug', 'feature' => 'Feature', 'task' => 'Task', 'improvement' => 'Improvement', 'chore' => 'Chore'] as $tv => $tl)
+        <option value="{{ $tv }}" @selected(request('type') === $tv)>{{ $tl }}</option>
+        @endforeach
+    </select>
+    @endif
+    @if(request()->hasAny(['project_id','priority','type']))
+    <a href="{{ route('my-tasks', ['view' => $view, 'scope' => $scope]) }}" class="btn-ghost btn-sm">Clear</a>
     @endif
 </form>
 
@@ -76,6 +95,17 @@
                     <p class="text-sm text-slate-900 dark:text-white truncate" :class="status === 'done' && 'line-through text-slate-400'">{{ $task->title }}</p>
                     <p class="text-xs text-slate-400 truncate">{{ $task->ticket_key }} · {{ $task->project->name }}</p>
                 </a>
+                @if($isManager && $scope === 'all')
+                <div class="hidden sm:flex items-center -space-x-1.5 flex-shrink-0">
+                    @foreach($task->assignees->take(3) as $a)
+                    <img src="{{ $a->avatar_url }}" alt="{{ $a->name }}" title="{{ $a->name }}"
+                         class="w-5 h-5 rounded-full border border-white dark:border-slate-900 object-cover">
+                    @endforeach
+                    @if($task->assignees->count() > 3)
+                    <span class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 border border-white dark:border-slate-900 flex items-center justify-center text-[9px] text-slate-500">+{{ $task->assignees->count() - 3 }}</span>
+                    @endif
+                </div>
+                @endif
                 <span class="badge-{{ $task->priority }} text-[10px] hidden sm:inline-flex">{{ ucfirst($task->priority) }}</span>
                 @if($task->due_date)
                 <span class="text-xs w-20 text-right flex-shrink-0 {{ $task->is_overdue ? 'text-rose-500 font-medium' : 'text-slate-500' }}">

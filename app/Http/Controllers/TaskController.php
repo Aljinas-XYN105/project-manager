@@ -313,15 +313,18 @@ class TaskController extends Controller
     {
         $user = auth()->user();
 
+        $isPrivileged = $user->hasRole(['admin', 'manager']);
+
         $query = Task::with(['project', 'assignees', 'creator'])
-            ->where('type', 'bug')
-            ->whereHas('project', function ($q) use ($user) {
+            ->where('type', 'bug');
+
+        if (!$isPrivileged) {
+            $query->whereHas('project', function ($q) use ($user) {
                 $q->where('owner_id', $user->id)
-                  ->orWhereHas('members', fn($m) => $m->where('users.id', $user->id));
-                if ($user->hasRole('admin')) {
-                    $q->orWhereNotNull('id');
-                }
+                  ->orWhereHas('members', fn($m) => $m->where('users.id', $user->id))
+                  ->orWhere('is_public', true);
             });
+        }
 
         if ($request->status) {
             $query->where('status', $request->status);
@@ -341,10 +344,15 @@ class TaskController extends Controller
             ->paginate(25);
 
         // Projects for filter
-        $projects = \App\Models\Project::where('owner_id', $user->id)
-            ->orWhereHas('members', fn($m) => $m->where('users.id', $user->id))
-            ->orderBy('name')
-            ->get();
+        $projectsQuery = \App\Models\Project::query();
+        if (!$isPrivileged) {
+            $projectsQuery->where(function ($q) use ($user) {
+                $q->where('owner_id', $user->id)
+                  ->orWhereHas('members', fn($m) => $m->where('users.id', $user->id))
+                  ->orWhere('is_public', true);
+            });
+        }
+        $projects = $projectsQuery->orderBy('name')->get();
 
         return view('bugs.index', compact('bugs', 'projects'));
     }

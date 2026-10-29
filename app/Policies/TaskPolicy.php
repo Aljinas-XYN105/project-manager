@@ -14,7 +14,7 @@ class TaskPolicy
 
     public function view(User $user, Task $task): bool
     {
-        return $user->hasRole('admin')
+        return $user->hasRole(['admin', 'manager'])
             || $task->project->owner_id === $user->id
             || $task->project->members()->where('users.id', $user->id)->exists();
     }
@@ -26,7 +26,7 @@ class TaskPolicy
 
     public function update(User $user, Task $task): bool
     {
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(['admin', 'manager'])) {
             return true;
         }
 
@@ -40,7 +40,7 @@ class TaskPolicy
 
     public function delete(User $user, Task $task): bool
     {
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(['admin', 'manager'])) {
             return true;
         }
 
