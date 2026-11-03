@@ -76,10 +76,11 @@
              id="column-{{ $column->id }}">
             @foreach($column->tasks as $task)
             <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80
-                        shadow-sm cursor-grab active:cursor-grabbing p-3
+                        shadow-sm cursor-pointer p-3
                         hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700/60
                         hover:-translate-y-px transition-all duration-150 group"
                  draggable="true"
+                 @click="$dispatch('open-task-panel', { taskId: {{ $task->id }} })"
                  @dragstart="dragStart({{ $task->id }}); $el.classList.add('opacity-50','rotate-1')"
                  @dragend="$el.classList.remove('opacity-50','rotate-1')">
 
@@ -97,11 +98,9 @@
                     @endforeach
                 </div>
 
-                <a href="{{ route('projects.tasks.show', $task) }}"
-                   class="block font-medium text-sm text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 leading-snug mb-2.5"
-                   @click.stop>
+                <p class="block font-medium text-sm text-slate-900 dark:text-white leading-snug mb-2.5">
                     {{ $task->title }}
-                </a>
+                </p>
 
                 @if($task->subtasks->count())
                 @php $subDone = $task->subtasks->where('status','done')->count(); @endphp

@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('tasks/project-data/{project}', [TaskController::class, 'projectData'])->name('tasks.projectData');
     Route::post('tasks/bulk-update', [TaskController::class, 'bulkUpdate'])->name('tasks.bulk-update');
     Route::post('tasks/quick-store', [TaskController::class, 'quickStore'])->name('tasks.quickStore');
+    Route::get('tasks/{task}/panel-data', [TaskController::class, 'panelData'])->name('tasks.panelData');
     Route::get('tasks/{task}', [TaskController::class, 'show'])->name('projects.tasks.show');
     Route::get('tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
     Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');

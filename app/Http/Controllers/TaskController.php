@@ -204,6 +204,40 @@ class TaskController extends Controller
             ->with('success', 'Task created.');
     }
 
+    public function panelData(Task $task)
+    {
+        $this->authorize('view', $task);
+        $task->load(['project', 'column', 'assignees', 'labels']);
+
+        return response()->json([
+            'task'    => [
+                'id'              => $task->id,
+                'title'           => $task->title,
+                'description'     => $task->description,
+                'type'            => $task->type,
+                'priority'        => $task->priority,
+                'status'          => $task->status,
+                'column_id'       => $task->column_id,
+                'due_date'        => $task->due_date?->format('Y-m-d'),
+                'estimated_hours' => $task->estimated_hours,
+                'ticket_key'      => $task->ticket_key,
+                'show_url'        => route('projects.tasks.show', $task),
+                'edit_url'        => route('tasks.edit', $task),
+                'project_name'    => $task->project->name,
+                'assignee_ids'    => $task->assignees->pluck('id'),
+                'label_ids'       => $task->labels->pluck('id'),
+                'type_icon'       => $task->type_icon,
+                'type_color'      => $task->type_color,
+                'is_overdue'      => $task->is_overdue,
+            ],
+            'columns' => $task->project->columns()->orderBy('position')->get(['id','name','color']),
+            'members' => \App\Models\User::active()->orderBy('name')->get()->map(fn ($u) => [
+                'id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar_url,
+            ]),
+            'labels'  => $task->project->labels()->get(['id','name','color']),
+        ]);
+    }
+
     public function quickStore(Request $request)
     {
         $validated = $request->validate([

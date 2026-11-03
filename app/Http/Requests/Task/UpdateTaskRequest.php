@@ -13,9 +13,11 @@ class UpdateTaskRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // HTML forms omit unchecked checkboxes; ensure the key is always present
-        // so updateTask() can detect "clear all assignees" vs "don't touch assignees"
-        if (!$this->has('assignee_ids')) {
+        // HTML forms omit unchecked checkboxes; inject an empty array so
+        // updateTask() knows the intent is "clear all" not "don't touch".
+        // JSON/API requests (e.g. the quick-edit panel) send only the field
+        // they changed, so we must NOT inject assignee_ids for those.
+        if (!$this->wantsJson() && !$this->has('assignee_ids')) {
             $this->merge(['assignee_ids' => []]);
         }
     }

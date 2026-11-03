@@ -836,6 +836,11 @@
     </template>
 </div>
 
+{{-- Global task quick-edit panel (available on every page) --}}
+@auth
+<x-task-quick-panel />
+@endauth
+
 @stack('scripts')
 </body>
 </html>
