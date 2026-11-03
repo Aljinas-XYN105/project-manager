@@ -144,7 +144,12 @@ class Project extends Model
         if ($total === 0) {
             return 0;
         }
-        $done = $this->tasks()->whereNull('parent_id')->where('status', 'done')->count();
+        // Count tasks in any "done" column (is_done=true) so dragging cards on
+        // the Kanban board always reflects correctly in progress, even if the
+        // status field and column_id ever drift out of sync.
+        $done = $this->tasks()->whereNull('parent_id')
+            ->whereHas('column', fn ($q) => $q->where('is_done', true))
+            ->count();
         return (int) round(($done / $total) * 100);
     }
 

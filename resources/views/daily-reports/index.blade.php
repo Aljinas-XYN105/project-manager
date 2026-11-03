@@ -110,7 +110,11 @@
             </div>
             <div class="flex items-center gap-1.5 flex-shrink-0">
                 <a href="{{ route('daily-reports.show', $report) }}" class="btn-ghost btn-sm">View</a>
+                @if($report->report_date->isToday() || auth()->user()->hasAnyRole(['admin', 'manager']))
                 <a href="{{ route('daily-reports.edit', $report) }}" class="btn-ghost btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>
+                @else
+                <span class="btn-ghost btn-sm text-slate-400 cursor-not-allowed" title="Editing locked after the report day"><i class="bi bi-lock"></i></span>
+                @endif
                 <form method="POST" action="{{ route('daily-reports.destroy', $report) }}">
                     @csrf @method('DELETE')
                     <button type="submit" class="btn-ghost btn-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"

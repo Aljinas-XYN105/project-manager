@@ -105,7 +105,7 @@ class ProjectService
 
     public function getProjectsForUser(User $user, array $filters = []): LengthAwarePaginator
     {
-        return $this->projectRepository->forUser($user->id, $filters, $user->hasRole('admin'));
+        return $this->projectRepository->forUser($user->id, $filters, $user->hasRole(['admin', 'manager']));
     }
 
     public function getProjectStats(Project $project): array
@@ -118,7 +118,7 @@ class ProjectService
                 'todo'              => $tasks->clone()->where('status', 'todo')->count(),
                 'in_progress'       => $tasks->clone()->where('status', 'in_progress')->count(),
                 'in_review'         => $tasks->clone()->where('status', 'in_review')->count(),
-                'done'              => $tasks->clone()->where('status', 'done')->count(),
+                'done'              => $tasks->clone()->whereHas('column', fn ($q) => $q->where('is_done', true))->count(),
                 'overdue'           => $tasks->clone()->overdue()->count(),
                 'progress'          => $project->progress_percentage,
                 'total_hours'       => $project->total_tracked_hours,

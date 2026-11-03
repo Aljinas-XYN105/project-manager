@@ -115,6 +115,7 @@ class DailyReportController extends Controller
         $user = auth()->user();
 
         $validated = $request->validate(['report_date' => 'required|date'] + $this->rules());
+        $this->validateNoDuplicateTasks($validated['tasks'] ?? []);
         $this->authorizeNewTasks($validated['tasks'] ?? [], $user);
 
         DB::transaction(function () use ($validated, $user) {
@@ -144,7 +145,7 @@ class DailyReportController extends Controller
 
     public function edit(DailyReport $dailyReport)
     {
-        $this->authorizeReport($dailyReport);
+        $this->authorizeEdit($dailyReport);
 
         $user = auth()->user();
         $myTasks = Task::with(['project'])
@@ -161,9 +162,10 @@ class DailyReportController extends Controller
 
     public function update(Request $request, DailyReport $dailyReport)
     {
-        $this->authorizeReport($dailyReport);
+        $this->authorizeEdit($dailyReport);
 
         $validated = $request->validate($this->rules());
+        $this->validateNoDuplicateTasks($validated['tasks'] ?? []);
         $this->authorizeNewTasks($validated['tasks'] ?? [], $request->user());
 
         DB::transaction(function () use ($validated, $dailyReport, $request) {
@@ -265,7 +267,7 @@ class DailyReportController extends Controller
     {
         return Project::query()
             ->where('status', '!=', 'archived')
-            ->when(! $user->hasRole('admin'), fn ($q) => $q->where(fn ($q) => $q
+            ->when(! $user->hasRole(['admin', 'manager']), fn ($q) => $q->where(fn ($q) => $q
                 ->where('is_public', true)
                 ->orWhere('owner_id', $user->id)
                 ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))
@@ -278,6 +280,30 @@ class DailyReportController extends Controller
         $user = auth()->user();
         if ($report->user_id !== $user->id && !$user->hasAnyRole(['admin', 'manager'])) {
             abort(403);
+        }
+    }
+
+    private function authorizeEdit(DailyReport $report): void
+    {
+        $this->authorizeReport($report);
+
+        $user = auth()->user();
+        if (!$user->hasAnyRole(['admin', 'manager']) && !$report->report_date->isToday()) {
+            abort(403, 'You can only edit your report on the day it was submitted.');
+        }
+    }
+
+    private function validateNoDuplicateTasks(array $rows): void
+    {
+        $taskIds = collect($rows)
+            ->pluck('task_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id);
+
+        if ($taskIds->count() !== $taskIds->unique()->count()) {
+            throw ValidationException::withMessages([
+                'tasks' => 'The same task cannot be added more than once to a report.',
+            ]);
         }
     }
 }

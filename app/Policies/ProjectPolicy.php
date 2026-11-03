@@ -14,12 +14,16 @@ class ProjectPolicy
 
     public function view(User $user, Project $project): bool
     {
+        // Admins and managers have full visibility across all projects
+        if ($user->hasRole(['admin', 'manager'])) {
+            return true;
+        }
+
         if ($project->is_public) {
             return true;
         }
 
-        return $user->hasRole('admin')
-            || $project->owner_id === $user->id
+        return $project->owner_id === $user->id
             || $project->members()->where('users.id', $user->id)->exists();
     }
 

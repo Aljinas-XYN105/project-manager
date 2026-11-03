@@ -14,11 +14,11 @@
             <p class="text-sm text-slate-500 mt-1">{{ $dailyReport->report_date->format('l, F j, Y') }}</p>
         </div>
         <div class="flex items-center gap-2">
-            @can('update', $dailyReport)
+            @if($dailyReport->report_date->isToday() || auth()->user()->hasAnyRole(['admin', 'manager']))
             <a href="{{ route('daily-reports.edit', $dailyReport) }}" class="btn-secondary btn-sm">
                 <i class="bi bi-pencil"></i> Edit
             </a>
-            @endcan
+            @endif
             <a href="{{ route('daily-reports.index') }}" class="btn-ghost">
                 <i class="bi bi-arrow-left"></i> Back
             </a>

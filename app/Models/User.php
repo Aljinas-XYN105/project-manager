@@ -183,11 +183,14 @@ class User extends Authenticatable
 
     public function getAvatarUrlAttribute(): string
     {
-        if ($this->avatar) {
+        $name = urlencode($this->name);
+        $fallback = "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF&bold=true";
+
+        if ($this->avatar && file_exists(storage_path('app/public/' . $this->avatar))) {
             return asset('storage/' . $this->avatar);
         }
-        $name = urlencode($this->name);
-        return "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF&bold=true";
+
+        return $fallback;
     }
 
     public function getInitialsAttribute(): string

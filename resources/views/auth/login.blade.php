@@ -54,7 +54,7 @@
                 class="w-full pl-9 pr-10 py-2.5 bg-white border border-slate-200 hover:border-slate-300 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/15 rounded-xl text-slate-900 placeholder-slate-400 text-sm outline-none transition @error('password') border-rose-400 @enderror"
             >
             <button type="button" tabindex="-1"
-                onclick="const f=document.getElementById('password');f.type=f.type==='password'?'text':'password';this.querySelector('i').className=f.type==='password'?'bi bi-eye text-sm':'bi bi-eye-slash text-sm'"
+                onclick="const f=this.closest('div.relative').querySelector('input');f.type=f.type==='password'?'text':'password';this.querySelector('i').className=f.type==='password'?'bi bi-eye text-sm':'bi bi-eye-slash text-sm'"
                 class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition">
                 <i class="bi bi-eye text-sm"></i>
             </button>

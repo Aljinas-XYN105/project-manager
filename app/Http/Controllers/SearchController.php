@@ -56,7 +56,7 @@ class SearchController extends Controller
     private function accessibleProjectIds(User $user)
     {
         return Project::query()
-            ->when(! $user->hasRole('admin'), fn ($q) => $q->where(fn ($q) => $q
+            ->when(! $user->hasRole(['admin', 'manager']), fn ($q) => $q->where(fn ($q) => $q
                 ->where('is_public', true)
                 ->orWhere('owner_id', $user->id)
                 ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))

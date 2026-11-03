@@ -123,9 +123,22 @@ class TaskService
                 ->where('position', '>=', $position)
                 ->increment('position');
 
+            // Sync status with the column so progress calculations stay accurate
+            $slugMap = [
+                'todo'        => 'todo',
+                'in-progress' => 'in_progress',
+                'in-review'   => 'in_review',
+                'qa-testing'  => 'in_review',
+                'done'        => 'done',
+            ];
+            $newStatus = $newColumn->is_done
+                ? 'done'
+                : ($slugMap[$newColumn->slug] ?? ($task->status === 'done' ? 'in_progress' : $task->status));
+
             $task->update([
                 'column_id' => $newColumn->id,
                 'position'  => $position,
+                'status'    => $newStatus,
             ]);
 
             // Re-sequence old column with a single CASE WHEN statement
