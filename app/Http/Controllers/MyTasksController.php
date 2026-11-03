@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class MyTasksController extends Controller
@@ -14,7 +15,9 @@ class MyTasksController extends Controller
         $view = $request->input('view', 'open');
         $scope = $request->input('scope', 'mine'); // 'mine' or 'all' (managers only)
 
-        if ($isManager && $scope === 'all') {
+        $assigneeId = $isManager && $request->filled('assignee_id') ? $request->integer('assignee_id') : null;
+
+        if ($isManager && ($scope === 'all' || $assigneeId)) {
             $baseQuery = Task::with(['project', 'assignees', 'labels'])->whereNull('parent_id');
         } else {
             $baseQuery = $user->assignedTasks()->with(['project', 'labels']);
@@ -26,6 +29,7 @@ class MyTasksController extends Controller
             ->when($request->filled('project_id'), fn ($q) => $q->where('tasks.project_id', $request->integer('project_id')))
             ->when($request->filled('priority'), fn ($q) => $q->where('tasks.priority', $request->input('priority')))
             ->when($request->filled('type'), fn ($q) => $q->where('tasks.type', $request->input('type')))
+            ->when($assigneeId, fn ($q) => $q->whereHas('assignees', fn ($aq) => $aq->where('users.id', $assigneeId)))
             ->orderByRaw('tasks.due_date is null')
             ->orderBy('tasks.due_date')
             ->orderByRaw("case tasks.priority when 'critical' then 0 when 'high' then 1 when 'medium' then 2 else 3 end")
@@ -54,10 +58,12 @@ class MyTasksController extends Controller
             $counts['all_done'] = Task::whereNull('parent_id')->where('status', 'done')->count();
         }
 
-        $projects = $isManager && $scope === 'all'
+        $projects = $isManager && ($scope === 'all' || $assigneeId)
             ? \App\Models\Project::orderBy('name')->get()
             : $user->assignedTasks()->with('project')->get()->pluck('project')->filter()->unique('id')->sortBy('name');
 
-        return view('my-tasks.index', compact('groups', 'view', 'counts', 'projects', 'isManager', 'scope'));
+        $members = $isManager ? User::active()->orderBy('name')->get() : collect();
+
+        return view('my-tasks.index', compact('groups', 'view', 'counts', 'projects', 'isManager', 'scope', 'members', 'assigneeId'));
     }
 }

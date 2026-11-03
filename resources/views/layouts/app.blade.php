@@ -114,7 +114,7 @@
             $navGroups = [
                 'MAIN' => [
                     ['route'=>'dashboard',      'icon'=>'bi-house-fill',        'label'=>'Home',         'match'=>'dashboard'],
-                    ['route'=>'my-tasks',        'icon'=>'bi-check2-square',     'label'=>'My Tasks',     'match'=>'my-tasks'],
+                    ['route'=>'my-tasks',        'icon'=>'bi-check2-square',     'label'=>'Task List',     'match'=>'my-tasks'],
                     ['route'=>'projects.index',  'icon'=>'bi-folder2-open',      'label'=>'Projects',     'match'=>'projects.*'],
                 ],
                 'WORK' => [

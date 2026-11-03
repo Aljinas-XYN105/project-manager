@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'My Tasks')
+@section('title', 'Task List')
 
 @section('content')
 @php
@@ -14,16 +14,30 @@
 @endphp
 <div class="page-header">
     <div>
-        <h1 class="page-title">{{ ($isManager && $scope === 'all') ? 'All Tasks' : 'My Tasks' }}</h1>
+        <h1 class="page-title">
+            @if($isManager && $assigneeId && $members->find($assigneeId))
+                {{ $members->find($assigneeId)->name }}'s Tasks
+            @elseif($isManager && $scope === 'all')
+                All Tasks
+            @else
+                My Tasks
+            @endif
+        </h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {{ ($isManager && $scope === 'all') ? 'All tasks across every project.' : 'Everything assigned to you, across every project.' }}
+            @if($isManager && $assigneeId && $members->find($assigneeId))
+                Tasks assigned to {{ $members->find($assigneeId)->name }}.
+            @elseif($isManager && $scope === 'all')
+                All tasks across every project.
+            @else
+                Everything assigned to you, across every project.
+            @endif
         </p>
     </div>
     <div class="flex items-center gap-3 flex-wrap">
         @if($isManager)
         <div class="tab-bar">
-            <a href="{{ route('my-tasks', ['scope' => 'mine', 'view' => $view]) }}" class="tab-item {{ $scope === 'mine' ? 'active' : '' }}">My Tasks <span class="text-slate-400">{{ $counts['open'] }}</span></a>
-            <a href="{{ route('my-tasks', ['scope' => 'all', 'view' => $view]) }}" class="tab-item {{ $scope === 'all' ? 'active' : '' }}">All Tasks <span class="text-slate-400">{{ $counts['all_open'] }}</span></a>
+            <a href="{{ route('my-tasks', ['scope' => 'mine', 'view' => $view]) }}" class="tab-item {{ $scope === 'mine' && !$assigneeId ? 'active' : '' }}">My Tasks <span class="text-slate-400">{{ $counts['open'] }}</span></a>
+            <a href="{{ route('my-tasks', ['scope' => 'all', 'view' => $view]) }}" class="tab-item {{ $scope === 'all' || $assigneeId ? 'active' : '' }}">All Tasks <span class="text-slate-400">{{ $counts['all_open'] }}</span></a>
         </div>
         @endif
         <div class="tab-bar">
@@ -55,8 +69,14 @@
         <option value="{{ $tv }}" @selected(request('type') === $tv)>{{ $tl }}</option>
         @endforeach
     </select>
+    <select name="assignee_id" onchange="this.form.submit()" class="form-select text-sm w-auto">
+        <option value="">Any person</option>
+        @foreach($members as $member)
+        <option value="{{ $member->id }}" @selected(request('assignee_id') == $member->id)>{{ $member->name }}</option>
+        @endforeach
+    </select>
     @endif
-    @if(request()->hasAny(['project_id','priority','type']))
+    @if(request()->hasAny(['project_id','priority','type','assignee_id']))
     <a href="{{ route('my-tasks', ['view' => $view, 'scope' => $scope]) }}" class="btn-ghost btn-sm">Clear</a>
     @endif
 </form>
