@@ -482,7 +482,7 @@ $typeOptions = [
     <div class="space-y-3">
 
         {{-- Details card --}}
-        <div class="card overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+        <div class="card divide-y divide-slate-100 dark:divide-slate-800" style="overflow:visible">
             <div class="px-4 py-2.5">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Details</p>
             </div>
