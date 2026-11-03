@@ -89,22 +89,84 @@
         <div class="card p-5">
             <p class="section-heading">Details</p>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <div>
+                {{-- Status pill dropdown --}}
+                <div x-data="{
+                    open: false,
+                    val: '{{ old('status',$task->status) }}',
+                    opts: [
+                        {val:'todo',        label:'To Do',      icon:'bi-circle',              chip:'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'},
+                        {val:'in_progress', label:'In Progress',icon:'bi-arrow-repeat',        chip:'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'},
+                        {val:'qa_testing',  label:'QA Testing', icon:'bi-clipboard2-check',    chip:'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'},
+                        {val:'in_review',   label:'In Review',  icon:'bi-eye',                 chip:'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'},
+                        {val:'done',        label:'Done',       icon:'bi-check-circle-fill',   chip:'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'},
+                        {val:'cancelled',   label:'Cancelled',  icon:'bi-x-circle-fill',       chip:'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'},
+                    ],
+                    get cur() { return this.opts.find(o=>o.val===this.val)||this.opts[0] }
+                }">
+                    <input type="hidden" name="status" :value="val">
                     <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        @foreach(['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
-                        <option value="{{ $v }}" @selected(old('status',$task->status)===$v)>{{ $l }}</option>
-                        @endforeach
-                    </select>
+                    <div class="relative">
+                        <button type="button" @click="open=!open" @click.outside="open=false"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold w-full hover:opacity-90 transition-colors"
+                                :class="cur.chip">
+                            <i class="bi text-xs" :class="cur.icon"></i>
+                            <span x-text="cur.label" class="flex-1 text-left"></span>
+                            <i class="bi bi-chevron-down text-[10px] opacity-50"></i>
+                        </button>
+                        <div x-show="open" x-cloak
+                             class="absolute left-0 top-full mt-1 z-50 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
+                            <template x-for="o in opts" :key="o.val">
+                                <button type="button" @click="val=o.val; open=false"
+                                        class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                    <span class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" :class="o.chip">
+                                        <i class="bi text-[10px]" :class="o.icon"></i>
+                                    </span>
+                                    <span x-text="o.label"></span>
+                                    <i class="bi bi-check text-violet-500 text-xs ml-auto" x-show="o.val===val"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
-                <div>
+
+                {{-- Priority pill dropdown --}}
+                <div x-data="{
+                    open: false,
+                    val: '{{ old('priority',$task->priority) }}',
+                    opts: [
+                        {val:'low',      label:'Low',      icon:'bi-arrow-down',              chip:'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'},
+                        {val:'medium',   label:'Medium',   icon:'bi-dash',                    chip:'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'},
+                        {val:'high',     label:'High',     icon:'bi-arrow-up',                chip:'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'},
+                        {val:'critical', label:'Critical', icon:'bi-exclamation-circle-fill', chip:'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'},
+                    ],
+                    get cur() { return this.opts.find(o=>o.val===this.val)||this.opts[1] }
+                }">
+                    <input type="hidden" name="priority" :value="val">
                     <label class="form-label">Priority</label>
-                    <select name="priority" class="form-select">
-                        @foreach(['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical'] as $v=>$l)
-                        <option value="{{ $v }}" @selected(old('priority',$task->priority)===$v)>{{ $l }}</option>
-                        @endforeach
-                    </select>
+                    <div class="relative">
+                        <button type="button" @click="open=!open" @click.outside="open=false"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold w-full hover:opacity-90 transition-colors"
+                                :class="cur.chip">
+                            <i class="bi text-xs" :class="cur.icon"></i>
+                            <span x-text="cur.label" class="flex-1 text-left"></span>
+                            <i class="bi bi-chevron-down text-[10px] opacity-50"></i>
+                        </button>
+                        <div x-show="open" x-cloak
+                             class="absolute left-0 top-full mt-1 z-50 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
+                            <template x-for="o in opts" :key="o.val">
+                                <button type="button" @click="val=o.val; open=false"
+                                        class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                    <span class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" :class="o.chip">
+                                        <i class="bi text-[10px]" :class="o.icon"></i>
+                                    </span>
+                                    <span x-text="o.label"></span>
+                                    <i class="bi bi-check text-violet-500 text-xs ml-auto" x-show="o.val===val"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
+
                 <div>
                     <label class="form-label">Column / Stage</label>
                     <select name="column_id" class="form-select">

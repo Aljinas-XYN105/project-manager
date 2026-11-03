@@ -102,24 +102,79 @@
 
                     {{-- Type + Priority --}}
                     <div class="grid grid-cols-2 gap-3">
-                        <div>
+                        {{-- Type pill dropdown --}}
+                        <div x-data="{
+                            open: false,
+                            opts: [
+                                {val:'task',    label:'Task',    icon:'bi-check-square',    chip:'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'},
+                                {val:'bug',     label:'Bug',     icon:'bi-bug-fill',        chip:'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'},
+                                {val:'feature', label:'Feature', icon:'bi-stars',           chip:'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'},
+                                {val:'story',   label:'Story',   icon:'bi-book-fill',       chip:'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'},
+                                {val:'epic',    label:'Epic',    icon:'bi-lightning-fill',  chip:'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'},
+                            ],
+                            get cur() { return this.opts.find(o=>o.val===task.type)||this.opts[0] },
+                            pick(v) { task.type=v; this.open=false; patch({type:v}); }
+                        }">
                             <label class="form-label">Type</label>
-                            <select x-model="task.type" @change="patch({ type: task.type })" class="form-select">
-                                <option value="task">Task</option>
-                                <option value="bug">Bug</option>
-                                <option value="feature">Feature</option>
-                                <option value="story">Story</option>
-                                <option value="epic">Epic</option>
-                            </select>
+                            <div class="relative">
+                                <button type="button" @click="open=!open" @click.outside="open=false"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold w-full hover:opacity-90 transition-colors"
+                                        :class="cur.chip">
+                                    <i class="bi text-[11px]" :class="cur.icon"></i>
+                                    <span x-text="cur.label" class="flex-1 text-left"></span>
+                                    <i class="bi bi-chevron-down text-[9px] opacity-50"></i>
+                                </button>
+                                <div x-show="open" x-cloak
+                                     class="absolute left-0 top-full mt-1 z-[60] w-40 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
+                                    <template x-for="o in opts" :key="o.val">
+                                        <button type="button" @click="pick(o.val)"
+                                                class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <span class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" :class="o.chip">
+                                                <i class="bi text-[10px]" :class="o.icon"></i>
+                                            </span>
+                                            <span x-text="o.label"></span>
+                                            <i class="bi bi-check text-violet-500 text-xs ml-auto" x-show="o.val===task.type"></i>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
-                        <div>
+
+                        {{-- Priority pill dropdown --}}
+                        <div x-data="{
+                            open: false,
+                            opts: [
+                                {val:'low',      label:'Low',      icon:'bi-arrow-down',       chip:'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'},
+                                {val:'medium',   label:'Medium',   icon:'bi-dash',             chip:'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'},
+                                {val:'high',     label:'High',     icon:'bi-arrow-up',         chip:'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'},
+                                {val:'critical', label:'Critical', icon:'bi-exclamation-circle-fill', chip:'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'},
+                            ],
+                            get cur() { return this.opts.find(o=>o.val===task.priority)||this.opts[1] },
+                            pick(v) { task.priority=v; this.open=false; patch({priority:v}); }
+                        }">
                             <label class="form-label">Priority</label>
-                            <select x-model="task.priority" @change="patch({ priority: task.priority })" class="form-select">
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="critical">Critical</option>
-                            </select>
+                            <div class="relative">
+                                <button type="button" @click="open=!open" @click.outside="open=false"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold w-full hover:opacity-90 transition-colors"
+                                        :class="cur.chip">
+                                    <i class="bi text-[11px]" :class="cur.icon"></i>
+                                    <span x-text="cur.label" class="flex-1 text-left"></span>
+                                    <i class="bi bi-chevron-down text-[9px] opacity-50"></i>
+                                </button>
+                                <div x-show="open" x-cloak
+                                     class="absolute left-0 top-full mt-1 z-[60] w-40 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
+                                    <template x-for="o in opts" :key="o.val">
+                                        <button type="button" @click="pick(o.val)"
+                                                class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <span class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" :class="o.chip">
+                                                <i class="bi text-[10px]" :class="o.icon"></i>
+                                            </span>
+                                            <span x-text="o.label"></span>
+                                            <i class="bi bi-check text-violet-500 text-xs ml-auto" x-show="o.val===task.priority"></i>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
