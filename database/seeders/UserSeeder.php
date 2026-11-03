@@ -51,6 +51,9 @@ class UserSeeder extends Seeder
             ['name' => 'Suhana',    'email' => 'suhana@xynosoft.in',    'job_title' => 'Frontend Developer',          'department' => 'Engineering'],
             ['name' => 'Annmaria',  'email' => 'annmaria@xynosoft.in',  'job_title' => 'Frontend Developer',      'department' => 'Engineering'],
             ['name' => 'Aishwarya', 'email' => 'aishwarya@xynosoft.in', 'job_title' => 'UI/UX Designer',       'department' => 'Design'],
+            ['name' => 'Sujith',    'email' => 'sujith@xynosoft.in',    'job_title' => 'Sales Executive',       'department' => 'Marketing'],
+            ['name' => 'Nooh',      'email' => 'nooh@xynosoft.in',      'job_title' => 'DevOps Engineer',           'department' => 'Engineering'],
+            ['name' => 'Akshay',    'email' => 'akshay@xynosoft.in',    'job_title' => 'Human Resources Specialist',            'department' => 'Human Resources']
         ];
 
         foreach ($members as $data) {
