@@ -117,7 +117,8 @@ class ProjectSeeder extends Seeder
             ['name' => 'To Do',       'color' => '#94a3b8', 'position' => 1, 'is_default' => true,  'is_done' => false],
             ['name' => 'In Progress', 'color' => '#3b82f6', 'position' => 2, 'is_default' => false, 'is_done' => false],
             ['name' => 'In Review',   'color' => '#f59e0b', 'position' => 3, 'is_default' => false, 'is_done' => false],
-            ['name' => 'Done',        'color' => '#10b981', 'position' => 4, 'is_default' => false, 'is_done' => true],
+            ['name' => 'QA Testing',  'color' => '#8b5cf6', 'position' => 4, 'is_default' => false, 'is_done' => false],
+            ['name' => 'Done',        'color' => '#10b981', 'position' => 5, 'is_default' => false, 'is_done' => true],
         ];
 
         foreach ($projects as $data) {
