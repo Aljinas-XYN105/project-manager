@@ -30,7 +30,7 @@ class UpdateTaskRequest extends FormRequest
             'column_id'           => ['sometimes', 'exists:columns,id'],
             'type'                => ['nullable', 'in:task,bug,feature,story,epic'],
             'sprint_id'           => ['nullable', 'exists:sprints,id'],
-            'status'              => ['nullable', 'in:todo,in_progress,in_review,done,cancelled'],
+            'status'              => ['nullable', 'in:todo,in_progress,qa_testing,in_review,done,cancelled'],
             'priority'            => ['nullable', 'in:low,medium,high,critical'],
             'due_date'            => ['nullable', 'date'],
             'estimated_hours'     => ['nullable', 'numeric', 'min:0'],

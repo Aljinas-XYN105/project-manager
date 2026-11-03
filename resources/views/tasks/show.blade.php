@@ -1,105 +1,206 @@
 @extends('layouts.app')
 @section('title', $task->title)
 
+@php
+$csrfToken = csrf_token();
+$taskId    = $task->id;
+$canUpdate = auth()->user()->can('update', $task);
+$canDelete = auth()->user()->can('delete', $task);
+
+$statusOptions = [
+    ['val'=>'todo',        'label'=>'To Do',        'icon'=>'bi-circle',             'chip'=>'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'],
+    ['val'=>'in_progress', 'label'=>'In Progress',   'icon'=>'bi-arrow-right-circle-fill', 'chip'=>'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'],
+    ['val'=>'qa_testing',  'label'=>'QA Testing',    'icon'=>'bi-bug-fill',           'chip'=>'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'],
+    ['val'=>'in_review',   'label'=>'In Review',     'icon'=>'bi-eye-fill',           'chip'=>'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'],
+    ['val'=>'done',        'label'=>'Done',           'icon'=>'bi-check-circle-fill',  'chip'=>'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'],
+    ['val'=>'cancelled',   'label'=>'Cancelled',      'icon'=>'bi-x-circle-fill',      'chip'=>'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'],
+];
+$priorityOptions = [
+    ['val'=>'low',      'label'=>'Low',      'icon'=>'bi-arrow-down-circle',      'chip'=>'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'],
+    ['val'=>'medium',   'label'=>'Medium',   'icon'=>'bi-dash-circle',            'chip'=>'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'],
+    ['val'=>'high',     'label'=>'High',     'icon'=>'bi-arrow-up-circle',        'chip'=>'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'],
+    ['val'=>'critical', 'label'=>'Critical', 'icon'=>'bi-exclamation-circle-fill','chip'=>'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'],
+];
+$typeOptions = [
+    ['val'=>'task',    'label'=>'Task',    'icon'=>'bi-check-square-fill', 'chip'=>'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'],
+    ['val'=>'bug',     'label'=>'Bug',     'icon'=>'bi-bug-fill',          'chip'=>'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'],
+    ['val'=>'feature', 'label'=>'Feature', 'icon'=>'bi-stars',             'chip'=>'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'],
+    ['val'=>'story',   'label'=>'Story',   'icon'=>'bi-bookmark-fill',     'chip'=>'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'],
+    ['val'=>'epic',    'label'=>'Epic',    'icon'=>'bi-lightning-fill',    'chip'=>'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'],
+];
+@endphp
+
 @section('content')
-{{-- Breadcrumb + header --}}
-<div class="page-header">
-    <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1.5 flex-wrap">
-            <a href="{{ route('projects.show', $task->project) }}" class="hover:text-violet-600 transition-colors">{{ $task->project->name }}</a>
-            <i class="bi bi-chevron-right text-[10px]"></i>
-            <a href="{{ route('projects.tasks.index', $task->project) }}" class="hover:text-violet-600 transition-colors">Tasks</a>
-            <i class="bi bi-chevron-right text-[10px]"></i>
-            <span class="font-mono text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-slate-500">{{ $task->ticket_key }}</span>
-        </div>
-        <div class="flex items-start gap-3 flex-wrap">
-            {{-- Type icon badge --}}
-            <span class="mt-1 w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0
-                @if($task->type==='bug') bg-rose-100 dark:bg-rose-900/30
-                @elseif($task->type==='feature') bg-purple-100 dark:bg-purple-900/30
-                @elseif($task->type==='story') bg-blue-100 dark:bg-blue-900/30
-                @elseif($task->type==='epic') bg-orange-100 dark:bg-orange-900/30
-                @else bg-slate-100 dark:bg-slate-800 @endif">
-                <i class="bi {{ $task->type_icon }} {{ $task->type_color }} text-sm"></i>
-            </span>
-            <div class="flex-1 min-w-0">
-                <h1 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">{{ $task->title }}</h1>
-                <div class="flex items-center gap-3 mt-1 flex-wrap text-xs text-slate-400">
-                    <span class="capitalize">{{ $task->type }}</span>
-                    @if($task->sprint)
-                    <a href="{{ route('projects.sprints.show', [$task->project, $task->sprint]) }}"
-                       class="inline-flex items-center gap-1 text-violet-500 dark:text-violet-400 hover:underline">
-                        <i class="bi bi-speedometer2"></i> {{ $task->sprint->name }}
-                    </a>
+{{-- Breadcrumb --}}
+<div class="flex items-center gap-1.5 text-xs text-slate-400 mb-4 flex-wrap">
+    <a href="{{ route('projects.show', $task->project) }}" class="hover:text-violet-600 transition-colors font-medium">{{ $task->project->name }}</a>
+    <i class="bi bi-chevron-right text-[9px]"></i>
+    <a href="{{ route('projects.tasks.index', $task->project) }}" class="hover:text-violet-600 transition-colors">Tasks</a>
+    <i class="bi bi-chevron-right text-[9px]"></i>
+    <span class="font-mono text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-slate-500">{{ $task->ticket_key }}</span>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
+
+    {{-- ══ MAIN COLUMN ══ --}}
+    <div class="space-y-4 min-w-0">
+
+        {{-- Title card --}}
+        <div class="card p-5 pb-4"
+             x-data="{
+                 editing: false,
+                 titleVal: @js($task->title),
+                 original: @js($task->title),
+                 async save() {
+                     if (!this.titleVal.trim()) { this.titleVal = this.original; this.editing = false; return; }
+                     if (this.titleVal === this.original) { this.editing = false; return; }
+                     const r = await fetch('/tasks/{{ $taskId }}', {
+                         method: 'PATCH',
+                         headers: {'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},
+                         body: JSON.stringify({title: this.titleVal})
+                     });
+                     if (r.ok) { this.original = this.titleVal; window.toast?.('Title saved', 'success'); }
+                     else { this.titleVal = this.original; window.toast?.('Failed to save', 'error'); }
+                     this.editing = false;
+                 }
+             }">
+            <div class="flex items-start gap-3">
+                {{-- Type badge --}}
+                <span class="mt-0.5 w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0
+                    @if($task->type==='bug') bg-rose-100 dark:bg-rose-900/30
+                    @elseif($task->type==='feature') bg-purple-100 dark:bg-purple-900/30
+                    @elseif($task->type==='story') bg-blue-100 dark:bg-blue-900/30
+                    @elseif($task->type==='epic') bg-orange-100 dark:bg-orange-900/30
+                    @else bg-slate-100 dark:bg-slate-800 @endif">
+                    <i class="bi {{ $task->type_icon }} {{ $task->type_color }} text-sm"></i>
+                </span>
+                <div class="flex-1 min-w-0">
+                    {{-- Editable title --}}
+                    <h1 x-show="!editing"
+                        @click="@if($canUpdate) editing=true; $nextTick(()=>$refs.titleInput.select()) @endif"
+                        class="text-xl font-bold text-slate-900 dark:text-white leading-snug {{ $canUpdate ? 'cursor-text hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-lg px-1.5 py-0.5 -mx-1.5 transition-colors' : '' }}">
+                        <span x-text="titleVal"></span>
+                    </h1>
+                    <input x-show="editing" x-cloak x-ref="titleInput" x-model="titleVal"
+                           @blur="save()" @keydown.enter.prevent="save()" @keydown.escape="editing=false; titleVal=original"
+                           class="w-full text-xl font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 border border-violet-400 rounded-lg px-2 py-0.5 outline-none shadow-sm leading-snug -mx-0.5">
+                    <div class="flex items-center gap-2.5 mt-2 flex-wrap text-xs text-slate-400">
+                        <span class="capitalize">{{ $task->type }}</span>
+                        <span class="text-slate-200 dark:text-slate-700">·</span>
+                        <span>by <strong class="text-slate-600 dark:text-slate-300">{{ $task->creator->name }}</strong></span>
+                        <span class="text-slate-200 dark:text-slate-700">·</span>
+                        <span>{{ $task->created_at->diffForHumans() }}</span>
+                        @if($task->sprint)
+                        <span class="text-slate-200 dark:text-slate-700">·</span>
+                        <a href="{{ route('projects.sprints.show', [$task->project, $task->sprint]) }}"
+                           class="inline-flex items-center gap-1 text-violet-500 hover:underline">
+                            <i class="bi bi-speedometer2"></i> {{ $task->sprint->name }}
+                        </a>
+                        @endif
+                    </div>
+                </div>
+                {{-- Action buttons --}}
+                <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                    @if($task->status !== 'done')
+                    <form method="POST" action="{{ route('tasks.update', $task) }}">
+                        @csrf @method('PUT')
+                        <input type="hidden" name="status" value="done">
+                        <button type="submit"
+                                class="btn-sm inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors">
+                            <i class="bi bi-check-lg"></i> Done
+                        </button>
+                    </form>
                     @endif
-                    <span>by <strong class="text-slate-600 dark:text-slate-300">{{ $task->creator->name }}</strong></span>
-                    <span>{{ $task->created_at->diffForHumans() }}</span>
+                    @can('update', $task)
+                    <a href="{{ route('tasks.edit', $task) }}"
+                       class="btn-sm inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                       title="Full edit">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    @endcan
                 </div>
             </div>
         </div>
-    </div>
-    <div class="flex items-center gap-2 flex-shrink-0">
-        @if($task->status !== 'done')
-        <form method="POST" action="{{ route('tasks.update', $task) }}" class="inline">
-            @csrf @method('PUT')
-            <input type="hidden" name="status" value="done">
-            <button type="submit" class="btn-secondary btn-sm text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
-                <i class="bi bi-check-lg"></i> Mark Done
-            </button>
-        </form>
-        @endif
-        @can('update', $task)
-        <a href="{{ route('tasks.edit', $task) }}" class="btn-secondary btn-sm">
-            <i class="bi bi-pencil"></i> Edit
-        </a>
-        @endcan
-    </div>
-</div>
-
-<div class="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-5">
-    {{-- ── MAIN CONTENT ── --}}
-    <div class="space-y-4 min-w-0">
 
         {{-- Description --}}
-        <div class="card p-5">
-            <h3 class="section-heading">Description</h3>
-            @if($task->description)
-            <div class="prose dark:prose-invert max-w-none text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                {!! nl2br(e($task->description)) !!}
+        <div class="card p-5"
+             x-data="{
+                 editing: false,
+                 val: @js($task->description ?? ''),
+                 original: @js($task->description ?? ''),
+                 async save() {
+                     if (this.val === this.original) { this.editing = false; return; }
+                     const r = await fetch('/tasks/{{ $taskId }}', {
+                         method: 'PATCH',
+                         headers: {'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},
+                         body: JSON.stringify({description: this.val})
+                     });
+                     if (r.ok) { this.original = this.val; window.toast?.('Description saved', 'success'); }
+                     else { this.val = this.original; window.toast?.('Failed to save', 'error'); }
+                     this.editing = false;
+                 }
+             }">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <i class="bi bi-text-paragraph"></i> Description
+                </h3>
+                @if($canUpdate)
+                <button x-show="!editing" @click="editing=true; $nextTick(()=>$refs.descInput.focus())"
+                        class="text-xs text-slate-400 hover:text-violet-600 transition-colors flex items-center gap-1">
+                    <i class="bi bi-pencil text-[10px]"></i> Edit
+                </button>
+                @endif
             </div>
-            @else
-            <p class="text-sm text-slate-400 italic">No description — <a href="{{ route('tasks.edit', $task) }}" class="text-violet-500 hover:underline">add one</a></p>
-            @endif
+            <div x-show="!editing">
+                @if($task->description)
+                <div class="prose dark:prose-invert max-w-none text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {!! nl2br(e($task->description)) !!}
+                </div>
+                @else
+                <p class="text-sm text-slate-400 italic @if($canUpdate) cursor-text @endif"
+                   @if($canUpdate) @click="editing=true; $nextTick(()=>$refs.descInput.focus())" @endif>
+                    @if($canUpdate) Click to add a description… @else No description. @endif
+                </p>
+                @endif
+            </div>
+            <div x-show="editing" x-cloak class="space-y-2">
+                <textarea x-ref="descInput" x-model="val" rows="5"
+                          placeholder="Add a description…"
+                          class="w-full form-input resize-none text-sm leading-relaxed"></textarea>
+                <div class="flex gap-2">
+                    <button @click="save()"
+                            class="px-3 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors">
+                        Save
+                    </button>
+                    <button @click="editing=false; val=original"
+                            class="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
         </div>
 
-        {{-- Bug Report Details — always shown for bugs --}}
+        {{-- Bug Report --}}
         @if($task->type === 'bug')
         <div class="card p-5 border-l-4 border-l-rose-400">
             <h3 class="font-semibold text-rose-700 dark:text-rose-400 mb-4 flex items-center gap-2">
                 <i class="bi bi-bug-fill"></i> Bug Report
             </h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                {{-- Severity --}}
                 <div class="flex flex-col gap-1">
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Severity</span>
                     @if($task->severity)
                     @php
-                    $sevBg = ['blocker'=>'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 ring-rose-200',
-                              'critical'=>'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 ring-orange-200',
-                              'major'=>'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 ring-amber-200',
-                              'minor'=>'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 ring-sky-200',
-                              'trivial'=>'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 ring-slate-200'];
+                    $sevCls = ['blocker'=>'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400','critical'=>'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400','major'=>'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400','minor'=>'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400','trivial'=>'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'];
                     $sevIcon = ['blocker'=>'🔴','critical'=>'🟠','major'=>'🟡','minor'=>'🟢','trivial'=>'⚪'];
                     @endphp
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold capitalize ring-1 w-fit
-                                 {{ $sevBg[$task->severity] ?? $sevBg['trivial'] }}">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold capitalize w-fit {{ $sevCls[$task->severity] ?? $sevCls['trivial'] }}">
                         {{ $sevIcon[$task->severity] ?? '' }} {{ ucfirst($task->severity) }}
                     </span>
                     @else
                     <a href="{{ route('tasks.edit', $task) }}" class="text-sm text-slate-400 hover:text-violet-500 italic">Not set — add severity</a>
                     @endif
                 </div>
-                {{-- Environment --}}
                 <div class="flex flex-col gap-1">
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Environment</span>
                     @if($task->environment ?? false)
@@ -107,88 +208,84 @@
                         <i class="bi bi-display text-slate-400 text-xs"></i> {{ $task->environment }}
                     </span>
                     @else
-                    <a href="{{ route('tasks.edit', $task) }}" class="text-sm text-slate-400 hover:text-violet-500 italic">Not set — add environment</a>
+                    <a href="{{ route('tasks.edit', $task) }}" class="text-sm text-slate-400 hover:text-violet-500 italic">Not set</a>
                     @endif
                 </div>
             </div>
-
-            {{-- Steps to reproduce --}}
+            @if($task->steps_to_reproduce ?? false)
             <div class="mb-4">
                 <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Steps to Reproduce</p>
-                @if($task->steps_to_reproduce ?? false)
-                <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300
-                            whitespace-pre-wrap border border-slate-200 dark:border-slate-700 leading-relaxed font-mono text-xs">{{ $task->steps_to_reproduce }}</div>
-                @else
-                <div class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-dashed border-slate-200 dark:border-slate-700 text-center">
-                    <a href="{{ route('tasks.edit', $task) }}" class="text-sm text-slate-400 hover:text-violet-500">
-                        <i class="bi bi-plus-circle mr-1"></i> Add reproduction steps
-                    </a>
-                </div>
-                @endif
+                <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap border border-slate-200 dark:border-slate-700 font-mono leading-relaxed">{{ $task->steps_to_reproduce }}</div>
             </div>
-
-            {{-- Expected vs Actual --}}
+            @endif
             @if(($task->expected_behavior ?? false) || ($task->actual_behavior ?? false))
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                    <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
-                        <i class="bi bi-check-circle-fill"></i> Expected
-                    </p>
-                    <div class="bg-emerald-50 dark:bg-emerald-900/10 rounded-xl p-3.5 text-sm text-slate-700 dark:text-slate-300
-                                border border-emerald-200 dark:border-emerald-900 leading-relaxed">
-                        {{ $task->expected_behavior ?? '—' }}
-                    </div>
+                    <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide"><i class="bi bi-check-circle-fill"></i> Expected</p>
+                    <div class="bg-emerald-50 dark:bg-emerald-900/10 rounded-xl p-3.5 text-sm text-slate-700 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 leading-relaxed">{{ $task->expected_behavior ?? '—' }}</div>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-rose-600 dark:text-rose-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
-                        <i class="bi bi-x-circle-fill"></i> Actual
-                    </p>
-                    <div class="bg-rose-50 dark:bg-rose-900/10 rounded-xl p-3.5 text-sm text-slate-700 dark:text-slate-300
-                                border border-rose-200 dark:border-rose-900 leading-relaxed">
-                        {{ $task->actual_behavior ?? '—' }}
-                    </div>
+                    <p class="text-xs font-semibold text-rose-600 dark:text-rose-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wide"><i class="bi bi-x-circle-fill"></i> Actual</p>
+                    <div class="bg-rose-50 dark:bg-rose-900/10 rounded-xl p-3.5 text-sm text-slate-700 dark:text-slate-300 border border-rose-200 dark:border-rose-900 leading-relaxed">{{ $task->actual_behavior ?? '—' }}</div>
                 </div>
-            </div>
-            @else
-            <div class="grid grid-cols-2 gap-3">
-                <a href="{{ route('tasks.edit', $task) }}" class="flex items-center gap-2 p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-sm text-slate-400 hover:text-violet-500 hover:border-violet-300 transition-colors">
-                    <i class="bi bi-plus-circle text-xs"></i> Add expected behavior
-                </a>
-                <a href="{{ route('tasks.edit', $task) }}" class="flex items-center gap-2 p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-sm text-slate-400 hover:text-rose-500 hover:border-rose-300 transition-colors">
-                    <i class="bi bi-plus-circle text-xs"></i> Add actual behavior
-                </a>
             </div>
             @endif
         </div>
         @endif
 
         {{-- Subtasks --}}
-        <div class="card overflow-hidden">
+        <div class="card overflow-hidden"
+             x-data="{
+                 adding: false,
+                 newTitle: '',
+                 submitting: false,
+                 async addSubtask() {
+                     if (!this.newTitle.trim() || this.submitting) return;
+                     this.submitting = true;
+                     const r = await fetch('{{ route('projects.tasks.store', $task->project) }}', {
+                         method: 'POST',
+                         headers: {'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},
+                         body: JSON.stringify({
+                             title: this.newTitle,
+                             project_id: {{ $task->project_id }},
+                             column_id: {{ $task->column_id ?? 'null' }},
+                             parent_id: {{ $taskId }},
+                             type: '{{ $task->type }}',
+                             priority: '{{ $task->priority ?? 'medium' }}',
+                         })
+                     });
+                     if (r.ok) {
+                         window.toast?.('Subtask created', 'success');
+                         this.newTitle = '';
+                         this.adding = false;
+                         window.location.reload();
+                     } else {
+                         window.toast?.('Failed to create subtask', 'error');
+                     }
+                     this.submitting = false;
+                 }
+             }">
             <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800">
-                <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i class="bi bi-diagram-2 text-slate-400 text-sm"></i>
+                <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                    <i class="bi bi-diagram-2 text-slate-400 text-xs"></i>
                     Subtasks
                     @if($task->subtasks->count())
                     @php $subDone = $task->subtasks->where('status','done')->count(); @endphp
                     <span class="text-xs font-normal text-slate-400">{{ $subDone }}/{{ $task->subtasks->count() }}</span>
                     @endif
                 </h3>
-                @can('update', $task)
-                <a href="{{ route('tasks.create', ['project_id' => $task->project->id]) }}?parent_id={{ $task->id }}"
-                   class="btn-ghost btn-sm text-xs">
-                    <i class="bi bi-plus-lg"></i> Add subtask
-                </a>
-                @endcan
+                @if($canUpdate)
+                <button @click="adding=!adding; $nextTick(()=>{ if(adding) $refs.subInput.focus() })"
+                        class="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1 font-medium">
+                    <i class="bi bi-plus-lg text-sm"></i> Add subtask
+                </button>
+                @endif
             </div>
             @if($task->subtasks->count())
-            @php
-            $pct = $task->subtasks->count() > 0
-                ? round($task->subtasks->where('status','done')->count() / $task->subtasks->count() * 100)
-                : 0;
-            @endphp
+            @php $pct = round($task->subtasks->where('status','done')->count() / $task->subtasks->count() * 100); @endphp
             <div class="px-5 pt-3 pb-1">
-                <div class="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full">
-                    <div class="h-1.5 bg-violet-400 rounded-full transition-all" style="width: {{ $pct }}%"></div>
+                <div class="h-1 bg-slate-100 dark:bg-slate-800 rounded-full">
+                    <div class="h-1 bg-violet-400 rounded-full transition-all" style="width: {{ $pct }}%"></div>
                 </div>
             </div>
             <div class="divide-y divide-slate-50 dark:divide-slate-800/60">
@@ -209,8 +306,28 @@
                 @endforeach
             </div>
             @else
-            <div class="px-5 py-6 text-center">
+            <div class="px-5 py-4 text-center">
                 <p class="text-sm text-slate-400">No subtasks yet</p>
+            </div>
+            @endif
+            {{-- Inline add form --}}
+            @if($canUpdate)
+            <div x-show="adding" x-cloak class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                <div class="flex items-center gap-2">
+                    <input x-ref="subInput" x-model="newTitle"
+                           placeholder="Subtask title…"
+                           @keydown.enter.prevent="addSubtask()"
+                           @keydown.escape="adding=false; newTitle=''"
+                           class="flex-1 form-input text-sm py-1.5">
+                    <button @click="addSubtask()" :disabled="!newTitle.trim() || submitting"
+                            class="px-3 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors disabled:opacity-40">
+                        <span x-text="submitting ? 'Adding…' : 'Add'"></span>
+                    </button>
+                    <button @click="adding=false; newTitle=''"
+                            class="px-2 py-1.5 text-xs text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
             </div>
             @endif
         </div>
@@ -218,8 +335,8 @@
         {{-- Comments --}}
         <div class="card overflow-hidden" id="comments">
             <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i class="bi bi-chat text-slate-400 text-sm"></i>
+                <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                    <i class="bi bi-chat text-slate-400 text-xs"></i>
                     Comments
                     @if($task->comments->count())
                     <span class="text-xs font-normal text-slate-400">({{ $task->comments->count() }})</span>
@@ -229,9 +346,7 @@
             <div class="divide-y divide-slate-50 dark:divide-slate-800">
                 @forelse($task->comments as $comment)
                 <div class="p-5 flex gap-3">
-                    <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0 text-sm font-bold text-violet-600 dark:text-violet-400">
-                        {{ strtoupper(substr($comment->user->name, 0, 1)) }}
-                    </div>
+                    <img src="{{ $comment->user->avatar_url }}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1.5">
                             <span class="font-semibold text-sm text-slate-900 dark:text-white">{{ $comment->user->name }}</span>
@@ -241,37 +356,32 @@
                     </div>
                 </div>
                 @empty
-                <div class="py-8 text-center">
-                    <i class="bi bi-chat text-2xl text-slate-200 dark:text-slate-700 block mb-2"></i>
-                    <p class="text-sm text-slate-400">No comments yet</p>
+                <div class="py-10 text-center">
+                    <i class="bi bi-chat text-3xl text-slate-200 dark:text-slate-700 block mb-2"></i>
+                    <p class="text-sm text-slate-400">No comments yet — start the conversation</p>
                 </div>
                 @endforelse
             </div>
-            {{-- Comment input --}}
             <div class="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20"
                  x-data="{ body: '', submitting: false }">
                 <div class="flex gap-3">
-                    <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0 text-sm font-bold text-violet-600 dark:text-violet-400">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </div>
+                    <img src="{{ auth()->user()->avatar_url }}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover">
                     <div class="flex-1">
-                        <textarea x-model="body" rows="2" placeholder="Add a comment… (Shift+Enter for new line)"
+                        <textarea x-model="body" rows="2" placeholder="Add a comment… (⌘+Enter to post)"
                                   class="form-input resize-none w-full text-sm"
-                                  @keydown.enter.meta.prevent="$el.closest('[x-data]').__x.$data.submitting || (async () => {
-                                      if (!body.trim()) return; submitting=true;
-                                      await fetch('/comments',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'},body:JSON.stringify({body,commentable_type:'task',commentable_id:{{ $task->id }}})});
-                                      body='';submitting=false;window.location.reload();
-                                  })()"></textarea>
-                        <div class="flex items-center justify-between mt-2">
-                            <span class="text-[11px] text-slate-400">⌘+Enter to submit</span>
+                                  @keydown.meta.enter.prevent="
+                                      if (!body.trim() || submitting) return; submitting=true;
+                                      fetch('/comments',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},body:JSON.stringify({body,commentable_type:'task',commentable_id:{{ $taskId }}})})
+                                          .then(()=>{body='';submitting=false;window.location.reload()})"></textarea>
+                        <div class="flex justify-end mt-2">
                             <button @click="
                                 if (!body.trim() || submitting) return; submitting=true;
-                                fetch('/comments',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'},body:JSON.stringify({body,commentable_type:'task',commentable_id:{{ $task->id }}})})
+                                fetch('/comments',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},body:JSON.stringify({body,commentable_type:'task',commentable_id:{{ $taskId }}})})
                                     .then(()=>{body='';submitting=false;window.location.reload()})
                                     .catch(()=>submitting=false)"
                                 :disabled="!body.trim() || submitting"
                                 class="btn-primary btn-sm disabled:opacity-40">
-                                <i class="bi" :class="submitting ? 'bi-hourglass-split animate-spin' : 'bi-send'"></i>
+                                <i class="bi" :class="submitting ? 'bi-hourglass-split' : 'bi-send'"></i>
                                 <span x-text="submitting ? 'Posting…' : 'Post'"></span>
                             </button>
                         </div>
@@ -284,118 +394,75 @@
         <div class="card overflow-hidden"
              x-data="attachmentManager('{{ route('attachments.store', $task) }}', '{{ route('attachments.destroy', ':id') }}')">
             <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i class="bi bi-paperclip text-slate-400 text-sm"></i>
+                <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                    <i class="bi bi-paperclip text-slate-400 text-xs"></i>
                     Attachments
                     <span class="text-xs font-normal text-slate-400" x-text="'(' + files.length + ')'"></span>
                 </h3>
-                <label class="btn-ghost btn-sm cursor-pointer" title="Upload file">
+                <label class="btn-ghost btn-sm cursor-pointer text-xs">
                     <i class="bi bi-plus-lg text-sm"></i> Add
                     <input type="file" class="sr-only" multiple @change="upload($event.target.files)">
                 </label>
             </div>
-
-            {{-- Drop zone --}}
-            <div class="px-5 py-3 border-b border-dashed border-slate-200 dark:border-slate-700 transition-colors"
+            <div class="px-5 py-3 border-b border-dashed border-slate-200 dark:border-slate-700"
                  :class="dragging ? 'bg-violet-50 dark:bg-violet-900/10 border-violet-400' : ''"
-                 @dragover.prevent="dragging = true"
-                 @dragleave.prevent="dragging = false"
+                 @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false"
                  @drop.prevent="dragging = false; upload($event.dataTransfer.files)">
-                <div class="flex items-center justify-center gap-2 py-2 text-center">
-                    <i class="bi bi-cloud-upload text-slate-300 dark:text-slate-600 text-xl" :class="dragging ? 'text-violet-400' : ''"></i>
-                    <p class="text-xs text-slate-400" :class="dragging ? 'text-violet-500' : ''">
-                        Drop files here or <label class="text-violet-500 hover:text-violet-600 cursor-pointer font-medium">
-                            browse<input type="file" class="sr-only" multiple @change="upload($event.target.files)">
-                        </label>
-                        <span class="text-slate-300 dark:text-slate-600"> · images, PDFs, videos, docs · max 100 MB</span>
+                <div class="flex items-center justify-center gap-2 py-1 text-center">
+                    <i class="bi bi-cloud-upload text-slate-300 dark:text-slate-600 text-lg" :class="dragging ? 'text-violet-400' : ''"></i>
+                    <p class="text-xs text-slate-400">
+                        Drop files or <label class="text-violet-500 hover:text-violet-600 cursor-pointer font-medium">browse<input type="file" class="sr-only" multiple @change="upload($event.target.files)"></label>
+                        <span class="text-slate-300 dark:text-slate-600"> · max 100 MB</span>
                     </p>
                 </div>
             </div>
-
-            {{-- Upload progress --}}
             <template x-if="uploading">
                 <div class="px-5 py-3 flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 bg-violet-50/50 dark:bg-violet-900/10">
-                    <div class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
-                        <i class="bi bi-arrow-up text-violet-500 text-sm animate-pulse"></i>
-                    </div>
+                    <i class="bi bi-arrow-up text-violet-500 animate-pulse"></i>
                     <div class="flex-1">
                         <p class="text-xs font-medium text-violet-700 dark:text-violet-300" x-text="uploadStatus"></p>
-                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1 mt-1.5">
-                            <div class="bg-violet-500 h-1 rounded-full transition-all duration-300"
-                                 :style="'width: ' + uploadProgress + '%'"></div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1 mt-1">
+                            <div class="bg-violet-500 h-1 rounded-full transition-all" :style="'width:'+uploadProgress+'%'"></div>
                         </div>
                     </div>
                 </div>
             </template>
-
-            {{-- File list --}}
             <div class="divide-y divide-slate-50 dark:divide-slate-800/60">
                 <template x-if="files.length === 0 && !uploading">
-                    <div class="px-5 py-6 text-center">
-                        <p class="text-xs text-slate-400">No attachments yet</p>
-                    </div>
+                    <div class="px-5 py-6 text-center"><p class="text-xs text-slate-400">No attachments yet</p></div>
                 </template>
                 <template x-for="att in files" :key="att.id">
                     <div class="flex items-center gap-3 px-5 py-3 group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                             :class="att.is_image
-                                 ? 'bg-sky-100 dark:bg-sky-900/30'
-                                 : att.mime_type && att.mime_type.includes('pdf')
-                                 ? 'bg-rose-100 dark:bg-rose-900/30'
-                                 : 'bg-slate-100 dark:bg-slate-800'">
-                            <i class="text-sm"
-                               :class="att.is_image
-                                   ? 'bi bi-image text-sky-500'
-                                   : att.is_video
-                                   ? 'bi bi-play-circle-fill text-violet-500'
-                                   : att.mime_type && att.mime_type.includes('pdf')
-                                   ? 'bi bi-file-earmark-pdf text-rose-500'
-                                   : att.mime_type && att.mime_type.includes('word')
-                                   ? 'bi bi-file-earmark-word text-blue-500'
-                                   : att.mime_type && (att.mime_type.includes('sheet') || att.mime_type.includes('excel'))
-                                   ? 'bi bi-file-earmark-excel text-emerald-500'
-                                   : att.mime_type && att.mime_type.includes('zip')
-                                   ? 'bi bi-file-earmark-zip text-amber-500'
-                                   : 'bi bi-file-earmark text-slate-400'"></i>
+                             :class="att.is_image ? 'bg-sky-100 dark:bg-sky-900/30' : att.mime_type?.includes('pdf') ? 'bg-rose-100 dark:bg-rose-900/30' : 'bg-slate-100 dark:bg-slate-800'">
+                            <i class="text-sm" :class="att.is_image ? 'bi bi-image text-sky-500' : att.is_video ? 'bi bi-play-circle-fill text-violet-500' : att.mime_type?.includes('pdf') ? 'bi bi-file-earmark-pdf text-rose-500' : att.mime_type?.includes('word') ? 'bi bi-file-earmark-word text-blue-500' : att.mime_type?.includes('sheet') || att.mime_type?.includes('excel') ? 'bi bi-file-earmark-excel text-emerald-500' : att.mime_type?.includes('zip') ? 'bi bi-file-earmark-zip text-amber-500' : 'bi bi-file-earmark text-slate-400'"></i>
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-slate-900 dark:text-white truncate" x-text="att.original_name"></p>
-                            <p class="text-xs text-slate-400 mt-0.5">
-                                <span x-text="att.size_formatted"></span> ·
-                                <span x-text="att.uploader_name"></span> ·
-                                <span x-text="att.created_ago"></span>
-                            </p>
+                            <p class="text-xs text-slate-400 mt-0.5"><span x-text="att.size_formatted"></span> · <span x-text="att.uploader_name"></span> · <span x-text="att.created_ago"></span></p>
                         </div>
                         <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a :href="att.url" target="_blank"
-                               class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500"
-                               title="Download">
-                                <i class="bi bi-download text-sm"></i>
-                            </a>
-                            <button @click="remove(att.id)"
-                                    class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors text-slate-400 hover:text-rose-500"
-                                    title="Delete">
-                                <i class="bi bi-trash3 text-sm"></i>
-                            </button>
+                            <a :href="att.url" target="_blank" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500" title="Download"><i class="bi bi-download text-sm"></i></a>
+                            <button @click="remove(att.id)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-500" title="Delete"><i class="bi bi-trash3 text-sm"></i></button>
                         </div>
                     </div>
                 </template>
             </div>
         </div>
 
-        {{-- Activity Log --}}
+        {{-- Activity --}}
         @if(isset($activityLogs) && $activityLogs->count())
         <div class="card overflow-hidden">
             <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800">
-                <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i class="bi bi-clock-history text-slate-400 text-sm"></i> Activity
+                <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                    <i class="bi bi-clock-history text-slate-400 text-xs"></i> Activity
                 </h3>
             </div>
             <div class="p-5 space-y-3">
                 @foreach($activityLogs as $log)
                 <div class="flex gap-3">
                     <div class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <i class="bi bi-circle-fill text-[6px] text-slate-400"></i>
+                        <i class="bi bi-circle-fill text-[5px] text-slate-400"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-xs text-slate-700 dark:text-slate-300">
@@ -411,348 +478,422 @@
         @endif
     </div>
 
-    {{-- ── SIDEBAR ── --}}
+    {{-- ══ SIDEBAR ══ --}}
     <div class="space-y-3">
 
-        {{-- Status + key fields --}}
-        <div class="card p-4 space-y-3">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Properties</p>
+        {{-- Details card --}}
+        <div class="card divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
+            <div class="px-4 py-3">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Details</p>
+            </div>
 
-            {{-- Status (inline dropdown) --}}
-            <div>
-                <label class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block mb-1">Status</label>
-                <select onchange="fetch('/tasks/{{ $task->id }}/status',{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'},body:JSON.stringify({status:this.value})})"
-                        class="form-select text-sm py-1.5">
-                    @foreach(['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
-                    <option value="{{ $v }}" {{ $task->status===$v?'selected':'' }}>{{ $l }}</option>
+            {{-- STATUS --}}
+            <div class="px-4 py-3"
+                 x-data="{
+                     open: false,
+                     status: @js($task->status),
+                     options: @js($statusOptions),
+                     get current() { return this.options.find(o => o.val === this.status) || this.options[0] },
+                     async set(val) {
+                         this.status = val; this.open = false;
+                         await fetch('/tasks/{{ $taskId }}/status', {
+                             method:'PATCH',
+                             headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},
+                             body: JSON.stringify({status: val})
+                         });
+                         window.toast?.('Status updated', 'success');
+                     }
+                 }">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="bi bi-circle-half text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Status</span>
+                </div>
+                <div class="relative pl-6">
+                    <button @click="{{ $canUpdate ? 'open=!open' : '' }}"
+                            @click.outside="open=false"
+                            class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold w-full transition-colors"
+                            :class="[current.chip, {{ $canUpdate ? 'true' : 'false' }} ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
+                        <i class="bi text-xs flex-shrink-0" :class="current.icon"></i>
+                        <span x-text="current.label" class="flex-1 text-left"></span>
+                        @if($canUpdate)<i class="bi bi-chevron-down text-[10px] opacity-50 flex-shrink-0"></i>@endif
+                    </button>
+                    @if($canUpdate)
+                    <div x-show="open" x-cloak
+                         class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 overflow-hidden">
+                        <template x-for="opt in options" :key="opt.val">
+                            <button @click="set(opt.val)"
+                                    class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                <span class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" :class="opt.chip">
+                                    <i class="bi text-[10px]" :class="opt.icon"></i>
+                                </span>
+                                <span x-text="opt.label" class="flex-1"></span>
+                                <i class="bi bi-check text-violet-500 text-xs" x-show="opt.val === status"></i>
+                            </button>
+                        </template>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- PRIORITY --}}
+            <div class="px-4 py-3"
+                 x-data="{
+                     open: false,
+                     priority: @js($task->priority ?? 'medium'),
+                     options: @js($priorityOptions),
+                     get current() { return this.options.find(o => o.val === this.priority) || this.options[1] },
+                     async set(val) {
+                         this.priority = val; this.open = false;
+                         await fetch('/tasks/{{ $taskId }}', {
+                             method:'PATCH',
+                             headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},
+                             body: JSON.stringify({priority: val})
+                         });
+                         window.toast?.('Priority updated', 'success');
+                     }
+                 }">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="bi bi-flag text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Priority</span>
+                </div>
+                <div class="relative pl-6">
+                    <button @click="{{ $canUpdate ? 'open=!open' : '' }}"
+                            @click.outside="open=false"
+                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                            :class="[current.chip, {{ $canUpdate ? 'true' : 'false' }} ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
+                        <i class="bi text-xs" :class="current.icon"></i>
+                        <span x-text="current.label"></span>
+                        @if($canUpdate)<i class="bi bi-chevron-down text-[10px] opacity-50 ml-1"></i>@endif
+                    </button>
+                    @if($canUpdate)
+                    <div x-show="open" x-cloak
+                         class="absolute left-0 top-full mt-1 z-50 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
+                        <template x-for="opt in options" :key="opt.val">
+                            <button @click="set(opt.val)"
+                                    class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                <span class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" :class="opt.chip">
+                                    <i class="bi text-[10px]" :class="opt.icon"></i>
+                                </span>
+                                <span x-text="opt.label"></span>
+                                <i class="bi bi-check text-violet-500 text-xs ml-auto" x-show="opt.val === priority"></i>
+                            </button>
+                        </template>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- TYPE --}}
+            <div class="px-4 py-3"
+                 x-data="{
+                     open: false,
+                     type: @js($task->type ?? 'task'),
+                     options: @js($typeOptions),
+                     get current() { return this.options.find(o => o.val === this.type) || this.options[0] },
+                     async set(val) {
+                         this.type = val; this.open = false;
+                         await fetch('/tasks/{{ $taskId }}', {
+                             method:'PATCH',
+                             headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},
+                             body: JSON.stringify({type: val})
+                         });
+                         window.toast?.('Type updated', 'success');
+                     }
+                 }">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="bi bi-tag text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Type</span>
+                </div>
+                <div class="relative pl-6">
+                    <button @click="{{ $canUpdate ? 'open=!open' : '' }}"
+                            @click.outside="open=false"
+                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                            :class="[current.chip, {{ $canUpdate ? 'true' : 'false' }} ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
+                        <i class="bi text-xs" :class="current.icon"></i>
+                        <span x-text="current.label"></span>
+                        @if($canUpdate)<i class="bi bi-chevron-down text-[10px] opacity-50 ml-1"></i>@endif
+                    </button>
+                    @if($canUpdate)
+                    <div x-show="open" x-cloak
+                         class="absolute left-0 top-full mt-1 z-50 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
+                        <template x-for="opt in options" :key="opt.val">
+                            <button @click="set(opt.val)"
+                                    class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                <span class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" :class="opt.chip">
+                                    <i class="bi text-[10px]" :class="opt.icon"></i>
+                                </span>
+                                <span x-text="opt.label"></span>
+                                <i class="bi bi-check text-violet-500 text-xs ml-auto" x-show="opt.val === type"></i>
+                            </button>
+                        </template>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- DUE DATE --}}
+            <div class="px-4 py-3"
+                 x-data="{
+                     editing: false,
+                     val: @js($task->due_date?->format('Y-m-d') ?? ''),
+                     display: @js($task->due_date?->format('M j, Y') ?? ''),
+                     async save() {
+                         const r = await fetch('/tasks/{{ $taskId }}', {
+                             method:'PATCH',
+                             headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ $csrfToken }}','Accept':'application/json'},
+                             body: JSON.stringify({due_date: this.val || null})
+                         });
+                         if (r.ok) {
+                             this.display = this.val ? new Date(this.val + 'T00:00:00').toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '';
+                             window.toast?.('Due date saved', 'success');
+                         }
+                         this.editing = false;
+                     }
+                 }">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="bi bi-calendar3 text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Due Date</span>
+                </div>
+                <div class="pl-6">
+                    <div x-show="!editing">
+                        <template x-if="display">
+                            <button @click="{{ $canUpdate ? 'editing=true; $nextTick(()=>$refs.dateInput.showPicker?.())' : '' }}"
+                                    class="inline-flex items-center gap-1.5 text-sm font-medium {{ $task->is_overdue ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200' }} {{ $canUpdate ? 'hover:text-violet-600 cursor-pointer' : 'cursor-default' }} transition-colors">
+                                <span x-text="display"></span>
+                                @if($task->is_overdue)<span class="text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 px-1.5 py-0.5 rounded-md">Overdue</span>@endif
+                            </button>
+                        </template>
+                        <template x-if="!display">
+                            <button @click="{{ $canUpdate ? 'editing=true; $nextTick(()=>$refs.dateInput.showPicker?.())' : '' }}"
+                                    class="text-sm text-slate-400 {{ $canUpdate ? 'hover:text-violet-500 cursor-pointer' : 'cursor-default' }} italic transition-colors">
+                                @if($canUpdate) Set due date @else No due date @endif
+                            </button>
+                        </template>
+                    </div>
+                    <div x-show="editing" x-cloak class="flex items-center gap-2">
+                        <input type="date" x-ref="dateInput" x-model="val"
+                               class="form-input text-sm py-1 w-36"
+                               @change="save()" @blur="save()" @keydown.escape="editing=false">
+                        <button @click="val=''; save()" x-show="val"
+                                class="text-xs text-slate-400 hover:text-rose-500 transition-colors" title="Clear">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ASSIGNEES --}}
+            <div class="px-4 py-3"
+                 x-data="{
+                     assignees: {{ Js::from($task->assignees->map(fn($a) => ['id'=>$a->id,'name'=>$a->name,'avatar'=>$a->avatar_url])) }},
+                     available: {{ Js::from($members->whereNotIn('id', $task->assignees->pluck('id'))->values()->map(fn($m) => ['id'=>$m->id,'name'=>$m->name,'avatar'=>$m->avatar_url])) }},
+                     open: false,
+                     canEdit: {{ $canUpdate ? 'true' : 'false' }},
+                     addUrl: '{{ route('tasks.assignees.add', $task) }}',
+                     removeBase: '{{ url('tasks/'.$task->id.'/assignees') }}',
+                     csrfToken: '{{ $csrfToken }}',
+                     async add(user) {
+                         this.open = false;
+                         const r = await fetch(this.addUrl, {method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':this.csrfToken},body:JSON.stringify({user_id:user.id})});
+                         if (r.ok) { this.assignees.push(user); this.available = this.available.filter(u => u.id !== user.id); }
+                     },
+                     async remove(user) {
+                         const r = await fetch(this.removeBase+'/'+user.id, {method:'DELETE',headers:{'X-CSRF-TOKEN':this.csrfToken}});
+                         if (r.ok) { this.assignees = this.assignees.filter(u => u.id !== user.id); this.available.push(user); this.available.sort((a,b)=>a.name.localeCompare(b.name)); }
+                     }
+                 }">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <i class="bi bi-person text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                        <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Assignees</span>
+                    </div>
+                    @if($canUpdate)
+                    <div class="relative">
+                        <button @click="open=!open" @click.outside="open=false"
+                                class="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1 font-medium">
+                            <i class="bi bi-person-plus text-sm"></i>
+                        </button>
+                        <div x-show="open" x-cloak
+                             class="absolute right-0 top-6 z-30 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 max-h-48 overflow-y-auto">
+                            <template x-if="available.length === 0">
+                                <p class="text-xs text-slate-400 text-center py-3">All members assigned</p>
+                            </template>
+                            <template x-for="u in available" :key="u.id">
+                                <button @click="add(u)"
+                                        class="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                    <img :src="u.avatar" class="w-6 h-6 rounded-full flex-shrink-0 object-cover">
+                                    <span class="text-sm text-slate-700 dark:text-slate-300 truncate" x-text="u.name"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+                <div class="pl-6 space-y-2">
+                    <template x-if="assignees.length === 0">
+                        <p class="text-xs text-slate-400 italic">Unassigned</p>
+                    </template>
+                    <template x-for="a in assignees" :key="a.id">
+                        <div class="flex items-center gap-2 group">
+                            <img :src="a.avatar" class="w-6 h-6 rounded-full flex-shrink-0 object-cover">
+                            <span class="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate" x-text="a.name"></span>
+                            @if($canUpdate)
+                            <button @click="remove(a)" title="Remove"
+                                    class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-rose-500">
+                                <i class="bi bi-x-circle text-xs"></i>
+                            </button>
+                            @endif
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {{-- LABELS --}}
+            @if($task->labels->count())
+            <div class="px-4 py-3">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="bi bi-bookmark text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Labels</span>
+                </div>
+                <div class="pl-6 flex flex-wrap gap-1.5">
+                    @foreach($task->labels as $label)
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+                          style="background-color: {{ $label->color }}">{{ $label->name }}</span>
                     @endforeach
-                </select>
+                </div>
             </div>
+            @endif
 
-            {{-- Priority --}}
-            <div>
-                <label class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block mb-1">Priority</label>
-                <span class="badge-{{ $task->priority }} capitalize">{{ ucfirst($task->priority) }}</span>
+            {{-- SPRINT --}}
+            @if($task->sprint)
+            <div class="px-4 py-3">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="bi bi-speedometer2 text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Sprint</span>
+                </div>
+                <div class="pl-6">
+                    <a href="{{ route('projects.sprints.show', [$task->project, $task->sprint]) }}"
+                       class="text-sm text-violet-600 dark:text-violet-400 hover:underline font-medium">
+                        {{ $task->sprint->name }}
+                    </a>
+                </div>
             </div>
+            @endif
 
-            {{-- Type --}}
-            <div>
-                <label class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block mb-1">Type</label>
-                <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium capitalize">
-                    <i class="bi {{ $task->type_icon }} {{ $task->type_color }}"></i>{{ ucfirst($task->type) }}
-                </span>
-            </div>
-
-            {{-- Due Date --}}
-            <div>
-                <label class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block mb-1">Due Date</label>
-                @if($task->due_date)
-                <p class="text-sm font-medium {{ $task->is_overdue ? 'text-rose-500' : 'text-slate-900 dark:text-white' }}">
-                    <i class="bi bi-calendar3 mr-1 text-slate-400"></i>{{ $task->due_date->format('M j, Y') }}
-                    @if($task->is_overdue)<span class="text-xs font-semibold text-rose-500 ml-1">Overdue</span>@endif
-                </p>
-                @else
-                <a href="{{ route('tasks.edit', $task) }}" class="text-xs text-slate-400 hover:text-violet-500 italic">Set due date</a>
-                @endif
-            </div>
-
-            {{-- Estimates --}}
+            {{-- ESTIMATES --}}
             @if($task->estimated_hours || $task->story_points)
-            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                @if($task->estimated_hours)
-                <div>
-                    <label class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block mb-1">Estimated</label>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white"><i class="bi bi-clock text-slate-400 mr-1"></i>{{ $task->estimated_hours }}h</p>
+            <div class="px-4 py-3">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="bi bi-clock text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Estimates</span>
                 </div>
-                @endif
-                @if($task->story_points)
-                <div>
-                    <label class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block mb-1">Points</label>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white"><i class="bi bi-lightning text-slate-400 mr-1"></i>{{ $task->story_points }}</p>
+                <div class="pl-6 flex gap-4">
+                    @if($task->estimated_hours)
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        <i class="bi bi-clock text-slate-400 text-xs mr-1"></i>{{ $task->estimated_hours }}h
+                    </span>
+                    @endif
+                    @if($task->story_points)
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        <i class="bi bi-lightning text-slate-400 text-xs mr-1"></i>{{ $task->story_points }} pts
+                    </span>
+                    @endif
                 </div>
-                @endif
             </div>
             @endif
         </div>
 
-        {{-- Assignees (interactive) --}}
-        <div class="card p-4"
-             x-data="{
-                 assignees: {{ Js::from($task->assignees->map(fn($a) => ['id'=>$a->id,'name'=>$a->name,'avatar'=>$a->avatar_url])) }},
-                 available: {{ Js::from($members->whereNotIn('id', $task->assignees->pluck('id'))->values()->map(fn($m) => ['id'=>$m->id,'name'=>$m->name,'avatar'=>$m->avatar_url])) }},
-                 open: false,
-                 canEdit: {{ auth()->user()->can('update', $task) ? 'true' : 'false' }},
-                 addUrl: '{{ route('tasks.assignees.add', $task) }}',
-                 removeBase: '{{ url('tasks/'.$task->id.'/assignees') }}',
-                 csrfToken: '{{ csrf_token() }}',
-                 async add(user) {
-                     this.open = false;
-                     const r = await fetch(this.addUrl, {
-                         method: 'POST',
-                         headers: {'Content-Type':'application/json','X-CSRF-TOKEN':this.csrfToken},
-                         body: JSON.stringify({user_id: user.id})
-                     });
-                     if (r.ok) {
-                         this.assignees.push(user);
-                         this.available = this.available.filter(u => u.id !== user.id);
-                     }
-                 },
-                 async remove(user) {
-                     const r = await fetch(this.removeBase+'/'+user.id, {
-                         method: 'DELETE',
-                         headers: {'X-CSRF-TOKEN':this.csrfToken}
-                     });
-                     if (r.ok) {
-                         this.assignees = this.assignees.filter(u => u.id !== user.id);
-                         this.available.push(user);
-                         this.available.sort((a,b) => a.name.localeCompare(b.name));
-                     }
-                 }
-             }">
-            <div class="flex items-center justify-between mb-2.5">
-                <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Assignees</label>
-                @can('update', $task)
-                <div class="relative" x-show="available.length > 0 || assignees.length > 0">
-                    <button @click="open = !open"
-                            class="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1">
-                        <i class="bi bi-person-plus text-sm"></i> Add
-                    </button>
-                    <div x-show="open" x-cloak @click.away="open = false"
-                         class="absolute right-0 top-6 z-30 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 max-h-48 overflow-y-auto">
-                        <template x-if="available.length === 0">
-                            <p class="text-xs text-slate-400 text-center py-3">All members assigned</p>
-                        </template>
-                        <template x-for="u in available" :key="u.id">
-                            <button @click="add(u)"
-                                    class="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                <img :src="u.avatar" class="w-6 h-6 rounded-full flex-shrink-0">
-                                <span class="text-sm text-slate-700 dark:text-slate-300 truncate" x-text="u.name"></span>
-                            </button>
-                        </template>
-                    </div>
-                </div>
-                @endcan
-            </div>
-            <div class="space-y-2">
-                <template x-if="assignees.length === 0">
-                    <p class="text-xs text-slate-400 italic">No one assigned</p>
-                </template>
-                <template x-for="a in assignees" :key="a.id">
-                    <div class="flex items-center gap-2.5 group">
-                        <img :src="a.avatar" class="w-7 h-7 rounded-full flex-shrink-0">
-                        <span class="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate" x-text="a.name"></span>
-                        @can('update', $task)
-                        <button @click="remove(a)"
-                                class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-rose-500 flex-shrink-0"
-                                title="Remove">
-                            <i class="bi bi-x-circle text-sm"></i>
-                        </button>
-                        @endcan
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        {{-- Labels --}}
-        @if($task->labels->count())
-        <div class="card p-4">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2.5">Labels</label>
-            <div class="flex flex-wrap gap-1.5">
-                @foreach($task->labels as $label)
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium text-white"
-                      style="background-color: {{ $label->color }}">{{ $label->name }}</span>
-                @endforeach
-            </div>
-        </div>
-        @endif
-
         {{-- Time Tracker --}}
         <div class="card p-4"
              x-data="{ running: false, entryId: null, elapsed: '00:00:00', startedAt: null, _tick: null }"
-             x-init="
-                 fetch('/time-entries/running', {headers:{'Accept':'application/json'}})
-                     .then(r=>r.ok?r.json():null)
-                     .then(d => {
-                         if (d?.entry?.task_id == {{ $task->id }}) {
-                             running=true; entryId=d.entry.id;
-                             startedAt=new Date(d.entry.started_at);
-                             _tick=setInterval(()=>{
-                                 const s=Math.floor((Date.now()-startedAt)/1000);
-                                 elapsed=[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(n=>String(n).padStart(2,'0')).join(':');
-                             },1000);
-                         }
-                     }).catch(()=>{});">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-3">Time Tracker</label>
-            <div class="flex items-center gap-3">
-                <button @click="
-                    const tok=document.querySelector('meta[name=csrf-token]').content;
-                    if (running) {
-                        fetch('/time-entries/'+entryId+'/stop',{method:'POST',headers:{'X-CSRF-TOKEN':tok,'Accept':'application/json'}})
-                            .then(()=>{running=false;clearInterval(_tick);elapsed='00:00:00';entryId=null;});
-                    } else {
-                        fetch('/time-entries/start',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':tok,'Accept':'application/json'},body:JSON.stringify({task_id:{{ $task->id }}})})
-                            .then(r=>r.json()).then(d=>{
-                                running=true;entryId=d.entry.id;startedAt=new Date(d.entry.started_at);
-                                _tick=setInterval(()=>{const s=Math.floor((Date.now()-startedAt)/1000);elapsed=[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(n=>String(n).padStart(2,'0')).join(':');},1000);
-                            });
-                    }"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-                    :class="running
-                        ? 'bg-rose-500 hover:bg-rose-600 text-white'
-                        : 'bg-violet-600 hover:bg-violet-700 text-white'">
-                    <i class="bi text-xs" :class="running ? 'bi-stop-fill' : 'bi-play-fill'"></i>
-                    <span x-text="running ? 'Stop' : 'Start'"></span>
-                </button>
+             x-init="fetch('/time-entries/running',{headers:{'Accept':'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{if(d?.entry?.task_id=={{ $taskId }}){running=true;entryId=d.entry.id;startedAt=new Date(d.entry.started_at);_tick=setInterval(()=>{const s=Math.floor((Date.now()-startedAt)/1000);elapsed=[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(n=>String(n).padStart(2,'0')).join(':');},1000);}}).catch(()=>{})">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <i class="bi bi-stopwatch"></i> Time Tracker
+                </span>
                 <span x-show="running" x-text="elapsed" x-cloak
-                      class="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums tracking-widest"></span>
-                <span x-show="!running" class="text-xs text-slate-400">Not tracking</span>
+                      class="font-mono text-sm font-bold text-slate-900 dark:text-white tabular-nums tracking-wider"></span>
             </div>
+            <button @click="
+                const tok=document.querySelector('meta[name=csrf-token]').content;
+                if(running){fetch('/time-entries/'+entryId+'/stop',{method:'POST',headers:{'X-CSRF-TOKEN':tok,'Accept':'application/json'}}).then(()=>{running=false;clearInterval(_tick);elapsed='00:00:00';entryId=null;});}
+                else{fetch('/time-entries/start',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':tok,'Accept':'application/json'},body:JSON.stringify({task_id:{{ $taskId }}})}).then(r=>r.json()).then(d=>{running=true;entryId=d.entry.id;startedAt=new Date(d.entry.started_at);_tick=setInterval(()=>{const s=Math.floor((Date.now()-startedAt)/1000);elapsed=[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(n=>String(n).padStart(2,'0')).join(':');},1000);});}"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+                :class="running ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'">
+                <i class="bi text-xs" :class="running ? 'bi-stop-fill' : 'bi-play-fill'"></i>
+                <span x-text="running ? 'Stop tracking' : 'Start tracking'"></span>
+            </button>
         </div>
 
-        {{-- Quick Actions --}}
-        <div class="card p-4">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2.5">Quick Actions</label>
-            <div class="space-y-0.5">
-                <a href="{{ route('tasks.edit', $task) }}" class="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 px-2 py-2 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
-                    <i class="bi bi-pencil w-4 text-center text-slate-400 text-xs"></i> Edit task
-                </a>
-                <a href="{{ route('tasks.create', ['project_id' => $task->project->id]) }}?parent_id={{ $task->id }}"
-                   class="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 px-2 py-2 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
-                    <i class="bi bi-plus-circle w-4 text-center text-slate-400 text-xs"></i> Add subtask
-                </a>
-                @php $activeSprint = $task->project->activeSprint(); @endphp
-                @if($activeSprint)
-                <button onclick="fetch('/projects/{{ $task->project->id }}/sprints/{{ $activeSprint->id }}/add-task',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'},body:JSON.stringify({task_id:{{ $task->id }}})}).then(()=>window.location.reload())"
-                        class="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 px-2 py-2 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors w-full text-left">
-                    <i class="bi bi-speedometer2 w-4 text-center text-slate-400 text-xs"></i> Add to active sprint
-                </button>
-                @endif
-                <a href="#comments" class="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 px-2 py-2 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
-                    <i class="bi bi-chat w-4 text-center text-slate-400 text-xs"></i> Jump to comments
-                </a>
-                @can('delete', $task)
-                <button onclick="if(confirm('Delete this task?')) document.getElementById('delete-form').submit()"
-                        class="flex items-center gap-2.5 text-sm text-rose-500 hover:text-rose-600 px-2 py-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors w-full text-left">
-                    <i class="bi bi-trash w-4 text-center text-xs"></i> Delete task
-                </button>
-                <form id="delete-form" method="POST" action="{{ route('tasks.destroy', $task) }}" class="hidden">
-                    @csrf @method('DELETE')
-                </form>
-                @endcan
-            </div>
-        </div>
-
-        {{-- Project link --}}
+        {{-- Project --}}
         <a href="{{ route('projects.show', $task->project) }}"
-           class="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700
-                  hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group">
-            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+           class="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                  style="background-color: {{ $task->project->color ?? '#3B82F6' }}20">
                 <i class="bi bi-folder2-open text-sm" style="color: {{ $task->project->color ?? '#3B82F6' }}"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-xs font-semibold text-slate-900 dark:text-white truncate">{{ $task->project->name }}</p>
+                <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ $task->project->name }}</p>
                 <p class="text-[10px] text-slate-400">View project</p>
             </div>
             <i class="bi bi-chevron-right text-xs text-slate-400 group-hover:text-violet-500 transition-colors"></i>
         </a>
+
+        {{-- Delete --}}
+        @can('delete', $task)
+        <button onclick="if(confirm('Delete this task? This cannot be undone.')) document.getElementById('delete-form').submit()"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-800 transition-all font-medium">
+            <i class="bi bi-trash3 text-sm"></i> Delete task
+        </button>
+        <form id="delete-form" method="POST" action="{{ route('tasks.destroy', $task) }}" class="hidden">
+            @csrf @method('DELETE')
+        </form>
+        @endcan
     </div>
 </div>
+
 @push('scripts')
 @php
-$attachmentsJson = $task->attachments->map(function($a) {
-    return [
-        'id'             => $a->id,
-        'original_name'  => $a->original_name,
-        'mime_type'      => $a->mime_type,
-        'size_formatted' => $a->size_formatted,
-        'is_image'       => $a->is_image,
-        'is_video'       => $a->is_video,
-        'url'            => $a->url,
-        'uploader_name'  => $a->user->name,
-        'created_ago'    => $a->created_at->diffForHumans(),
-    ];
-});
+$attachmentsJson = $task->attachments->map(fn($a) => [
+    'id'=>$a->id,'original_name'=>$a->original_name,'mime_type'=>$a->mime_type,
+    'size_formatted'=>$a->size_formatted,'is_image'=>$a->is_image,'is_video'=>$a->is_video,
+    'url'=>$a->url,'uploader_name'=>$a->user->name,'created_ago'=>$a->created_at->diffForHumans(),
+]);
 @endphp
 <script>
 function attachmentManager(uploadUrl, destroyUrlTemplate) {
     return {
         files: @json($attachmentsJson),
-        uploading: false,
-        uploadProgress: 0,
-        uploadStatus: '',
-        dragging: false,
-
+        uploading: false, uploadProgress: 0, uploadStatus: '', dragging: false,
         async upload(fileList) {
-            if (!fileList || !fileList.length) return;
-            this.uploading = true;
-            this.uploadProgress = 0;
-
+            if (!fileList?.length) return;
+            this.uploading = true; this.uploadProgress = 0;
             for (let i = 0; i < fileList.length; i++) {
                 const file = fileList[i];
-                this.uploadStatus = `Uploading ${file.name}… (${i + 1}/${fileList.length})`;
-
+                this.uploadStatus = `Uploading ${file.name}… (${i+1}/${fileList.length})`;
                 const form = new FormData();
                 form.append('file', file);
                 form.append('_token', document.querySelector('meta[name=csrf-token]').content);
-
                 try {
                     const res = await new Promise((resolve, reject) => {
                         const xhr = new XMLHttpRequest();
                         xhr.open('POST', uploadUrl);
-                        xhr.upload.onprogress = e => {
-                            if (e.lengthComputable) {
-                                this.uploadProgress = Math.round((e.loaded / e.total) * 100);
-                            }
-                        };
-                        xhr.onload = () => {
-                            if (xhr.status >= 200 && xhr.status < 300) {
-                                resolve(JSON.parse(xhr.responseText));
-                            } else {
-                                reject(new Error(xhr.responseText));
-                            }
-                        };
-                        xhr.onerror = () => reject(new Error('Network error'));
+                        xhr.upload.onprogress = e => { if (e.lengthComputable) this.uploadProgress = Math.round(e.loaded/e.total*100); };
+                        xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve(JSON.parse(xhr.responseText)) : reject();
+                        xhr.onerror = reject;
                         xhr.send(form);
                     });
-
                     const att = res.attachment;
-                    this.files.push({
-                        id:             att.id,
-                        original_name:  att.original_name,
-                        mime_type:      att.mime_type,
-                        size_formatted: att.size_formatted,
-                        is_image:       att.is_image,
-                        url:            res.url,
-                        uploader_name:  att.user?.name ?? 'You',
-                        created_ago:    'just now',
-                    });
-                    window.toast(`${file.name} uploaded`, 'success');
-                } catch (err) {
-                    window.toast(`Failed to upload ${file.name}`, 'error');
-                }
+                    this.files.push({id:att.id,original_name:att.original_name,mime_type:att.mime_type,size_formatted:att.size_formatted,is_image:att.is_image,is_video:att.is_video,url:res.url,uploader_name:att.user?.name??'You',created_ago:'just now'});
+                    window.toast?.(`${file.name} uploaded`, 'success');
+                } catch { window.toast?.(`Failed to upload ${file.name}`, 'error'); }
             }
-
-            this.uploading = false;
-            this.uploadProgress = 0;
+            this.uploading = false; this.uploadProgress = 0;
         },
-
         async remove(id) {
             if (!confirm('Delete this attachment?')) return;
-            const url = destroyUrlTemplate.replace(':id', id);
-            const token = document.querySelector('meta[name=csrf-token]').content;
-            try {
-                const res = await fetch(url, {
-                    method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
-                });
-                if (res.ok) {
-                    this.files = this.files.filter(f => f.id !== id);
-                    window.toast('Attachment deleted', 'success');
-                }
-            } catch {
-                window.toast('Could not delete attachment', 'error');
-            }
+            const res = await fetch(destroyUrlTemplate.replace(':id', id), {method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'}});
+            if (res.ok) { this.files = this.files.filter(f => f.id !== id); window.toast?.('Deleted', 'success'); }
         }
     };
 }
