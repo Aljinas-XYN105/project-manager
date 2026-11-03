@@ -117,12 +117,15 @@
                     ['route'=>'my-tasks',        'icon'=>'bi-check2-square',     'label'=>'Task List',     'match'=>'my-tasks'],
                     ['route'=>'projects.index',  'icon'=>'bi-folder2-open',      'label'=>'Projects',     'match'=>'projects.*'],
                 ],
-                'WORK' => [
+                'WORK' => array_filter([
+                    auth()->user()?->hasRole(['admin','manager'])
+                        ? ['route'=>'standups.index', 'icon'=>'bi-mic',            'label'=>'Standups',     'match'=>'standups.*']
+                        : null,
                     ['route'=>'bugs.index',          'icon'=>'bi-bug',           'label'=>'Bug Tracker',  'match'=>'bugs.*'],
                     ['route'=>'daily-reports.index',  'icon'=>'bi-journal-text',  'label'=>'Daily Reports','match'=>'daily-reports.*'],
                     ['route'=>'time-entries.index',   'icon'=>'bi-stopwatch',     'label'=>'Time Tracker', 'match'=>'time-entries.*'],
                     ['route'=>'reports.index',        'icon'=>'bi-bar-chart-line','label'=>'Reports',      'match'=>'reports.*'],
-                ],
+                ]),
                 'PEOPLE' => [
                     ['route'=>'people.index',        'icon'=>'bi-people',         'label'=>'Directory',    'match'=>'people.*'],
                     ['route'=>'teams.index',          'icon'=>'bi-diagram-3',      'label'=>'Teams',        'match'=>'teams.*'],

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\StandupController;
 use App\Http\Controllers\ProjectNoteController;
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\CommentController;
@@ -153,6 +154,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Search & personal task list
     Route::get('search', SearchController::class)->name('search');
     Route::get('my-tasks', MyTasksController::class)->name('my-tasks');
+
+    // Standups (manager/admin only)
+    Route::get('standups', [StandupController::class, 'index'])->name('standups.index');
+    Route::get('standups/{user}', [StandupController::class, 'show'])->name('standups.show');
+    Route::patch('tasks/{task}/standup-move', [StandupController::class, 'moveTask'])->name('standups.move');
 
     // People
     Route::get('people', [PeopleController::class, 'index'])->name('people.index');
