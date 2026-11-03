@@ -307,7 +307,7 @@
                         Drop files here or <label class="text-violet-500 hover:text-violet-600 cursor-pointer font-medium">
                             browse<input type="file" class="sr-only" multiple @change="upload($event.target.files)">
                         </label>
-                        <span class="text-slate-300 dark:text-slate-600"> · max 10 MB per file</span>
+                        <span class="text-slate-300 dark:text-slate-600"> · images, PDFs, videos, docs · max 100 MB</span>
                     </p>
                 </div>
             </div>
@@ -346,6 +346,8 @@
                             <i class="text-sm"
                                :class="att.is_image
                                    ? 'bi bi-image text-sky-500'
+                                   : att.is_video
+                                   ? 'bi bi-play-circle-fill text-violet-500'
                                    : att.mime_type && att.mime_type.includes('pdf')
                                    ? 'bi bi-file-earmark-pdf text-rose-500'
                                    : att.mime_type && att.mime_type.includes('word')
@@ -665,6 +667,7 @@ $attachmentsJson = $task->attachments->map(function($a) {
         'mime_type'      => $a->mime_type,
         'size_formatted' => $a->size_formatted,
         'is_image'       => $a->is_image,
+        'is_video'       => $a->is_video,
         'url'            => $a->url,
         'uploader_name'  => $a->user->name,
         'created_ago'    => $a->created_at->diffForHumans(),

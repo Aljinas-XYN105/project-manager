@@ -27,12 +27,13 @@
                     'projects'       => ['icon' => 'bi-folder2-open',      'label' => 'Projects'],
                     'tasks'          => ['icon' => 'bi-list-task',         'label' => 'Tasks'],
                     'kanban'         => ['icon' => 'bi-kanban',            'label' => 'Kanban Board'],
+                    'standups'       => ['icon' => 'bi-mic-fill',          'label' => 'Standups'],
                     'sprints'        => ['icon' => 'bi-speedometer2',      'label' => 'Sprints'],
                     'bugs'           => ['icon' => 'bi-bug-fill',          'label' => 'Bug Tracker'],
                     'daily-reports'  => ['icon' => 'bi-journal-text',      'label' => 'Daily Reports'],
                     'time-tracking'  => ['icon' => 'bi-clock-history',     'label' => 'Time Tracking'],
                     'teams'          => ['icon' => 'bi-people-fill',       'label' => 'Teams'],
-                    'my-tasks'       => ['icon' => 'bi-check2-square',     'label' => 'My Tasks & Search'],
+                    'my-tasks'       => ['icon' => 'bi-check2-square',     'label' => 'Task List & Search'],
                     'people'         => ['icon' => 'bi-person-lines-fill', 'label' => 'People & Org Chart'],
                     'leave'          => ['icon' => 'bi-airplane',          'label' => 'Leave & Holidays'],
                     'attendance'     => ['icon' => 'bi-calendar-check',    'label' => 'Attendance & Status'],
@@ -196,6 +197,26 @@
                 </div>
             </div>
 
+            {{-- ── STANDUPS ── --}}
+            <div x-show="activeSection === 'standups'" x-transition>
+                <div class="card p-6 space-y-5">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-mic-fill text-violet-500"></i> Standups
+                    </h2>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                        The Standups feature (visible to Managers and Admins only) lets you run your daily team standup from a single page per member.
+                        Each member's view shows all their tasks organised into five lanes — <strong>To Do, In Progress, In Review, QA Testing, Done</strong> — mirroring the project Kanban board.
+                    </p>
+                    @include('help._section', ['items' => [
+                        ['q' => 'How do I run a standup?', 'a' => 'Go to Standups in the sidebar, click the member whose turn it is. Their tasks load in the lane board. As they speak, drag tasks between lanes to update their status — the change syncs instantly to the project Kanban board.'],
+                        ['q' => 'Is the standup board a separate status from the Kanban?', 'a' => 'No — they share the same task record. Moving a card in standup changes the task\'s column_id and status, which is immediately reflected on the Kanban board and in Task List for everyone.'],
+                        ['q' => 'Can I edit task details during standup?', 'a' => 'Yes. Click any task card to open the quick-edit panel and update title, priority, due date, assignees, labels, or description without leaving the standup view.'],
+                        ['q' => 'Who can see Standups?', 'a' => 'Only users with the Manager or Admin role see the Standups link in the sidebar. Regular developers do not have access.'],
+                        ['q' => 'If two people are assigned to a task, does moving it in one person\'s standup affect the other?', 'a' => 'Yes — tasks have a single shared status. Moving a task updates it for all assignees and on the Kanban board.'],
+                    ]])
+                </div>
+            </div>
+
             {{-- ── SPRINTS ── --}}
             <div x-show="activeSection === 'sprints'" x-transition>
                 <div class="card p-6 space-y-5">
@@ -305,18 +326,24 @@
                 </div>
             </div>
 
-            {{-- ── MY TASKS & SEARCH ── --}}
+            {{-- ── TASK LIST & SEARCH ── --}}
             <div x-show="activeSection === 'my-tasks'" x-transition>
                 <div class="card p-6 space-y-5">
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <i class="bi bi-check2-square text-violet-500"></i> My Tasks & Search
+                        <i class="bi bi-check2-square text-violet-500"></i> Task List & Search
                     </h2>
-                    <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">My Tasks lists everything assigned to you across all projects, grouped by when it is due. The search box at the top of every page finds projects, tasks and people.</p>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                        <strong>Task List</strong> (formerly "My Tasks") shows everything assigned to you across all projects, grouped by due date.
+                        Managers and Admins also see an <em>Assignee</em> filter to view any team member's tasks.
+                        The <strong>Quick Edit Panel</strong> lets you click any task card anywhere in the app to edit it inline — no page navigation needed.
+                    </p>
                     @include('help._section', [
                         'items' => [
-                            ['q' => 'Where do I see all my tasks?', 'a' => 'Open My Tasks in the sidebar. Tasks are grouped into Overdue, Today, This week, Later and No due date. Tick the circle to mark a task done, and filter by project or priority.'],
-                            ['q' => 'How do I search?', 'a' => 'Click the search box in the header (or press /) and type at least 2 characters. Use the arrow keys and Enter to jump to a result, or press Enter to see all results.'],
-                            ['q' => 'Can I search by ticket number?', 'a' => 'Yes. Type the ticket key, for example MOBILE-12, to jump straight to that task.'],
+                            ['q' => 'Where do I see all my tasks?', 'a' => 'Open Task List in the sidebar. Tasks are grouped into Overdue, Today, This week, Later and No due date. Filter by project, priority, or (managers only) by assignee.'],
+                            ['q' => 'How does the quick-edit panel work?', 'a' => 'Click any task card on the Kanban board, standup view, or anywhere a card appears. A slide-in panel opens from the right where you can edit the title, type, priority, column, due date, estimate, assignees, labels, description, and attachments — all saved automatically.'],
+                            ['q' => 'How do I attach files to a task?', 'a' => 'Open the task\'s detail page or the quick-edit panel. Drag files into the drop zone or click Add/Upload to browse. Supports images, PDFs, Word/Excel documents, ZIP files, and videos (MP4, MOV, WebM). Max 100 MB per file.'],
+                            ['q' => 'How do I search?', 'a' => 'Click the search box in the header (or press /) and type at least 2 characters. Use arrow keys and Enter to jump to a result.'],
+                            ['q' => 'Can I search by ticket number?', 'a' => 'Yes. Type the ticket key, for example RAEDNA-3, to jump straight to that task.'],
                         ]
                     ])
                 </div>

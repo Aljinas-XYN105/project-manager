@@ -207,7 +207,7 @@ class TaskController extends Controller
     public function panelData(Task $task)
     {
         $this->authorize('view', $task);
-        $task->load(['project', 'column', 'assignees', 'labels']);
+        $task->load(['project', 'column', 'assignees', 'labels', 'attachments.user']);
 
         return response()->json([
             'task'    => [
@@ -234,7 +234,17 @@ class TaskController extends Controller
             'members' => \App\Models\User::active()->orderBy('name')->get()->map(fn ($u) => [
                 'id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar_url,
             ]),
-            'labels'  => $task->project->labels()->get(['id','name','color']),
+            'labels'      => $task->project->labels()->get(['id','name','color']),
+            'attachments' => $task->attachments->map(fn ($a) => [
+                'id'             => $a->id,
+                'original_name'  => $a->original_name,
+                'mime_type'      => $a->mime_type,
+                'size_formatted' => $a->size_formatted,
+                'is_image'       => $a->is_image,
+                'is_video'       => $a->is_video,
+                'url'            => $a->url,
+                'uploader_name'  => $a->user->name,
+            ]),
         ]);
     }
 

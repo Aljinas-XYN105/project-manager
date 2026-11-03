@@ -40,7 +40,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['columns.tasks.assignees', 'members', 'owner', 'labels']);
+        $project->load(['columns.tasks.assignees', 'members', 'owner', 'labels', 'attachments.user']);
         $stats = $this->projectService->getProjectStats($project);
 
         return view('projects.show', compact('project', 'stats'));

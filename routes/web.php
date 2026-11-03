@@ -77,6 +77,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Attachments
     Route::post('tasks/{task}/attachments', [AttachmentController::class, 'store'])->name('attachments.store');
+    Route::post('projects/{project}/attachments', [AttachmentController::class, 'storeForProject'])->name('attachments.project.store');
     Route::delete('attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
     // Columns

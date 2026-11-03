@@ -143,4 +143,219 @@
         </div>
     </div>
 </div>
+
+{{-- Project Attachments --}}
+@php
+$projectAttachmentsJson = $project->attachments->map(fn($a) => [
+    'id'             => $a->id,
+    'original_name'  => $a->original_name,
+    'mime_type'      => $a->mime_type,
+    'size_formatted' => $a->size_formatted,
+    'is_image'       => $a->is_image,
+    'is_video'       => $a->is_video,
+    'url'            => $a->url,
+    'uploader_name'  => $a->user->name,
+    'created_ago'    => $a->created_at->diffForHumans(),
+]);
+@endphp
+
+<div class="card overflow-hidden mt-6"
+     x-data="attachmentManager('{{ route('attachments.project.store', $project) }}', '{{ route('attachments.destroy', ':id') }}')">
+    <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="bi bi-paperclip text-slate-400 text-sm"></i>
+            Project Files & Attachments
+            <span class="text-xs font-normal text-slate-400" x-text="'(' + files.length + ')'"></span>
+        </h3>
+        <label class="btn-ghost btn-sm cursor-pointer">
+            <i class="bi bi-plus-lg text-sm"></i> Upload
+            <input type="file" class="sr-only" multiple @change="upload($event.target.files)">
+        </label>
+    </div>
+
+    {{-- Drop zone --}}
+    <div class="px-5 py-3 border-b border-dashed border-slate-200 dark:border-slate-700 transition-colors"
+         :class="dragging ? 'bg-violet-50 dark:bg-violet-900/10 border-violet-400' : ''"
+         @dragover.prevent="dragging = true"
+         @dragleave.prevent="dragging = false"
+         @drop.prevent="dragging = false; upload($event.dataTransfer.files)">
+        <div class="flex items-center justify-center gap-2 py-2 text-center">
+            <i class="bi bi-cloud-upload text-slate-300 dark:text-slate-600 text-xl" :class="dragging ? 'text-violet-400' : ''"></i>
+            <p class="text-xs text-slate-400" :class="dragging ? 'text-violet-500' : ''">
+                Drop files here or <label class="text-violet-500 hover:text-violet-600 cursor-pointer font-medium">
+                    browse<input type="file" class="sr-only" multiple @change="upload($event.target.files)">
+                </label>
+                <span class="text-slate-300 dark:text-slate-600"> · images, PDFs, videos, docs · max 100 MB</span>
+            </p>
+        </div>
+    </div>
+
+    {{-- Upload progress --}}
+    <template x-if="uploading">
+        <div class="px-5 py-3 flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 bg-violet-50/50 dark:bg-violet-900/10">
+            <div class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
+                <i class="bi bi-arrow-up text-violet-500 text-sm animate-pulse"></i>
+            </div>
+            <div class="flex-1">
+                <p class="text-xs font-medium text-violet-700 dark:text-violet-300" x-text="uploadStatus"></p>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1 mt-1.5">
+                    <div class="bg-violet-500 h-1 rounded-full transition-all duration-300"
+                         :style="'width: ' + uploadProgress + '%'"></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {{-- File grid --}}
+    <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <template x-if="files.length === 0 && !uploading">
+            <div class="col-span-full py-8 text-center">
+                <i class="bi bi-cloud-upload text-3xl text-slate-300 dark:text-slate-600 block mb-2"></i>
+                <p class="text-sm text-slate-400">No project files yet — drag and drop or click Upload</p>
+            </div>
+        </template>
+        <template x-for="att in files" :key="att.id">
+            <div class="group relative rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-800/50 hover:border-violet-300 dark:hover:border-violet-700 transition-all">
+                {{-- Preview area --}}
+                <div class="h-28 flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                    <template x-if="att.is_image">
+                        <img :src="att.url" :alt="att.original_name" class="h-full w-full object-cover">
+                    </template>
+                    <template x-if="att.is_video">
+                        <div class="flex flex-col items-center gap-1 text-violet-500">
+                            <i class="bi bi-play-circle-fill text-3xl"></i>
+                            <span class="text-[10px] font-medium text-slate-400">Video</span>
+                        </div>
+                    </template>
+                    <template x-if="!att.is_image && !att.is_video">
+                        <div class="flex flex-col items-center gap-1">
+                            <i class="text-3xl"
+                               :class="att.mime_type && att.mime_type.includes('pdf')
+                                   ? 'bi bi-file-earmark-pdf text-rose-400'
+                                   : att.mime_type && att.mime_type.includes('word')
+                                   ? 'bi bi-file-earmark-word text-blue-400'
+                                   : att.mime_type && (att.mime_type.includes('sheet')||att.mime_type.includes('excel'))
+                                   ? 'bi bi-file-earmark-excel text-emerald-400'
+                                   : att.mime_type && att.mime_type.includes('zip')
+                                   ? 'bi bi-file-earmark-zip text-amber-400'
+                                   : 'bi bi-file-earmark text-slate-400'"></i>
+                        </div>
+                    </template>
+                </div>
+                {{-- Info --}}
+                <div class="px-3 py-2">
+                    <p class="text-xs font-medium text-slate-900 dark:text-white truncate" x-text="att.original_name"></p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">
+                        <span x-text="att.size_formatted"></span> · <span x-text="att.uploader_name"></span>
+                    </p>
+                </div>
+                {{-- Hover actions --}}
+                <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a :href="att.url" target="_blank"
+                       class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/90 dark:bg-slate-900/90 shadow text-slate-600 hover:text-violet-600">
+                        <i class="bi bi-download text-xs"></i>
+                    </a>
+                    <button @click="remove(att.id)"
+                            class="w-7 h-7 flex items-center justify-center rounded-lg bg-white/90 dark:bg-slate-900/90 shadow text-slate-400 hover:text-rose-500">
+                        <i class="bi bi-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+@push('scripts')
+@php
+$projectAttachmentsJson = $project->attachments->map(fn($a) => [
+    'id'             => $a->id,
+    'original_name'  => $a->original_name,
+    'mime_type'      => $a->mime_type,
+    'size_formatted' => $a->size_formatted,
+    'is_image'       => $a->is_image,
+    'is_video'       => $a->is_video,
+    'url'            => $a->url,
+    'uploader_name'  => $a->user->name,
+    'created_ago'    => $a->created_at->diffForHumans(),
+]);
+@endphp
+<script>
+function attachmentManager(uploadUrl, destroyUrlTemplate) {
+    return {
+        files: @json($projectAttachmentsJson),
+        uploading: false,
+        uploadProgress: 0,
+        uploadStatus: '',
+        dragging: false,
+
+        async upload(fileList) {
+            if (!fileList || !fileList.length) return;
+            this.uploading = true;
+            this.uploadProgress = 0;
+
+            for (let i = 0; i < fileList.length; i++) {
+                const file = fileList[i];
+                this.uploadStatus = `Uploading ${file.name}… (${i + 1}/${fileList.length})`;
+
+                const form = new FormData();
+                form.append('file', file);
+                form.append('_token', document.querySelector('meta[name=csrf-token]').content);
+
+                try {
+                    const res = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', uploadUrl);
+                        xhr.upload.onprogress = e => {
+                            if (e.lengthComputable)
+                                this.uploadProgress = Math.round((e.loaded / e.total) * 100);
+                        };
+                        xhr.onload  = () => xhr.status >= 200 && xhr.status < 300
+                            ? resolve(JSON.parse(xhr.responseText))
+                            : reject(new Error(xhr.responseText));
+                        xhr.onerror = () => reject(new Error('Network error'));
+                        xhr.send(form);
+                    });
+
+                    const att = res.attachment;
+                    this.files.push({
+                        id:             att.id,
+                        original_name:  att.original_name,
+                        mime_type:      att.mime_type,
+                        size_formatted: att.size_formatted,
+                        is_image:       att.is_image,
+                        is_video:       att.is_video,
+                        url:            res.url,
+                        uploader_name:  att.user?.name ?? 'You',
+                        created_ago:    'just now',
+                    });
+                    window.toast(`${file.name} uploaded`, 'success');
+                } catch {
+                    window.toast(`Failed to upload ${file.name}`, 'error');
+                }
+            }
+            this.uploading = false;
+            this.uploadProgress = 0;
+        },
+
+        async remove(id) {
+            if (!confirm('Delete this attachment?')) return;
+            const url   = destroyUrlTemplate.replace(':id', id);
+            const token = document.querySelector('meta[name=csrf-token]').content;
+            try {
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
+                });
+                if (res.ok) {
+                    this.files = this.files.filter(f => f.id !== id);
+                    window.toast('File deleted', 'success');
+                }
+            } catch {
+                window.toast('Could not delete file', 'error');
+            }
+        },
+    };
+}
+</script>
+@endpush
 @endsection

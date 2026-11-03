@@ -198,6 +198,68 @@
                         </div>
                     </div>
 
+                    {{-- Attachments --}}
+                    <div x-data="panelAttachments(task.id, task.attachments ?? [])">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="form-label mb-0">Attachments
+                                <span class="font-normal text-slate-400" x-text="'(' + atts.length + ')'"></span>
+                            </label>
+                            <label class="btn-ghost btn-sm text-xs cursor-pointer py-0.5 px-2">
+                                <i class="bi bi-plus-lg text-xs"></i> Add
+                                <input type="file" class="sr-only" multiple @change="upload($event.target.files)">
+                            </label>
+                        </div>
+
+                        {{-- Drop zone --}}
+                        <div class="rounded-xl border-2 border-dashed transition-colors mb-2"
+                             :class="dropping ? 'border-violet-400 bg-violet-50 dark:bg-violet-900/10' : 'border-slate-200 dark:border-slate-700'"
+                             @dragover.prevent="dropping = true"
+                             @dragleave.prevent="dropping = false"
+                             @drop.prevent="dropping = false; upload($event.dataTransfer.files)">
+                            <div class="py-3 flex items-center justify-center gap-2 text-center">
+                                <i class="bi bi-cloud-upload text-slate-300 text-lg" :class="dropping ? 'text-violet-400' : ''"></i>
+                                <p class="text-xs text-slate-400" :class="dropping ? 'text-violet-500' : ''">Drop or <label class="text-violet-500 cursor-pointer font-medium">browse<input type="file" class="sr-only" multiple @change="upload($event.target.files)"></label></p>
+                            </div>
+                        </div>
+
+                        {{-- Upload bar --}}
+                        <template x-if="uploading">
+                            <div class="mb-2 flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400">
+                                <i class="bi bi-arrow-up animate-pulse"></i>
+                                <span x-text="uploadStatus"></span>
+                                <div class="flex-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-violet-500 rounded-full transition-all" :style="'width:'+uploadPct+'%'"></div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- File list --}}
+                        <div class="space-y-1">
+                            <template x-for="a in atts" :key="a.id">
+                                <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg
+                                            hover:bg-slate-50 dark:hover:bg-slate-800/50 group transition-colors">
+                                    <i class="text-sm flex-shrink-0"
+                                       :class="a.is_image ? 'bi bi-image text-sky-500'
+                                           : a.is_video ? 'bi bi-play-circle-fill text-violet-500'
+                                           : a.mime_type && a.mime_type.includes('pdf') ? 'bi bi-file-earmark-pdf text-rose-500'
+                                           : 'bi bi-file-earmark text-slate-400'"></i>
+                                    <span class="text-xs text-slate-700 dark:text-slate-300 truncate flex-1" x-text="a.original_name"></span>
+                                    <span class="text-[10px] text-slate-400 flex-shrink-0" x-text="a.size_formatted"></span>
+                                    <a :href="a.url" target="_blank"
+                                       class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-violet-500 transition-all">
+                                        <i class="bi bi-download text-xs"></i>
+                                    </a>
+                                    <button @click="remove(a.id)"
+                                            class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 transition-all">
+                                        <i class="bi bi-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </template>
+                            <p x-show="atts.length === 0 && !uploading"
+                               class="text-xs text-slate-400 text-center py-1">No files attached</p>
+                        </div>
+                    </div>
+
                     {{-- Description --}}
                     <div x-data="{ editDesc: false }">
                         <label class="form-label">Description</label>
@@ -275,11 +337,11 @@ function taskQuickPanel() {
 
             axios.get(`/tasks/${taskId}/panel-data`)
                 .then(r => {
-                    this.task    = r.data.task;
-                    this.columns = r.data.columns;
-                    this.members = r.data.members;
-                    this.labels  = r.data.labels;
-                    this.loading = false;
+                    this.task         = { ...r.data.task, attachments: r.data.attachments };
+                    this.columns      = r.data.columns;
+                    this.members      = r.data.members;
+                    this.labels       = r.data.labels;
+                    this.loading      = false;
                 })
                 .catch(() => {
                     this.loading = false;
@@ -332,6 +394,65 @@ function taskQuickPanel() {
 
         memberName(id) {
             return this.members.find(m => m.id === id)?.name ?? '';
+        },
+    };
+}
+
+function panelAttachments(taskId, initialAtts) {
+    return {
+        atts: initialAtts || [],
+        uploading: false,
+        uploadPct: 0,
+        uploadStatus: '',
+        dropping: false,
+
+        async upload(fileList) {
+            if (!fileList?.length) return;
+            this.uploading = true;
+            for (let i = 0; i < fileList.length; i++) {
+                const file = fileList[i];
+                this.uploadStatus = `Uploading ${file.name}… (${i+1}/${fileList.length})`;
+                const form = new FormData();
+                form.append('file', file);
+                form.append('_token', document.querySelector('meta[name=csrf-token]').content);
+                try {
+                    const res = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', `/tasks/${taskId}/attachments`);
+                        xhr.upload.onprogress = e => {
+                            if (e.lengthComputable) this.uploadPct = Math.round(e.loaded/e.total*100);
+                        };
+                        xhr.onload  = () => xhr.status < 300 ? resolve(JSON.parse(xhr.responseText)) : reject();
+                        xhr.onerror = () => reject();
+                        xhr.send(form);
+                    });
+                    const a = res.attachment;
+                    this.atts.push({
+                        id: a.id, original_name: a.original_name, mime_type: a.mime_type,
+                        size_formatted: a.size_formatted, is_image: a.is_image, is_video: a.is_video,
+                        url: res.url,
+                    });
+                    window.toast?.(`${file.name} uploaded`, 'success');
+                } catch {
+                    window.toast?.(`Failed to upload ${file.name}`, 'error');
+                }
+            }
+            this.uploading = false; this.uploadPct = 0;
+        },
+
+        async remove(id) {
+            if (!confirm('Delete this attachment?')) return;
+            const token = document.querySelector('meta[name=csrf-token]').content;
+            try {
+                const res = await fetch(`/attachments/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
+                });
+                if (res.ok) {
+                    this.atts = this.atts.filter(a => a.id !== id);
+                    window.toast?.('Attachment deleted', 'success');
+                }
+            } catch { window.toast?.('Could not delete', 'error'); }
         },
     };
 }

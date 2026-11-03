@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attachment;
+use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,7 @@ class AttachmentController extends Controller
         $this->authorize('update', $task);
 
         $request->validate([
-            'file' => 'required|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt,csv',
+            'file' => 'required|file|max:102400|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt,csv,mp4,mov,avi,webm,mkv,m4v',
         ]);
 
         $file         = $request->file('file');
@@ -25,6 +26,36 @@ class AttachmentController extends Controller
         $attachment = Attachment::create([
             'attachable_type' => Task::class,
             'attachable_id'   => $task->id,
+            'user_id'         => $request->user()->id,
+            'filename'        => $filename,
+            'original_name'   => $file->getClientOriginalName(),
+            'disk'            => 'public',
+            'path'            => $path,
+            'mime_type'       => $file->getMimeType(),
+            'size'            => $file->getSize(),
+        ]);
+
+        return response()->json([
+            'attachment' => $attachment->load('user'),
+            'url'        => Storage::disk('public')->url($path),
+        ]);
+    }
+
+    public function storeForProject(Request $request, Project $project)
+    {
+        $this->authorize('view', $project);
+
+        $request->validate([
+            'file' => 'required|file|max:102400|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,zip,txt,csv,mp4,mov,avi,webm,mkv,m4v',
+        ]);
+
+        $file     = $request->file('file');
+        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+        $path     = $file->storeAs('attachments/projects', $filename, 'public');
+
+        $attachment = Attachment::create([
+            'attachable_type' => Project::class,
+            'attachable_id'   => $project->id,
             'user_id'         => $request->user()->id,
             'filename'        => $filename,
             'original_name'   => $file->getClientOriginalName(),

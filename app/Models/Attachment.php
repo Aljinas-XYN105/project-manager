@@ -46,4 +46,9 @@ class Attachment extends Model
     {
         return str_starts_with($this->mime_type, 'image/');
     }
+
+    public function getIsVideoAttribute(): bool
+    {
+        return str_starts_with($this->mime_type, 'video/');
+    }
 }
