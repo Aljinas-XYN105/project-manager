@@ -33,9 +33,9 @@
         <button x-data @click="$dispatch('open-board-settings')" class="btn-ghost btn-sm p-2">
             <i class="bi bi-gear text-slate-500"></i>
         </button>
-        <a href="{{ route('projects.tasks.create', $project) }}" class="btn-primary btn-sm">
+        <button @click="$dispatch('open-task-panel', { columnId: null })" class="btn-primary btn-sm">
             <i class="bi bi-plus-lg"></i> Add Task
-        </a>
+        </button>
     </div>
 </div>
 
@@ -156,43 +156,241 @@
             </div>
         </div>
 
-        {{-- Quick Add --}}
-        <div class="px-2.5 pb-2.5 flex-shrink-0" x-data="{ adding: false, title: '' }">
-            <div x-show="!adding">
-                <button @click="adding = true"
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400
-                               hover:text-slate-600 dark:hover:text-slate-200
-                               hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-colors">
-                    <i class="bi bi-plus-lg text-sm"></i> Add task
-                </button>
-            </div>
-            <div x-show="adding" x-cloak @click.away="adding = false">
-                <textarea x-model="title" rows="2" placeholder="Task title…"
-                          class="form-input text-sm resize-none w-full mb-2"
-                          x-init="$el.focus()"
-                          @keydown.enter.prevent="
-                              if (title.trim()) {
-                                  axios.post('/projects/{{ $project->id }}/tasks', {
-                                      title, column_id: {{ $column->id }}, project_id: {{ $project->id }}
-                                  }).then(() => { title=''; adding=false; window.location.reload(); });
-                              }
-                          "
-                          @keydown.escape="adding = false; title = ''"></textarea>
-                <div class="flex gap-2">
-                    <button @click="
-                        if (title.trim()) {
-                            axios.post('/projects/{{ $project->id }}/tasks', {
-                                title, column_id: {{ $column->id }}, project_id: {{ $project->id }}
-                            }).then(() => window.location.reload());
-                        }" class="btn-primary btn-sm flex-1 justify-center text-xs">Add</button>
-                    <button @click="adding = false; title = ''" class="btn-ghost btn-sm text-xs">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-            </div>
+        {{-- Quick Add Button --}}
+        <div class="px-2.5 pb-2.5 flex-shrink-0">
+            <button @click="$dispatch('open-task-panel', { columnId: {{ $column->id }} })"
+                    class="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400
+                           hover:text-slate-600 dark:hover:text-slate-200
+                           hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-colors">
+                <i class="bi bi-plus-lg text-sm"></i> Add task
+            </button>
         </div>
     </div>
     @endforeach
+</div>
+
+{{-- ═══════════════════════════════════════════════════════════
+     New Task Slide-In Panel
+     ═══════════════════════════════════════════════════════════ --}}
+<div x-data="{
+        show: false,
+        saving: false,
+        form: {
+            title: '',
+            type: 'task',
+            priority: 'medium',
+            column_id: null,
+            assignee_ids: [],
+            label_ids: [],
+            due_date: '',
+            estimated_hours: '',
+            description: '',
+        },
+        columns: @js($columns->map(fn($c) => ['id' => $c->id, 'name' => $c->name])),
+        members: @js($members),
+        labels:  @js($labels),
+        reset() {
+            this.form = { title:'', type:'task', priority:'medium', column_id: this.columns[0]?.id ?? null,
+                          assignee_ids:[], label_ids:[], due_date:'', estimated_hours:'', description:'' };
+            this.saving = false;
+        },
+        open(columnId) {
+            this.reset();
+            if (columnId) this.form.column_id = columnId;
+            this.show = true;
+            this.$nextTick(() => this.$refs.titleInput?.focus());
+        },
+        toggleAssignee(id) {
+            const i = this.form.assignee_ids.indexOf(id);
+            i === -1 ? this.form.assignee_ids.push(id) : this.form.assignee_ids.splice(i, 1);
+        },
+        toggleLabel(id) {
+            const i = this.form.label_ids.indexOf(id);
+            i === -1 ? this.form.label_ids.push(id) : this.form.label_ids.splice(i, 1);
+        },
+        memberName(id) {
+            return this.members.find(m => m.id === id)?.name ?? '';
+        },
+        save() {
+            if (!this.form.title.trim() || this.saving) return;
+            this.saving = true;
+            axios.post('/projects/{{ $project->id }}/tasks', {
+                ...this.form,
+                project_id: {{ $project->id }},
+            })
+            .then(() => { this.show = false; window.location.reload(); })
+            .catch(() => { this.saving = false; window.toast('Failed to create task', 'error'); });
+        }
+     }"
+     @open-task-panel.window="open($event.detail.columnId)"
+     @keydown.escape.window="show = false">
+
+    {{-- Backdrop --}}
+    <div x-show="show" x-cloak
+         class="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm"
+         @click="show = false"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"></div>
+
+    {{-- Panel --}}
+    <div x-show="show" x-cloak
+         class="fixed inset-y-0 right-0 z-50 w-full max-w-md flex flex-col
+                bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="translate-x-full">
+
+        {{-- Panel Header --}}
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+            <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+                    <i class="bi bi-plus-lg text-violet-600 dark:text-violet-400 text-sm"></i>
+                </div>
+                <h2 class="font-semibold text-slate-900 dark:text-white">New Task</h2>
+                <span class="text-xs text-slate-400 font-mono">{{ $project->name }}</span>
+            </div>
+            <button @click="show = false" class="btn-icon btn-ghost p-1.5">
+                <i class="bi bi-x-lg text-sm"></i>
+            </button>
+        </div>
+
+        {{-- Panel Body --}}
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+
+            {{-- Title --}}
+            <div>
+                <label class="form-label">Title <span class="text-rose-500">*</span></label>
+                <input x-ref="titleInput" x-model="form.title" type="text"
+                       class="form-input" placeholder="What needs to be done?"
+                       @keydown.enter="save()">
+            </div>
+
+            {{-- Type + Priority row --}}
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="form-label">Type</label>
+                    <select x-model="form.type" class="form-select">
+                        <option value="task">Task</option>
+                        <option value="bug">Bug</option>
+                        <option value="feature">Feature</option>
+                        <option value="story">Story</option>
+                        <option value="epic">Epic</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Priority</label>
+                    <select x-model="form.priority" class="form-select">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- Column --}}
+            <div>
+                <label class="form-label">Column</label>
+                <select x-model.number="form.column_id" class="form-select">
+                    <template x-for="col in columns" :key="col.id">
+                        <option :value="col.id" x-text="col.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            {{-- Assignees --}}
+            <div>
+                <label class="form-label">Assignees</label>
+                <div class="flex flex-wrap gap-2 mb-2" x-show="form.assignee_ids.length > 0">
+                    <template x-for="id in form.assignee_ids" :key="id">
+                        <span class="inline-flex items-center gap-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs px-2 py-0.5 rounded-full">
+                            <span x-text="memberName(id)"></span>
+                            <button type="button" @click="toggleAssignee(id)" class="hover:text-rose-500">
+                                <i class="bi bi-x text-xs"></i>
+                            </button>
+                        </span>
+                    </template>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <template x-for="member in members" :key="member.id">
+                        <button type="button" @click="toggleAssignee(member.id)"
+                                class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm transition-colors"
+                                :class="form.assignee_ids.includes(member.id)
+                                    ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'
+                                    : 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'">
+                            <img :src="member.avatar" :alt="member.name" class="w-5 h-5 rounded-full flex-shrink-0">
+                            <span class="truncate text-xs" x-text="member.name"></span>
+                            <i x-show="form.assignee_ids.includes(member.id)"
+                               class="bi bi-check-lg text-violet-500 ml-auto text-xs flex-shrink-0"></i>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            {{-- Labels --}}
+            @if($labels->isNotEmpty())
+            <div>
+                <label class="form-label">Labels</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="lbl in labels" :key="lbl.id">
+                        <button type="button" @click="toggleLabel(lbl.id)"
+                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-white transition-all"
+                                :style="form.label_ids.includes(lbl.id)
+                                    ? 'background-color:' + lbl.color + '; box-shadow: 0 0 0 2px ' + lbl.color
+                                    : 'background-color:' + lbl.color + '66'"
+                                x-text="lbl.name">
+                        </button>
+                    </template>
+                </div>
+            </div>
+            @endif
+
+            {{-- Due date + Estimate row --}}
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="form-label">Due date</label>
+                    <input x-model="form.due_date" type="date" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">Estimate (hrs)</label>
+                    <input x-model="form.estimated_hours" type="number" min="0" step="0.5"
+                           class="form-input" placeholder="0">
+                </div>
+            </div>
+
+            {{-- Description --}}
+            <div>
+                <label class="form-label">Description <span class="text-slate-400 font-normal">(optional)</span></label>
+                <textarea x-model="form.description" rows="3"
+                          class="form-input resize-none"
+                          placeholder="Add more context…"></textarea>
+            </div>
+
+        </div>
+
+        {{-- Panel Footer --}}
+        <div class="px-5 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 flex-shrink-0">
+            <button @click="show = false" class="btn-ghost btn-sm">Cancel</button>
+            <button @click="save()"
+                    :disabled="!form.title.trim() || saving"
+                    class="btn-primary btn-sm gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <template x-if="saving">
+                    <i class="bi bi-arrow-repeat animate-spin"></i>
+                </template>
+                <template x-if="!saving">
+                    <i class="bi bi-plus-lg"></i>
+                </template>
+                <span x-text="saving ? 'Creating…' : 'Create Task'"></span>
+            </button>
+        </div>
+    </div>
 </div>
 
 {{-- Board Settings Modal --}}

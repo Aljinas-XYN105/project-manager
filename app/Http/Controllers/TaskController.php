@@ -38,9 +38,11 @@ class TaskController extends Controller
         $this->authorize('view', $project);
 
         $columns = $this->taskService->getKanbanBoard($project->id);
-        $members = $project->members;
+        $members = \App\Models\User::active()->orderBy('name')->get()
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar_url]);
+        $labels  = $project->labels;
 
-        return view('tasks.kanban', compact('project', 'columns', 'members'));
+        return view('tasks.kanban', compact('project', 'columns', 'members', 'labels'));
     }
 
     public function calendar(Request $request, Project $project)
