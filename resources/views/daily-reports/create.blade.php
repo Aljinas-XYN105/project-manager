@@ -36,11 +36,12 @@
     @endif
     <form method="POST" action="{{ route('daily-reports.store') }}"
           x-data="dailyReportForm({{ Js::from([
-              'myTasks'  => $taskOptions,
-              'rows'     => old('tasks') ? array_values(old('tasks')) : $timedTaskRows,
-              'summary'  => old('summary', ''),
-              'plan'     => old('plan_for_tomorrow', ''),
-              'blockers' => old('blockers', ''),
+              'myTasks'     => $taskOptions,
+              'rows'        => old('tasks') ? array_values(old('tasks')) : $timedTaskRows,
+              'summary'     => old('summary', ''),
+              'plan'        => old('plan_for_tomorrow', ''),
+              'blockers'    => old('blockers', ''),
+              'fieldErrors' => $errors->toArray(),
           ]) }})">
         @csrf
         <input type="hidden" name="report_date" value="{{ $today }}">
@@ -51,9 +52,9 @@
             <div class="card p-5">
                 <label class="form-label">What did you accomplish today? *</label>
                 <textarea name="summary" rows="4" required x-model="summary"
-                          class="form-input resize-none"
+                          class="form-input resize-none {{ $errors->has('summary') ? '!border-rose-400 dark:!border-rose-500 !ring-rose-400/20' : '' }}"
                           placeholder="Describe your accomplishments, meetings, reviews…">{{ old('summary') }}</textarea>
-                @error('summary')<p class="form-error">{{ $message }}</p>@enderror
+                @error('summary')<p class="mt-1 text-xs font-medium text-rose-500">{{ $message }}</p>@enderror
             </div>
 
             @include('daily-reports._task-rows')

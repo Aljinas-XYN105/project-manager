@@ -1,13 +1,14 @@
 {{-- Shared task breakdown for create/edit. Expects $projects; the parent form's x-data is dailyReportForm(). --}}
 @if($errors->any())
-<div class="alert-danger">
-    <i class="bi bi-exclamation-triangle-fill"></i>
-    <div>
-        <p class="font-semibold">Please fix the following:</p>
-        <ul class="list-disc pl-4 mt-1 text-sm">
-            @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
-        </ul>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-sm text-rose-700 dark:text-rose-300">
+    <div class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center flex-shrink-0">
+        <i class="bi bi-exclamation-triangle-fill text-rose-500"></i>
     </div>
+    <div>
+        <p class="font-semibold text-rose-800 dark:text-rose-200">{{ $errors->count() }} {{ Str::plural('issue', $errors->count()) }} need your attention</p>
+        <p class="text-xs text-rose-600 dark:text-rose-400 mt-0.5">Fields with errors are highlighted in red below.</p>
+    </div>
+    <div class="ml-auto text-xs font-mono bg-rose-100 dark:bg-rose-900/40 text-rose-600 px-2 py-0.5 rounded-full">{{ $errors->count() }}</div>
 </div>
 @endif
 
@@ -66,17 +67,27 @@
                                     <div class="sm:col-span-2">
                                         <label class="form-label">Task title *</label>
                                         <input type="text" :name="'tasks['+idx+'][new_task][title]'" x-model="task.new_task.title"
-                                               @input="if (!task._descTouched) task.description = task.new_task.title"
-                                               required maxlength="255" class="form-input text-sm" placeholder="e.g. Fix checkout total rounding">
+                                               @input="if (!task._descTouched) task.description = task.new_task.title; if(fieldErrors['tasks.'+idx+'.new_task.title']) delete fieldErrors['tasks.'+idx+'.new_task.title']"
+                                               required maxlength="255"
+                                               :class="fieldErrors['tasks.'+idx+'.new_task.title'] ? 'form-input text-sm !border-rose-400 dark:!border-rose-500 !ring-rose-400/20' : 'form-input text-sm'"
+                                               placeholder="e.g. Fix checkout total rounding">
+                                        <p x-show="fieldErrors['tasks.'+idx+'.new_task.title']"
+                                           x-text="fieldErrors['tasks.'+idx+'.new_task.title']?.[0]"
+                                           class="mt-1 text-xs font-medium text-rose-500"></p>
                                     </div>
                                     <div class="sm:col-span-2">
                                         <label class="form-label">Project *</label>
-                                        <select :name="'tasks['+idx+'][new_task][project_id]'" x-model="task.new_task.project_id" required class="form-select text-sm">
+                                        <select :name="'tasks['+idx+'][new_task][project_id]'" x-model="task.new_task.project_id" required
+                                                :class="fieldErrors['tasks.'+idx+'.new_task.project_id'] ? 'form-select text-sm !border-rose-400 dark:!border-rose-500 !ring-rose-400/20' : 'form-select text-sm'"
+                                                @change="if(fieldErrors['tasks.'+idx+'.new_task.project_id']) delete fieldErrors['tasks.'+idx+'.new_task.project_id']">
                                             <option value="">Select a project…</option>
                                             @foreach($projects as $p)
                                             <option value="{{ $p->id }}">{{ $p->name }}</option>
                                             @endforeach
                                         </select>
+                                        <p x-show="fieldErrors['tasks.'+idx+'.new_task.project_id']"
+                                           x-text="fieldErrors['tasks.'+idx+'.new_task.project_id']?.[0]"
+                                           class="mt-1 text-xs font-medium text-rose-500"></p>
                                     </div>
                                     <div>
                                         <label class="form-label">Type</label>
@@ -107,15 +118,25 @@
                         <div>
                             <label class="form-label">What was done? *</label>
                             <input type="text" :name="'tasks['+idx+'][description]'" x-model="task.description"
-                                   @input="task._descTouched = true"
-                                   required class="form-input text-sm" placeholder="Brief description of what you worked on…">
+                                   @input="task._descTouched = true; if(fieldErrors['tasks.'+idx+'.description']) delete fieldErrors['tasks.'+idx+'.description']"
+                                   required
+                                   :class="fieldErrors['tasks.'+idx+'.description'] ? 'form-input text-sm !border-rose-400 dark:!border-rose-500 !ring-rose-400/20 bg-rose-50/30 dark:bg-rose-900/10' : 'form-input text-sm'"
+                                   placeholder="Brief description of what you worked on…">
+                            <p x-show="fieldErrors['tasks.'+idx+'.description']"
+                               x-text="fieldErrors['tasks.'+idx+'.description']?.[0]"
+                               class="mt-1 text-xs font-medium text-rose-500"></p>
                         </div>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div>
                                 <label class="form-label">Hours *</label>
                                 <input type="number" :name="'tasks['+idx+'][hours]'" x-model.number="task.hours"
-                                       step="0.5" min="0" max="24" required class="form-input text-sm text-center"
-                                       @input="calcTotals()">
+                                       step="0.05" min="0.05" max="24" required
+                                       :class="fieldErrors['tasks.'+idx+'.hours'] ? 'form-input text-sm text-center !border-rose-400 dark:!border-rose-500 !ring-rose-400/20 bg-rose-50/30 dark:bg-rose-900/10' : 'form-input text-sm text-center'"
+                                       @input="calcTotals(); if(fieldErrors['tasks.'+idx+'.hours']) delete fieldErrors['tasks.'+idx+'.hours']">
+                                <p x-show="fieldErrors['tasks.'+idx+'.hours']"
+                                   x-text="fieldErrors['tasks.'+idx+'.hours']?.[0]"
+                                   class="mt-1 text-xs font-medium text-rose-500 flex items-center gap-1">
+                                </p>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="form-label">Status After Today</label>
@@ -206,6 +227,7 @@ function dailyReportForm(opts) {
         myTasks: opts.myTasks,
         tasks: (opts.rows || []).map(normalize),
         totalHours: 0,
+        fieldErrors: opts.fieldErrors ?? {},
         _uid: 0,
         init() {
             this._uid = this.tasks.length;
