@@ -122,6 +122,7 @@
                                 <select :name="'tasks['+idx+'][status_update]'" x-model="task.status_update" class="form-select text-sm">
                                     <option value="">No change</option>
                                     <option value="in_progress">🔵 In Progress</option>
+                                    <option value="qa_testing">🟣 QA Testing</option>
                                     <option value="in_review">🟡 In Review</option>
                                     <option value="done">✅ Done</option>
                                     <option value="blocked">🔴 Blocked</option>

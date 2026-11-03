@@ -23,11 +23,12 @@ $bugsByStatus = \App\Models\Task::where('type','bug')
     ->whereHas('project', fn($q) => $q->whereHas('members', fn($m) => $m->where('users.id', auth()->id()))->orWhere('owner_id', auth()->id()))
     ->selectRaw('status, count(*) as cnt')->groupBy('status')->pluck('cnt','status');
 $statsConfig = [
-    'todo'        => ['label'=>'Open',        'color'=>'text-slate-700 dark:text-slate-300',    'bg'=>'bg-slate-100 dark:bg-slate-800', 'icon'=>'bi-circle',             'ring'=>'ring-slate-200 dark:ring-slate-700'],
-    'in_progress' => ['label'=>'In Progress', 'color'=>'text-blue-700 dark:text-blue-400',     'bg'=>'bg-blue-50 dark:bg-blue-900/20',  'icon'=>'bi-arrow-right-circle', 'ring'=>'ring-blue-200 dark:ring-blue-800'],
-    'in_review'   => ['label'=>'In Review',   'color'=>'text-amber-700 dark:text-amber-400',   'bg'=>'bg-amber-50 dark:bg-amber-900/20','icon'=>'bi-eye',                'ring'=>'ring-amber-200 dark:ring-amber-800'],
-    'done'        => ['label'=>'Resolved',    'color'=>'text-emerald-700 dark:text-emerald-400','bg'=>'bg-emerald-50 dark:bg-emerald-900/20','icon'=>'bi-check-circle', 'ring'=>'ring-emerald-200 dark:ring-emerald-800'],
-    'cancelled'   => ['label'=>'Closed',      'color'=>'text-slate-500',                       'bg'=>'bg-slate-100 dark:bg-slate-800',  'icon'=>'bi-x-circle',           'ring'=>'ring-slate-200 dark:ring-slate-700'],
+    'todo'        => ['label'=>'Open',        'color'=>'text-slate-700 dark:text-slate-300',    'bg'=>'bg-slate-100 dark:bg-slate-800',       'icon'=>'bi-circle',             'ring'=>'ring-slate-200 dark:ring-slate-700'],
+    'in_progress' => ['label'=>'In Progress', 'color'=>'text-blue-700 dark:text-blue-400',     'bg'=>'bg-blue-50 dark:bg-blue-900/20',        'icon'=>'bi-arrow-right-circle', 'ring'=>'ring-blue-200 dark:ring-blue-800'],
+    'qa_testing'  => ['label'=>'QA Testing',  'color'=>'text-violet-700 dark:text-violet-400', 'bg'=>'bg-violet-50 dark:bg-violet-900/20',    'icon'=>'bi-bug',                'ring'=>'ring-violet-200 dark:ring-violet-800'],
+    'in_review'   => ['label'=>'In Review',   'color'=>'text-amber-700 dark:text-amber-400',   'bg'=>'bg-amber-50 dark:bg-amber-900/20',      'icon'=>'bi-eye',                'ring'=>'ring-amber-200 dark:ring-amber-800'],
+    'done'        => ['label'=>'Resolved',    'color'=>'text-emerald-700 dark:text-emerald-400','bg'=>'bg-emerald-50 dark:bg-emerald-900/20', 'icon'=>'bi-check-circle',       'ring'=>'ring-emerald-200 dark:ring-emerald-800'],
+    'cancelled'   => ['label'=>'Closed',      'color'=>'text-slate-500',                       'bg'=>'bg-slate-100 dark:bg-slate-800',        'icon'=>'bi-x-circle',           'ring'=>'ring-slate-200 dark:ring-slate-700'],
 ];
 @endphp
 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
@@ -53,7 +54,7 @@ $statsConfig = [
             <label class="form-label">Status</label>
             <select name="status" class="form-select text-sm">
                 <option value="">All Statuses</option>
-                @foreach(['todo'=>'Open','in_progress'=>'In Progress','in_review'=>'In Review','done'=>'Resolved','cancelled'=>'Closed'] as $v=>$l)
+                @foreach(['todo'=>'Open','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Resolved','cancelled'=>'Closed'] as $v=>$l)
                 <option value="{{ $v }}" {{ request('status')===$v?'selected':'' }}>{{ $l }}</option>
                 @endforeach
             </select>
@@ -145,6 +146,7 @@ $statsConfig = [
                 $statusConfig = [
                     'todo'        => ['label'=>'Open',        'class'=>'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'],
                     'in_progress' => ['label'=>'In Progress', 'class'=>'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'],
+                    'qa_testing'  => ['label'=>'QA Testing',  'class'=>'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'],
                     'in_review'   => ['label'=>'In Review',   'class'=>'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'],
                     'done'        => ['label'=>'Resolved',    'class'=>'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'],
                     'cancelled'   => ['label'=>'Closed',      'class'=>'bg-slate-100 dark:bg-slate-800 text-slate-500'],

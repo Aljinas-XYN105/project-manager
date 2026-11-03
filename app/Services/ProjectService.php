@@ -117,6 +117,7 @@ class ProjectService
                 'total_tasks'       => $tasks->count(),
                 'todo'              => $tasks->clone()->where('status', 'todo')->count(),
                 'in_progress'       => $tasks->clone()->where('status', 'in_progress')->count(),
+                'qa_testing'        => $tasks->clone()->where('status', 'qa_testing')->count(),
                 'in_review'         => $tasks->clone()->where('status', 'in_review')->count(),
                 'done'              => $tasks->clone()->whereHas('column', fn ($q) => $q->where('is_done', true))->count(),
                 'overdue'           => $tasks->clone()->overdue()->count(),

@@ -201,7 +201,7 @@ class DailyReportController extends Controller
             'tasks.*.description'        => 'required_with:tasks|string|max:500',
             'tasks.*.hours'              => 'required_with:tasks|numeric|min:0|max:24',
             'tasks.*.notes'              => 'nullable|string|max:500',
-            'tasks.*.status_update'      => 'nullable|string|in:todo,in_progress,in_review,done,blocked',
+            'tasks.*.status_update'      => 'nullable|string|in:todo,in_progress,qa_testing,in_review,done,blocked',
             'tasks.*.is_blocked'         => 'nullable|boolean',
             'tasks.*.new_task'           => 'nullable|array',
             'tasks.*.new_task.project_id'=> 'required_with:tasks.*.new_task|integer|exists:projects,id',

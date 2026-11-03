@@ -92,7 +92,7 @@
                 <div>
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
-                        @foreach(['todo'=>'To Do','in_progress'=>'In Progress','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
+                        @foreach(['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
                         <option value="{{ $v }}" @selected(old('status',$task->status)===$v)>{{ $l }}</option>
                         @endforeach
                     </select>

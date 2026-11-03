@@ -423,7 +423,7 @@
                 <label class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block mb-1">Status</label>
                 <select onchange="fetch('/tasks/{{ $task->id }}/status',{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'},body:JSON.stringify({status:this.value})})"
                         class="form-select text-sm py-1.5">
-                    @foreach(['todo'=>'To Do','in_progress'=>'In Progress','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
+                    @foreach(['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
                     <option value="{{ $v }}" {{ $task->status===$v?'selected':'' }}>{{ $l }}</option>
                     @endforeach
                 </select>

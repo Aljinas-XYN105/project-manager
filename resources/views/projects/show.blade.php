@@ -94,6 +94,7 @@
                 @foreach([
                     ['label'=>'To Do','key'=>'todo','color'=>'bg-slate-400'],
                     ['label'=>'In Progress','key'=>'in_progress','color'=>'bg-blue-500'],
+                    ['label'=>'QA Testing','key'=>'qa_testing','color'=>'bg-violet-500'],
                     ['label'=>'In Review','key'=>'in_review','color'=>'bg-yellow-500'],
                     ['label'=>'Done','key'=>'done','color'=>'bg-green-500'],
                 ] as $row)

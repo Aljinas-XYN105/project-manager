@@ -45,7 +45,7 @@
     </div>
     <select name="status" class="form-select w-auto text-sm">
         <option value="">All Status</option>
-        @foreach(['todo'=>'To Do','in_progress'=>'In Progress','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
+        @foreach(['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
         <option value="{{ $v }}" {{ request('status')===$v?'selected':'' }}>{{ $l }}</option>
         @endforeach
     </select>
@@ -91,6 +91,7 @@
             <option value="">Change status…</option>
             <option value="todo">To Do</option>
             <option value="in_progress">In Progress</option>
+            <option value="qa_testing">QA Testing</option>
             <option value="in_review">In Review</option>
             <option value="done">Done</option>
             <option value="cancelled">Cancelled</option>
@@ -137,6 +138,7 @@
                 $statusStyles = [
                     'todo'        => 'text-slate-500',
                     'in_progress' => 'text-blue-600 dark:text-blue-400',
+                    'qa_testing'  => 'text-violet-600 dark:text-violet-400',
                     'in_review'   => 'text-amber-600 dark:text-amber-400',
                     'done'        => 'text-emerald-600 dark:text-emerald-400',
                     'cancelled'   => 'text-slate-400',
@@ -173,6 +175,7 @@
                                            {{ $statusStyles[$task->status] ?? 'text-slate-500' }}">
                                 <option value="todo">To Do</option>
                                 <option value="in_progress">In Progress</option>
+                                <option value="qa_testing">QA Testing</option>
                                 <option value="in_review">In Review</option>
                                 <option value="done">Done</option>
                                 <option value="cancelled">Cancelled</option>

@@ -149,7 +149,7 @@ class TaskController extends Controller
             'project_id'          => 'required|exists:projects,id',
             'column_id'           => 'nullable|exists:columns,id',
             'type'                => 'nullable|in:task,bug,feature,story,epic',
-            'status'              => 'nullable|in:todo,in_progress,in_review,done,cancelled',
+            'status'              => 'nullable|in:todo,in_progress,qa_testing,in_review,done,cancelled',
             'priority'            => 'nullable|in:low,medium,high,critical',
             'due_date'            => 'nullable|date',
             'estimated_hours'     => 'nullable|numeric|min:0',
@@ -348,7 +348,7 @@ class TaskController extends Controller
     {
         $this->authorize('update', $task);
 
-        $request->validate(['status' => 'required|in:todo,in_progress,in_review,done,cancelled']);
+        $request->validate(['status' => 'required|in:todo,in_progress,qa_testing,in_review,done,cancelled']);
 
         $updated = $this->taskService->updateTaskStatus($task, $request->status);
 
@@ -385,7 +385,7 @@ class TaskController extends Controller
             $query->where('project_id', $request->project_id);
         }
 
-        $bugs = $query->orderByRaw("CASE status WHEN 'in_progress' THEN 0 WHEN 'todo' THEN 1 WHEN 'in_review' THEN 2 WHEN 'done' THEN 3 ELSE 4 END")
+        $bugs = $query->orderByRaw("CASE status WHEN 'in_progress' THEN 0 WHEN 'qa_testing' THEN 1 WHEN 'in_review' THEN 2 WHEN 'todo' THEN 3 WHEN 'done' THEN 4 ELSE 5 END")
             ->orderByRaw("CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
             ->paginate(25);
 

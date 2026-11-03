@@ -57,7 +57,7 @@ class StandupController extends Controller
             ->whereHas('assignees', fn ($q) => $q->where('users.id', $user->id))
             ->whereNull('parent_id')
             ->whereNotIn('status', ['cancelled'])
-            ->orderByRaw("CASE status WHEN 'in_progress' THEN 0 WHEN 'in_review' THEN 1 WHEN 'todo' THEN 2 WHEN 'done' THEN 3 ELSE 4 END")
+            ->orderByRaw("CASE status WHEN 'in_progress' THEN 0 WHEN 'qa_testing' THEN 1 WHEN 'in_review' THEN 2 WHEN 'todo' THEN 3 WHEN 'done' THEN 4 ELSE 5 END")
             ->orderByRaw("CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
             ->get();
 
@@ -74,6 +74,7 @@ class StandupController extends Controller
         $statusToLane = [
             'todo'        => 'To Do',
             'in_progress' => 'In Progress',
+            'qa_testing'  => 'QA Testing',
             'in_review'   => 'In Review',
             'done'        => 'Done',
         ];
@@ -108,7 +109,7 @@ class StandupController extends Controller
             'To Do'       => 'todo',
             'In Progress' => 'in_progress',
             'In Review'   => 'in_review',
-            'QA Testing'  => 'in_review', // closest status
+            'QA Testing'  => 'qa_testing',
             'Done'        => 'done',
         ];
 

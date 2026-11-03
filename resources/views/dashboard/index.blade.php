@@ -393,7 +393,7 @@ function formatSeconds(s) {
                     @foreach($upcomingTasks->take(5) as $task)
                     <div class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         @php
-                        $sc2 = ['todo'=>'bg-slate-300','in_progress'=>'bg-blue-500','in_review'=>'bg-amber-500'];
+                        $sc2 = ['todo'=>'bg-slate-300','in_progress'=>'bg-blue-500','qa_testing'=>'bg-violet-500','in_review'=>'bg-amber-500'];
                         $isOverdue = $task->due_date && $task->due_date < now();
                         @endphp
                         <div class="w-2 h-2 rounded-full {{ $sc2[$task->status] ?? 'bg-slate-300' }} flex-shrink-0"></div>

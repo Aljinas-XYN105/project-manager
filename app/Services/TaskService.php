@@ -127,8 +127,8 @@ class TaskService
             $slugMap = [
                 'todo'        => 'todo',
                 'in-progress' => 'in_progress',
+                'qa-testing'  => 'qa_testing',
                 'in-review'   => 'in_review',
-                'qa-testing'  => 'in_review',
                 'done'        => 'done',
             ];
             $newStatus = $newColumn->is_done

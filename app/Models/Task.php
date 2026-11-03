@@ -173,6 +173,7 @@ class Task extends Model
         return match ($this->status) {
             'todo'        => 'secondary',
             'in_progress' => 'primary',
+            'qa_testing'  => 'info',
             'in_review'   => 'warning',
             'done'        => 'success',
             'cancelled'   => 'danger',
