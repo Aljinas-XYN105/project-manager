@@ -482,13 +482,13 @@ $typeOptions = [
     <div class="space-y-3">
 
         {{-- Details card --}}
-        <div class="card divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
-            <div class="px-4 py-3">
+        <div class="card overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+            <div class="px-4 py-2.5">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Details</p>
             </div>
 
             {{-- STATUS --}}
-            <div class="px-4 py-3"
+            <div class="px-4 py-2.5 flex items-center gap-3"
                  x-data="{
                      open: false,
                      status: @js($task->status),
@@ -504,22 +504,20 @@ $typeOptions = [
                          window.toast?.('Status updated', 'success');
                      }
                  }">
-                <div class="flex items-center gap-3 mb-2">
-                    <i class="bi bi-circle-half text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
-                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Status</span>
-                </div>
-                <div class="relative pl-6">
+                <i class="bi bi-circle-half text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Status</span>
+                <div class="relative flex-1">
                     <button @click="{{ $canUpdate ? 'open=!open' : '' }}"
                             @click.outside="open=false"
-                            class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold w-full transition-colors"
-                            :class="[current.chip, {{ $canUpdate ? 'true' : 'false' }} ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
-                        <i class="bi text-xs flex-shrink-0" :class="current.icon"></i>
-                        <span x-text="current.label" class="flex-1 text-left"></span>
-                        @if($canUpdate)<i class="bi bi-chevron-down text-[10px] opacity-50 flex-shrink-0"></i>@endif
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors max-w-full"
+                            :class="[current.chip, '{{ $canUpdate }}' ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
+                        <i class="bi text-[10px] flex-shrink-0" :class="current.icon"></i>
+                        <span x-text="current.label" class="truncate"></span>
+                        @if($canUpdate)<i class="bi bi-chevron-down text-[9px] opacity-50 flex-shrink-0"></i>@endif
                     </button>
                     @if($canUpdate)
                     <div x-show="open" x-cloak
-                         class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 overflow-hidden">
+                         class="absolute left-0 top-full mt-1 z-50 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 overflow-hidden">
                         <template x-for="opt in options" :key="opt.val">
                             <button @click="set(opt.val)"
                                     class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
@@ -536,7 +534,7 @@ $typeOptions = [
             </div>
 
             {{-- PRIORITY --}}
-            <div class="px-4 py-3"
+            <div class="px-4 py-2.5 flex items-center gap-3"
                  x-data="{
                      open: false,
                      priority: @js($task->priority ?? 'medium'),
@@ -552,22 +550,20 @@ $typeOptions = [
                          window.toast?.('Priority updated', 'success');
                      }
                  }">
-                <div class="flex items-center gap-3 mb-2">
-                    <i class="bi bi-flag text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
-                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Priority</span>
-                </div>
-                <div class="relative pl-6">
+                <i class="bi bi-flag text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Priority</span>
+                <div class="relative flex-1">
                     <button @click="{{ $canUpdate ? 'open=!open' : '' }}"
                             @click.outside="open=false"
-                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                            :class="[current.chip, {{ $canUpdate ? 'true' : 'false' }} ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
-                        <i class="bi text-xs" :class="current.icon"></i>
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                            :class="[current.chip, '{{ $canUpdate }}' ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
+                        <i class="bi text-[10px]" :class="current.icon"></i>
                         <span x-text="current.label"></span>
-                        @if($canUpdate)<i class="bi bi-chevron-down text-[10px] opacity-50 ml-1"></i>@endif
+                        @if($canUpdate)<i class="bi bi-chevron-down text-[9px] opacity-50 ml-0.5"></i>@endif
                     </button>
                     @if($canUpdate)
                     <div x-show="open" x-cloak
-                         class="absolute left-0 top-full mt-1 z-50 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
+                         class="absolute left-0 top-full mt-1 z-50 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
                         <template x-for="opt in options" :key="opt.val">
                             <button @click="set(opt.val)"
                                     class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
@@ -584,7 +580,7 @@ $typeOptions = [
             </div>
 
             {{-- TYPE --}}
-            <div class="px-4 py-3"
+            <div class="px-4 py-2.5 flex items-center gap-3"
                  x-data="{
                      open: false,
                      type: @js($task->type ?? 'task'),
@@ -600,22 +596,20 @@ $typeOptions = [
                          window.toast?.('Type updated', 'success');
                      }
                  }">
-                <div class="flex items-center gap-3 mb-2">
-                    <i class="bi bi-tag text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
-                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Type</span>
-                </div>
-                <div class="relative pl-6">
+                <i class="bi bi-tag text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Type</span>
+                <div class="relative flex-1">
                     <button @click="{{ $canUpdate ? 'open=!open' : '' }}"
                             @click.outside="open=false"
-                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                            :class="[current.chip, {{ $canUpdate ? 'true' : 'false' }} ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
-                        <i class="bi text-xs" :class="current.icon"></i>
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                            :class="[current.chip, '{{ $canUpdate }}' ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
+                        <i class="bi text-[10px]" :class="current.icon"></i>
                         <span x-text="current.label"></span>
-                        @if($canUpdate)<i class="bi bi-chevron-down text-[10px] opacity-50 ml-1"></i>@endif
+                        @if($canUpdate)<i class="bi bi-chevron-down text-[9px] opacity-50 ml-0.5"></i>@endif
                     </button>
                     @if($canUpdate)
                     <div x-show="open" x-cloak
-                         class="absolute left-0 top-full mt-1 z-50 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
+                         class="absolute left-0 top-full mt-1 z-50 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
                         <template x-for="opt in options" :key="opt.val">
                             <button @click="set(opt.val)"
                                     class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
@@ -632,7 +626,7 @@ $typeOptions = [
             </div>
 
             {{-- DUE DATE --}}
-            <div class="px-4 py-3"
+            <div class="px-4 py-2.5 flex items-center gap-3"
                  x-data="{
                      editing: false,
                      val: @js($task->due_date?->format('Y-m-d') ?? ''),
@@ -650,45 +644,42 @@ $typeOptions = [
                          this.editing = false;
                      }
                  }">
-                <div class="flex items-center gap-3 mb-2">
-                    <i class="bi bi-calendar3 text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
-                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Due Date</span>
-                </div>
-                <div class="pl-6">
+                <i class="bi bi-calendar3 text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Due</span>
+                <div class="flex-1">
                     <div x-show="!editing">
                         <template x-if="display">
                             <button @click="{{ $canUpdate ? 'editing=true; $nextTick(()=>$refs.dateInput.showPicker?.())' : '' }}"
-                                    class="inline-flex items-center gap-1.5 text-sm font-medium {{ $task->is_overdue ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200' }} {{ $canUpdate ? 'hover:text-violet-600 cursor-pointer' : 'cursor-default' }} transition-colors">
+                                    class="inline-flex items-center gap-1.5 text-xs font-medium {{ $task->is_overdue ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200' }} {{ $canUpdate ? 'hover:text-violet-600 cursor-pointer' : 'cursor-default' }} transition-colors">
                                 <span x-text="display"></span>
-                                @if($task->is_overdue)<span class="text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 px-1.5 py-0.5 rounded-md">Overdue</span>@endif
+                                @if($task->is_overdue)<span class="text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 px-1.5 py-0.5 rounded">Overdue</span>@endif
                             </button>
                         </template>
                         <template x-if="!display">
                             <button @click="{{ $canUpdate ? 'editing=true; $nextTick(()=>$refs.dateInput.showPicker?.())' : '' }}"
-                                    class="text-sm text-slate-400 {{ $canUpdate ? 'hover:text-violet-500 cursor-pointer' : 'cursor-default' }} italic transition-colors">
-                                @if($canUpdate) Set due date @else No due date @endif
+                                    class="text-xs text-slate-400 {{ $canUpdate ? 'hover:text-violet-500 cursor-pointer' : 'cursor-default' }} italic">
+                                @if($canUpdate) Set date @else — @endif
                             </button>
                         </template>
                     </div>
-                    <div x-show="editing" x-cloak class="flex items-center gap-2">
+                    <div x-show="editing" x-cloak class="flex items-center gap-1.5">
                         <input type="date" x-ref="dateInput" x-model="val"
-                               class="form-input text-sm py-1 w-36"
+                               class="form-input text-xs py-0.5 w-32"
                                @change="save()" @blur="save()" @keydown.escape="editing=false">
                         <button @click="val=''; save()" x-show="val"
-                                class="text-xs text-slate-400 hover:text-rose-500 transition-colors" title="Clear">
-                            <i class="bi bi-x-circle"></i>
+                                class="text-slate-400 hover:text-rose-500 transition-colors">
+                            <i class="bi bi-x-circle text-xs"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
             {{-- ASSIGNEES --}}
-            <div class="px-4 py-3"
+            <div class="px-4 py-2.5 flex items-start gap-3"
                  x-data="{
                      assignees: {{ Js::from($task->assignees->map(fn($a) => ['id'=>$a->id,'name'=>$a->name,'avatar'=>$a->avatar_url])) }},
                      available: {{ Js::from($members->whereNotIn('id', $task->assignees->pluck('id'))->values()->map(fn($m) => ['id'=>$m->id,'name'=>$m->name,'avatar'=>$m->avatar_url])) }},
                      open: false,
-                     canEdit: {{ $canUpdate ? 'true' : 'false' }},
                      addUrl: '{{ route('tasks.assignees.add', $task) }}',
                      removeBase: '{{ url('tasks/'.$task->id.'/assignees') }}',
                      csrfToken: '{{ $csrfToken }}',
@@ -702,26 +693,40 @@ $typeOptions = [
                          if (r.ok) { this.assignees = this.assignees.filter(u => u.id !== user.id); this.available.push(user); this.available.sort((a,b)=>a.name.localeCompare(b.name)); }
                      }
                  }">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-3">
-                        <i class="bi bi-person text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
-                        <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Assignees</span>
+                <i class="bi bi-person text-[10px] text-slate-400 w-3 text-center flex-shrink-0 mt-0.5"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0 mt-0.5">Assigned</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap gap-1.5 mb-1">
+                        <template x-if="assignees.length === 0">
+                            <span class="text-xs text-slate-400 italic">Unassigned</span>
+                        </template>
+                        <template x-for="a in assignees" :key="a.id">
+                            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5 group">
+                                <img :src="a.avatar" class="w-4 h-4 rounded-full object-cover flex-shrink-0">
+                                <span class="text-xs text-slate-700 dark:text-slate-300 max-w-[80px] truncate" x-text="a.name"></span>
+                                @if($canUpdate)
+                                <button @click="remove(a)" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-rose-500 leading-none">
+                                    <i class="bi bi-x text-[10px]"></i>
+                                </button>
+                                @endif
+                            </div>
+                        </template>
                     </div>
                     @if($canUpdate)
-                    <div class="relative">
+                    <div class="relative inline-block">
                         <button @click="open=!open" @click.outside="open=false"
-                                class="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1 font-medium">
-                            <i class="bi bi-person-plus text-sm"></i>
+                                class="text-[10px] font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-0.5">
+                            <i class="bi bi-plus-circle text-xs"></i> Add
                         </button>
                         <div x-show="open" x-cloak
-                             class="absolute right-0 top-6 z-30 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 max-h-48 overflow-y-auto">
+                             class="absolute left-0 top-5 z-30 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 max-h-48 overflow-y-auto">
                             <template x-if="available.length === 0">
                                 <p class="text-xs text-slate-400 text-center py-3">All members assigned</p>
                             </template>
                             <template x-for="u in available" :key="u.id">
                                 <button @click="add(u)"
                                         class="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                    <img :src="u.avatar" class="w-6 h-6 rounded-full flex-shrink-0 object-cover">
+                                    <img :src="u.avatar" class="w-5 h-5 rounded-full flex-shrink-0 object-cover">
                                     <span class="text-sm text-slate-700 dark:text-slate-300 truncate" x-text="u.name"></span>
                                 </button>
                             </template>
@@ -729,35 +734,16 @@ $typeOptions = [
                     </div>
                     @endif
                 </div>
-                <div class="pl-6 space-y-2">
-                    <template x-if="assignees.length === 0">
-                        <p class="text-xs text-slate-400 italic">Unassigned</p>
-                    </template>
-                    <template x-for="a in assignees" :key="a.id">
-                        <div class="flex items-center gap-2 group">
-                            <img :src="a.avatar" class="w-6 h-6 rounded-full flex-shrink-0 object-cover">
-                            <span class="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate" x-text="a.name"></span>
-                            @if($canUpdate)
-                            <button @click="remove(a)" title="Remove"
-                                    class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-rose-500">
-                                <i class="bi bi-x-circle text-xs"></i>
-                            </button>
-                            @endif
-                        </div>
-                    </template>
-                </div>
             </div>
 
             {{-- LABELS --}}
             @if($task->labels->count())
-            <div class="px-4 py-3">
-                <div class="flex items-center gap-3 mb-2">
-                    <i class="bi bi-bookmark text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
-                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Labels</span>
-                </div>
-                <div class="pl-6 flex flex-wrap gap-1.5">
+            <div class="px-4 py-2.5 flex items-start gap-3">
+                <i class="bi bi-bookmark text-[10px] text-slate-400 w-3 text-center flex-shrink-0 mt-0.5"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0 mt-0.5">Labels</span>
+                <div class="flex-1 flex flex-wrap gap-1.5">
                     @foreach($task->labels as $label)
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
                           style="background-color: {{ $label->color }}">{{ $label->name }}</span>
                     @endforeach
                 </div>
@@ -766,89 +752,165 @@ $typeOptions = [
 
             {{-- SPRINT --}}
             @if($task->sprint)
-            <div class="px-4 py-3">
-                <div class="flex items-center gap-3 mb-2">
-                    <i class="bi bi-speedometer2 text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
-                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Sprint</span>
-                </div>
-                <div class="pl-6">
-                    <a href="{{ route('projects.sprints.show', [$task->project, $task->sprint]) }}"
-                       class="text-sm text-violet-600 dark:text-violet-400 hover:underline font-medium">
-                        {{ $task->sprint->name }}
-                    </a>
-                </div>
+            <div class="px-4 py-2.5 flex items-center gap-3">
+                <i class="bi bi-speedometer2 text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Sprint</span>
+                <a href="{{ route('projects.sprints.show', [$task->project, $task->sprint]) }}"
+                   class="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline truncate flex-1">
+                    {{ $task->sprint->name }}
+                </a>
             </div>
             @endif
 
             {{-- ESTIMATES --}}
             @if($task->estimated_hours || $task->story_points)
-            <div class="px-4 py-3">
-                <div class="flex items-center gap-3 mb-2">
-                    <i class="bi bi-clock text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
-                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Estimates</span>
-                </div>
-                <div class="pl-6 flex gap-4">
-                    @if($task->estimated_hours)
-                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                        <i class="bi bi-clock text-slate-400 text-xs mr-1"></i>{{ $task->estimated_hours }}h
-                    </span>
-                    @endif
-                    @if($task->story_points)
-                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                        <i class="bi bi-lightning text-slate-400 text-xs mr-1"></i>{{ $task->story_points }} pts
-                    </span>
-                    @endif
+            <div class="px-4 py-2.5 flex items-center gap-3">
+                <i class="bi bi-clock text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Estimates</span>
+                <div class="flex gap-3">
+                    @if($task->estimated_hours)<span class="text-xs font-semibold text-slate-700 dark:text-slate-200">{{ $task->estimated_hours }}h</span>@endif
+                    @if($task->story_points)<span class="text-xs font-semibold text-slate-700 dark:text-slate-200">{{ $task->story_points }} pts</span>@endif
                 </div>
             </div>
             @endif
-        </div>
 
-        {{-- Time Tracker --}}
-        <div class="card p-4"
-             x-data="{ running: false, entryId: null, elapsed: '00:00:00', startedAt: null, _tick: null }"
-             x-init="fetch('/time-entries/running',{headers:{'Accept':'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{if(d?.entry?.task_id=={{ $taskId }}){running=true;entryId=d.entry.id;startedAt=new Date(d.entry.started_at);_tick=setInterval(()=>{const s=Math.floor((Date.now()-startedAt)/1000);elapsed=[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(n=>String(n).padStart(2,'0')).join(':');},1000);}}).catch(()=>{})">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                    <i class="bi bi-stopwatch"></i> Time Tracker
+            {{-- Project row --}}
+            <div class="px-4 py-2.5 flex items-center gap-3">
+                <i class="bi bi-folder2-open text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Project</span>
+                <a href="{{ route('projects.show', $task->project) }}"
+                   class="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline truncate flex-1">
+                    {{ $task->project->name }}
+                </a>
+            </div>
+        </div>{{-- end Details card --}}
+
+        {{-- ── TIME TRACKER ── --}}
+        <div class="card overflow-hidden"
+             x-data="{
+                 running: false,
+                 entryId: null,
+                 elapsed: '00:00:00',
+                 elapsedSec: 0,
+                 startedAt: null,
+                 _tick: null,
+                 totalLogged: @js($task->timeEntries?->sum('duration_minutes') ?? 0),
+                 entries: @js(($task->timeEntries ?? collect())->map(fn($e)=>['id'=>$e->id,'started'=>$e->started_at?->format('M j, g:ia'),'duration'=>$e->duration_formatted ?? ($e->duration_minutes ? floor($e->duration_minutes/60).'h '.($e->duration_minutes%60).'m' : '—'),'user'=>$e->user?->name ?? ''])->values()),
+                 init() {
+                     fetch('/time-entries/running',{headers:{'Accept':'application/json'}})
+                         .then(r=>r.ok?r.json():null)
+                         .then(d=>{
+                             if(d?.entry?.task_id=={{ $taskId }}){
+                                 this.running=true; this.entryId=d.entry.id;
+                                 this.startedAt=new Date(d.entry.started_at);
+                                 this._tick=setInterval(()=>this._tick_fn(),1000);
+                             }
+                         }).catch(()=>{});
+                 },
+                 _tick_fn() {
+                     this.elapsedSec=Math.floor((Date.now()-this.startedAt)/1000);
+                     const h=Math.floor(this.elapsedSec/3600), m=Math.floor((this.elapsedSec%3600)/60), s=this.elapsedSec%60;
+                     this.elapsed=[h,m,s].map(n=>String(n).padStart(2,'0')).join(':');
+                 },
+                 async toggle() {
+                     const tok=document.querySelector('meta[name=csrf-token]').content;
+                     if(this.running) {
+                         const r=await fetch('/time-entries/'+this.entryId+'/stop',{method:'POST',headers:{'X-CSRF-TOKEN':tok,'Accept':'application/json'}});
+                         if(r.ok){
+                             this.running=false; clearInterval(this._tick); this._tick=null;
+                             const mins=Math.round(this.elapsedSec/60);
+                             this.totalLogged+=mins;
+                             this.entries.unshift({id:this.entryId,started:'just now',duration:(Math.floor(mins/60)>0?Math.floor(mins/60)+'h ':'')+(mins%60)+'m',user:'{{ auth()->user()->name }}'});
+                             this.elapsed='00:00:00'; this.elapsedSec=0; this.entryId=null;
+                         }
+                     } else {
+                         const r=await fetch('/time-entries/start',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':tok,'Accept':'application/json'},body:JSON.stringify({task_id:{{ $taskId }}})});
+                         if(r.ok){
+                             const d=await r.json();
+                             this.running=true; this.entryId=d.entry.id;
+                             this.startedAt=new Date(d.entry.started_at);
+                             this._tick=setInterval(()=>this._tick_fn(),1000);
+                         }
+                     }
+                 },
+                 get totalFormatted() {
+                     const h=Math.floor(this.totalLogged/60), m=this.totalLogged%60;
+                     return (h>0?h+'h ':'')+(m>0?m+'m':'0m');
+                 }
+             }">
+
+            {{-- Header row: label + live clock --}}
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                    <i class="bi bi-stopwatch text-violet-500"></i> Time Tracker
                 </span>
-                <span x-show="running" x-text="elapsed" x-cloak
-                      class="font-mono text-sm font-bold text-slate-900 dark:text-white tabular-nums tracking-wider"></span>
+                <div class="flex items-center gap-2">
+                    <span x-show="running" x-cloak
+                          class="font-mono text-base font-bold tabular-nums tracking-wider text-rose-500"
+                          x-text="elapsed"></span>
+                    <span x-show="!running"
+                          class="font-mono text-base font-bold tabular-nums tracking-wider text-slate-400">00:00:00</span>
+                    {{-- Pulsing dot when running --}}
+                    <span x-show="running" x-cloak class="w-2 h-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0"></span>
+                </div>
             </div>
-            <button @click="
-                const tok=document.querySelector('meta[name=csrf-token]').content;
-                if(running){fetch('/time-entries/'+entryId+'/stop',{method:'POST',headers:{'X-CSRF-TOKEN':tok,'Accept':'application/json'}}).then(()=>{running=false;clearInterval(_tick);elapsed='00:00:00';entryId=null;});}
-                else{fetch('/time-entries/start',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':tok,'Accept':'application/json'},body:JSON.stringify({task_id:{{ $taskId }}})}).then(r=>r.json()).then(d=>{running=true;entryId=d.entry.id;startedAt=new Date(d.entry.started_at);_tick=setInterval(()=>{const s=Math.floor((Date.now()-startedAt)/1000);elapsed=[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(n=>String(n).padStart(2,'0')).join(':');},1000);});}"
-                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-                :class="running ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'">
-                <i class="bi text-xs" :class="running ? 'bi-stop-fill' : 'bi-play-fill'"></i>
-                <span x-text="running ? 'Stop tracking' : 'Start tracking'"></span>
-            </button>
-        </div>
 
-        {{-- Project --}}
-        <a href="{{ route('projects.show', $task->project) }}"
-           class="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                 style="background-color: {{ $task->project->color ?? '#3B82F6' }}20">
-                <i class="bi bi-folder2-open text-sm" style="color: {{ $task->project->color ?? '#3B82F6' }}"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ $task->project->name }}</p>
-                <p class="text-[10px] text-slate-400">View project</p>
-            </div>
-            <i class="bi bi-chevron-right text-xs text-slate-400 group-hover:text-violet-500 transition-colors"></i>
-        </a>
+            {{-- Start / Stop button --}}
+            <div class="p-4">
+                <button @click="toggle()"
+                        class="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-sm font-bold transition-all"
+                        :class="running
+                            ? 'bg-rose-500 hover:bg-rose-600 text-white'
+                            : 'bg-violet-600 hover:bg-violet-700 text-white'">
+                    <i class="bi text-base" :class="running ? 'bi-stop-circle-fill' : 'bi-play-circle-fill'"></i>
+                    <span x-text="running ? 'Stop Tracking' : 'Start Tracking'"></span>
+                </button>
 
-        {{-- Delete --}}
+                {{-- Total logged --}}
+                <div class="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
+                    <i class="bi bi-clock-history text-xs text-violet-500"></i>
+                    <span class="text-xs text-slate-500">Total logged</span>
+                    <span class="ml-auto text-xs font-bold text-slate-900 dark:text-white" x-text="totalFormatted"></span>
+                </div>
+            </div>
+
+            {{-- Recent sessions --}}
+            <div class="border-t border-slate-100 dark:border-slate-800">
+                <div class="px-4 py-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sessions</span>
+                </div>
+                <template x-if="entries.length === 0">
+                    <div class="px-4 pb-4 text-center">
+                        <p class="text-xs text-slate-400">No sessions yet</p>
+                    </div>
+                </template>
+                <div class="divide-y divide-slate-50 dark:divide-slate-800/60 max-h-36 overflow-y-auto">
+                    <template x-for="(e, i) in entries" :key="e.id ?? i">
+                        <div class="flex items-center gap-2.5 px-4 py-2">
+                            <div class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
+                                <i class="bi bi-play-fill text-violet-500 text-[8px]"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300" x-text="e.duration"></p>
+                                <p class="text-[10px] text-slate-400 truncate" x-text="(e.user ? e.user + ' · ' : '') + e.started"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>{{-- end Time Tracker card --}}
+
+        {{-- Actions --}}
         @can('delete', $task)
         <button onclick="if(confirm('Delete this task? This cannot be undone.')) document.getElementById('delete-form').submit()"
-                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-800 transition-all font-medium">
+                class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-800 transition-all">
             <i class="bi bi-trash3 text-sm"></i> Delete task
         </button>
         <form id="delete-form" method="POST" action="{{ route('tasks.destroy', $task) }}" class="hidden">
             @csrf @method('DELETE')
         </form>
         @endcan
+
     </div>
 </div>
 
