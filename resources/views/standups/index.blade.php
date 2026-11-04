@@ -97,44 +97,23 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
             @endphp
 
             <a href="{{ route('standups.member-day', [$date->toDateString(), $member->id]) }}"
-               class="group text-left bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700
+               class="group flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700
                       shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-600
-                      transition-all duration-200 p-5 flex flex-col gap-3 w-full">
+                      transition-all duration-200 p-3.5 w-full">
 
-                {{-- Top row: avatar + chevron --}}
-                <div class="flex items-start justify-between">
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-base flex-shrink-0"
-                         style="background: {{ $avatarBg }}; color: {{ $avatarText }}">
-                        {{ $initials }}
-                    </div>
-                    <div class="flex flex-col items-end gap-1.5">
-                        @if($standup)
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-                                         bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                <i class="bi bi-check-circle-fill text-[10px]"></i> Submitted
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-                                         bg-slate-100 dark:bg-slate-700 text-slate-400">
-                                <i class="bi bi-clock text-[10px]"></i> Pending
-                            </span>
-                        @endif
-                        @if($hasBlockers)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-                                     bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-                            <i class="bi bi-exclamation-triangle-fill text-[10px]"></i> Blocked
-                        </span>
-                        @endif
-                    </div>
+                {{-- Avatar --}}
+                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+                     style="background: {{ $avatarBg }}; color: {{ $avatarText }}">
+                    {{ $initials }}
                 </div>
 
-                {{-- Name + role badges --}}
-                <div class="min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-semibold text-slate-900 dark:text-white text-sm truncate">{{ $member->name }}</span>
+                {{-- Name + role + designation --}}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="font-semibold text-slate-900 dark:text-white text-sm leading-tight truncate">{{ $member->name }}</span>
                         @foreach($member->roles as $role)
                         @if($role->name !== 'member')
-                        <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide
+                        <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide flex-shrink-0
                                      {{ $role->name === 'admin' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
                                       : ($role->name === 'manager' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                                       : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300') }}">
@@ -148,52 +127,26 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                     @endif
                 </div>
 
-                {{-- Progress bar + status dots --}}
-                <div class="pt-1 border-t border-slate-100 dark:border-slate-700/60 space-y-2">
-                    @if($standup && $totalItems > 0)
-                        {{-- Thin segmented progress bar --}}
-                        <div class="flex gap-0.5 h-1.5 rounded-full overflow-hidden">
-                            @if($doneCount)
-                            <div class="bg-green-400 dark:bg-green-500 rounded-full"
-                                 style="flex: {{ $doneCount }}"></div>
-                            @endif
-                            @if($wipCount)
-                            <div class="bg-blue-400 dark:bg-blue-500 rounded-full"
-                                 style="flex: {{ $wipCount }}"></div>
-                            @endif
-                            @if($todoCount)
-                            <div class="bg-slate-200 dark:bg-slate-600 rounded-full"
-                                 style="flex: {{ $todoCount }}"></div>
-                            @endif
-                        </div>
-                        {{-- Status dot counts --}}
-                        <div class="flex items-center gap-3">
-                            @if($todoCount)
-                            <span class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                                <span class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-500 flex-shrink-0"></span>
-                                {{ $todoCount }}
-                            </span>
-                            @endif
-                            @if($wipCount)
-                            <span class="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
-                                <span class="w-2 h-2 rounded-full bg-blue-400 dark:bg-blue-500 flex-shrink-0"></span>
-                                {{ $wipCount }}
-                            </span>
-                            @endif
-                            @if($doneCount)
-                            <span class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                                <span class="w-2 h-2 rounded-full bg-green-400 dark:bg-green-500 flex-shrink-0"></span>
-                                {{ $doneCount }}
-                            </span>
-                            @endif
-                            <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-sm ml-auto"></i>
-                        </div>
+                {{-- Status + chevron --}}
+                <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                    @if($standup)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                     bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                            <i class="bi bi-check-circle-fill text-[9px]"></i> Submitted
+                        </span>
                     @else
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-slate-300 dark:text-slate-600 italic">{{ $standup ? 'No items' : 'Not submitted' }}</span>
-                            <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-sm"></i>
-                        </div>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                     bg-slate-100 dark:bg-slate-700 text-slate-400">
+                            <i class="bi bi-clock text-[9px]"></i> Pending
+                        </span>
                     @endif
+                    @if($hasBlockers)
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
+                        <i class="bi bi-exclamation-triangle-fill text-[9px]"></i> Blocked
+                    </span>
+                    @endif
+                    <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-xs mt-0.5"></i>
                 </div>
 
             </a>
