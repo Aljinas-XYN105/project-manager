@@ -333,19 +333,19 @@ window.__standupInit = function() {
             <span x-show="saving" x-cloak class="text-xs text-slate-400 flex items-center gap-1">
                 <i class="bi bi-arrow-repeat animate-spin text-xs"></i> Saving…
             </span>
-            <span x-show="saved && !submitted" x-cloak x-transition
+            <span x-show="saved" x-cloak x-transition
                   class="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
                 <i class="bi bi-check-circle-fill text-xs"></i> Saved
             </span>
 
             <button @click="submitStandup()"
-                    :disabled="saving || submitted"
+                    :disabled="saving"
                     :class="submitted
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700 cursor-default'
-                        : 'bg-violet-600 hover:bg-violet-700 text-white border-violet-600 hover:border-violet-700'"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold
-                           transition-all duration-200 disabled:opacity-70">
-                <i :class="submitted ? 'bi-check-circle-fill' : 'bi-send-fill'" class="bi text-xs"></i>
+                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40'
+                        : 'bg-violet-600 hover:bg-violet-700 text-white border border-violet-600 hover:border-violet-700'"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
+                           transition-all duration-200 disabled:opacity-50">
+                <i :class="saving ? 'bi-arrow-repeat animate-spin' : (submitted ? 'bi-check-circle-fill' : 'bi-send-fill')" class="bi text-xs"></i>
                 <span x-text="submitted ? 'Submitted ✓' : 'Submit Standup'"></span>
             </button>
         </div>
@@ -476,20 +476,16 @@ window.__standupInit = function() {
     {{-- ── Bottom submit bar ───────────────────────────────────────────── --}}
     <div class="flex items-center justify-between gap-4 pt-2">
         <p class="text-xs text-slate-400">
-            @if($alreadySubmitted)
-            Last updated today · changes auto-save
-            @else
-            Drag tasks between columns to update status. Hit Submit when you're ready.
-            @endif
+            Changes auto-save · drag tasks between columns to update status.
         </p>
         <button @click="submitStandup()"
-                :disabled="saving || submitted"
+                :disabled="saving"
                 :class="submitted
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700 cursor-default'
-                    : 'bg-violet-600 hover:bg-violet-700 text-white border-violet-600 hover:border-violet-700'"
-                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border
-                       text-sm font-semibold transition-all duration-200 disabled:opacity-70">
-            <i :class="submitted ? 'bi-check-circle-fill' : 'bi-send-fill'" class="bi text-xs"></i>
+                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40'
+                    : 'bg-violet-600 hover:bg-violet-700 text-white border border-violet-600 hover:border-violet-700'"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
+                       text-sm font-semibold transition-all duration-200 disabled:opacity-50">
+            <i :class="saving ? 'bi-arrow-repeat animate-spin' : (submitted ? 'bi-check-circle-fill' : 'bi-send-fill')" class="bi text-xs"></i>
             <span x-text="submitted ? 'Submitted ✓' : 'Submit Standup'"></span>
         </button>
     </div>
