@@ -778,21 +778,22 @@ window.__standupInit = function() {
                 </div>
 
                 {{-- Tabs --}}
-                <div class="flex border-b border-slate-100 dark:border-slate-700/60 px-5 flex-shrink-0">
+                <div class="flex items-center border-b border-slate-100 dark:border-slate-700/60 px-5 flex-shrink-0">
                     <button @click="addTaskModalTab = 'existing'; fetchTasks(searchQuery)"
                             :class="addTaskModalTab === 'existing'
                                 ? 'border-b-2 border-violet-600 text-violet-700 dark:text-violet-400'
                                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
-                            class="px-1 py-3 text-sm font-semibold mr-5 transition-colors -mb-px">
+                            class="px-1 py-3 text-sm font-semibold transition-colors -mb-px">
                         <i class="bi bi-search text-xs mr-1.5"></i>Find Existing
                     </button>
+                    <div class="flex-1"></div>
                     @if($projects->count() > 0)
                     <button @click="addTaskModalTab = 'create'"
                             :class="addTaskModalTab === 'create'
-                                ? 'border-b-2 border-violet-600 text-violet-700 dark:text-violet-400'
-                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
-                            class="px-1 py-3 text-sm font-semibold transition-colors -mb-px">
-                        <i class="bi bi-plus-square text-xs mr-1.5"></i>Create New
+                                ? 'bg-violet-600 text-white border-violet-600'
+                                : 'text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/20'"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors mb-px">
+                        <i class="bi bi-plus-lg text-xs"></i>Create New
                     </button>
                     @endif
                 </div>
