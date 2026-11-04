@@ -82,34 +82,36 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             @forelse($users as $member)
             @php
-                $standup      = $standups[$member->id] ?? null;
-                $todoCount    = $standup ? $standup->items->where('status','todo')->count() : 0;
-                $wipCount     = $standup ? $standup->items->whereIn('status',['in_progress','in_review'])->count() : 0;
-                $doneCount    = $standup ? $standup->items->where('status','done')->count() : 0;
-                $totalItems   = $standup ? $standup->items->count() : 0;
-                $progressPct  = $totalItems > 0 ? (int)(($doneCount / $totalItems) * 100) : 0;
-                $hasBlockers  = $standup && $standup->blockers;
-                $cardShadow   = $hasBlockers
-                    ? '0 2px 10px 0 rgba(239,68,68,0.25), 0 1px 3px 0 rgba(239,68,68,0.1)'
-                    : ($standup ? '0 2px 10px 0 rgba(34,197,94,0.22), 0 1px 3px 0 rgba(34,197,94,0.08)' : '0 2px 10px 0 rgba(251,146,60,0.18), 0 1px 3px 0 rgba(251,146,60,0.07)');
-                $cardBorder   = $hasBlockers
-                    ? 'border-rose-200 dark:border-rose-800/60'
-                    : ($standup ? 'border-green-200 dark:border-green-800/50' : 'border-amber-200 dark:border-amber-700/40');
-                $colorIdx     = $member->id % count($avatarBgs);
-                $avatarBg     = $avatarBgs[$colorIdx];
-                $avatarText   = $avatarTexts[$colorIdx];
-                $initials     = strtoupper(substr($member->name, 0, 2));
-                $subtitle     = $member->job_title ?? $member->department ?? $member->email;
+                $standup       = $standups[$member->id] ?? null;
+                $todoCount     = $standup ? $standup->items->where('status','todo')->count() : 0;
+                $inProgCount   = $standup ? $standup->items->where('status','in_progress')->count() : 0;
+                $reviewCount   = $standup ? $standup->items->where('status','in_review')->count() : 0;
+                $doneCount     = $standup ? $standup->items->where('status','done')->count() : 0;
+                $hasBlockers   = $standup && $standup->blockers;
+                $cardShadow    = $hasBlockers
+                    ? '0 3px 12px 0 rgba(239,68,68,0.28), 0 1px 4px 0 rgba(239,68,68,0.12)'
+                    : ($standup ? '0 3px 12px 0 rgba(34,197,94,0.22), 0 1px 4px 0 rgba(34,197,94,0.08)' : '0 3px 12px 0 rgba(251,146,60,0.18), 0 1px 4px 0 rgba(251,146,60,0.06)');
+                $cardBorder    = $hasBlockers
+                    ? 'border-rose-200 dark:border-rose-800/50'
+                    : ($standup ? 'border-green-200 dark:border-green-800/40' : 'border-amber-200 dark:border-amber-700/40');
+                $dividerColor  = $hasBlockers
+                    ? 'border-rose-100 dark:border-rose-900/30'
+                    : ($standup ? 'border-green-100 dark:border-green-900/20' : 'border-amber-100 dark:border-amber-900/20');
+                $colorIdx      = $member->id % count($avatarBgs);
+                $avatarBg      = $avatarBgs[$colorIdx];
+                $avatarText    = $avatarTexts[$colorIdx];
+                $initials      = strtoupper(substr($member->name, 0, 2));
+                $subtitle      = $member->job_title ?? $member->department ?? $member->email;
             @endphp
 
             <a href="{{ route('standups.member-day', [$date->toDateString(), $member->id]) }}"
                class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl border {{ $cardBorder }}
-                      hover:border-violet-300 dark:hover:border-violet-600
-                      transition-all duration-200 p-3.5 w-full"
+                      hover:border-violet-300 dark:hover:border-violet-600 overflow-hidden
+                      transition-all duration-200 w-full"
                style="box-shadow: {{ $cardShadow }}">
 
-                {{-- Top row: avatar + name + badges + chevron --}}
-                <div class="flex items-center gap-3">
+                {{-- Top section: avatar + name + status badge --}}
+                <div class="flex items-center gap-3 px-4 pt-4 pb-3.5">
                     {{-- Avatar --}}
                     <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
                          style="background: {{ $avatarBg }}; color: {{ $avatarText }}">
@@ -136,51 +138,63 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                         @endif
                     </div>
 
-                    {{-- Status + chevron --}}
-                    <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                    {{-- Status dot + chevron --}}
+                    <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                         @if($standup)
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                         bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                <i class="bi bi-check-circle-fill text-[9px]"></i> Submitted
-                            </span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold
+                                     bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800/50">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0"></span>
+                            Submitted
+                        </span>
                         @else
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                         bg-slate-100 dark:bg-slate-700 text-slate-400">
-                                <i class="bi bi-clock text-[9px]"></i> Pending
-                            </span>
-                        @endif
-                        @if($hasBlockers)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                     bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-                            <i class="bi bi-exclamation-triangle-fill text-[9px]"></i> Blocked
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold
+                                     bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"></span>
+                            Pending
                         </span>
                         @endif
-                        <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-xs mt-0.5"></i>
+                        <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-xs"></i>
                     </div>
                 </div>
 
-                {{-- Bottom row: section counts (only for submitted standups) --}}
-                @if($standup)
-                <div class="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-700/50 pl-[52px]">
-                    <span class="flex items-center gap-1 text-xs {{ $todoCount > 0 ? 'text-slate-500 dark:text-slate-400' : 'text-slate-300 dark:text-slate-600' }}">
-                        <i class="bi bi-circle text-[11px]"></i>
-                        <span class="font-medium tabular-nums">{{ $todoCount }}</span>
-                    </span>
-                    <span class="flex items-center gap-1 text-xs {{ $wipCount > 0 ? 'text-blue-500 dark:text-blue-400' : 'text-slate-300 dark:text-slate-600' }}">
-                        <i class="bi bi-arrow-repeat text-[11px]"></i>
-                        <span class="font-medium tabular-nums">{{ $wipCount }}</span>
-                    </span>
-                    @php $reviewCount = $standup->items->where('status','in_review')->count(); @endphp
-                    <span class="flex items-center gap-1 text-xs {{ $reviewCount > 0 ? 'text-amber-500 dark:text-amber-400' : 'text-slate-300 dark:text-slate-600' }}">
-                        <i class="bi bi-eye text-[11px]"></i>
-                        <span class="font-medium tabular-nums">{{ $reviewCount }}</span>
-                    </span>
-                    <span class="flex items-center gap-1 text-xs {{ $doneCount > 0 ? 'text-green-500 dark:text-green-400' : 'text-slate-300 dark:text-slate-600' }}">
-                        <i class="bi bi-check-circle-fill text-[11px]"></i>
-                        <span class="font-medium tabular-nums">{{ $doneCount }}</span>
-                    </span>
+                {{-- Counts bar — always present, full-width, keeps all cards the same height --}}
+                <div class="grid grid-cols-4 border-t {{ $dividerColor }}">
+                    {{-- To Do --}}
+                    <div class="flex flex-col items-center gap-1 py-2.5
+                                border-r {{ $dividerColor }}">
+                        <i class="bi bi-circle-fill text-[11px] {{ $todoCount > 0 ? 'text-slate-400' : 'text-slate-200 dark:text-slate-700' }}"></i>
+                        <span class="text-[11px] font-bold tabular-nums leading-none
+                                     {{ $todoCount > 0 ? 'text-slate-600 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600' }}">
+                            {{ $todoCount }}
+                        </span>
+                    </div>
+                    {{-- In Progress --}}
+                    <div class="flex flex-col items-center gap-1 py-2.5
+                                border-r {{ $dividerColor }}">
+                        <i class="bi bi-arrow-repeat text-[11px] {{ $inProgCount > 0 ? 'text-blue-500' : 'text-slate-200 dark:text-slate-700' }}"></i>
+                        <span class="text-[11px] font-bold tabular-nums leading-none
+                                     {{ $inProgCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-300 dark:text-slate-600' }}">
+                            {{ $inProgCount }}
+                        </span>
+                    </div>
+                    {{-- In Review --}}
+                    <div class="flex flex-col items-center gap-1 py-2.5
+                                border-r {{ $dividerColor }}">
+                        <i class="bi bi-eye-fill text-[11px] {{ $reviewCount > 0 ? 'text-amber-500' : 'text-slate-200 dark:text-slate-700' }}"></i>
+                        <span class="text-[11px] font-bold tabular-nums leading-none
+                                     {{ $reviewCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300 dark:text-slate-600' }}">
+                            {{ $reviewCount }}
+                        </span>
+                    </div>
+                    {{-- Done --}}
+                    <div class="flex flex-col items-center gap-1 py-2.5">
+                        <i class="bi bi-check-circle-fill text-[11px] {{ $doneCount > 0 ? 'text-green-500' : 'text-slate-200 dark:text-slate-700' }}"></i>
+                        <span class="text-[11px] font-bold tabular-nums leading-none
+                                     {{ $doneCount > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-300 dark:text-slate-600' }}">
+                            {{ $doneCount }}
+                        </span>
+                    </div>
                 </div>
-                @endif
 
             </a>
             @empty
