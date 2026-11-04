@@ -9,7 +9,6 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
     return {
         items:          existingItems.map((item, i) => ({ ...item, _id: i })),
         blockers:       existingBlockers || '',
-        creatingIn:     null,
         newTaskTitle:   '',
         newTaskProject: '',
         taskCreating:   false,
@@ -21,35 +20,33 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
         dragging:       null,
         dragOverStatus: null,
 
-        // ── Add-existing-task picker ─────────────────────────────────────
-        addingMode:     null,   // null | 'create' | 'existing'
-        searchQuery:    '',
-        searchResults:  [],
-        searching:      false,
-        searchTimer:    null,
+        // ── Add task modal ────────────────────────────────────────────────
+        addTaskModal:       false,
+        addTaskModalTab:    'existing',   // 'existing' | 'create'
+        searchQuery:        '',
+        searchResults:      [],
+        searching:          false,
+        searchTimer:        null,
+        showAssigneePicker: false,
 
         itemsFor(status) {
             return this.items.filter(i => i.status === status);
         },
 
-        startCreate() {
-            this.creatingIn     = 'todo';
-            this.addingMode     = 'create';
-            this.newTaskTitle   = '';
-            this.newTaskProject = '';
+        openAddTaskModal(tab = 'existing') {
+            this.addTaskModal    = true;
+            this.addTaskModalTab = tab;
+            this.searchQuery     = '';
+            this.searchResults   = [];
+            this.newTaskTitle    = '';
+            this.newTaskProject  = '';
+            if (tab === 'existing') {
+                this.$nextTick(() => this.fetchTasks(''));
+            }
         },
 
-        startAddExisting() {
-            this.creatingIn    = 'todo';
-            this.addingMode    = 'existing';
-            this.searchQuery   = '';
-            this.searchResults = [];
-            this.fetchTasks('');
-        },
-
-        cancelAdding() {
-            this.creatingIn    = null;
-            this.addingMode    = null;
+        closeAddTaskModal() {
+            this.addTaskModal  = false;
             this.searchQuery   = '';
             this.searchResults = [];
             clearTimeout(this.searchTimer);
@@ -75,9 +72,7 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
         addExistingTask(task) {
             if (this.items.some(i => i.task_id === task.id)) return;
             this.items.push({ _id: nextId++, task_id: task.id, description: task.label, status: 'todo' });
-            this.searchQuery   = '';
-            this.searchResults = [];
-            this.fetchTasks('');
+            this.closeAddTaskModal();
             this.autoSave();
         },
 
@@ -104,10 +99,7 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
                 if (data.ok) {
                     const label = (data.ticket_key ? `[${data.ticket_key}] ` : '') + data.title;
                     this.items.push({ _id: nextId++, task_id: data.task_id, description: label, status: 'todo' });
-                    this.creatingIn     = null;
-                    this.addingMode     = null;
-                    this.newTaskTitle   = '';
-                    this.newTaskProject = '';
+                    this.closeAddTaskModal();
                     this.autoSave();
                 }
             } finally {
@@ -199,8 +191,9 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
         },
 
         closePanel() {
-            this.panelOpen = false;
-            this.panel     = null;
+            this.panelOpen          = false;
+            this.panel              = null;
+            this.showAssigneePicker = false;
         },
 
         async patchPanel(field, value) {
@@ -429,129 +422,16 @@ window.__standupInit = function() {
                 </div>
             </div>
 
-            {{-- Add task controls — only in To-Do column --}}
+            {{-- Add task button — only in To-Do column --}}
             @if($status === 'todo')
-
-            {{-- Create new task form --}}
-            <template x-if="creatingIn === 'todo' && addingMode === 'create'">
-                <div class="mx-2 mb-1 bg-white dark:bg-slate-800 rounded-xl px-3 py-3
-                            border border-violet-300 dark:border-violet-600 shadow-sm space-y-2">
-                    <div class="flex items-center justify-between">
-                        <p class="text-[11px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">
-                            <i class="bi bi-plus-square-fill mr-1"></i>New task
-                        </p>
-                        <button @click="cancelAdding()" class="text-slate-300 hover:text-slate-500 transition-colors">
-                            <i class="bi bi-x text-sm"></i>
-                        </button>
-                    </div>
-                    <input type="text"
-                           x-model="newTaskTitle"
-                           x-effect="addingMode === 'create' && $nextTick(() => $el.focus())"
-                           @keydown.enter.prevent="createTask()"
-                           @keydown.escape="cancelAdding()"
-                           placeholder="Task title…"
-                           class="w-full text-sm bg-slate-50 dark:bg-slate-700/50 rounded-lg px-3 py-1.5
-                                  border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
-                                  placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
-                    <select x-model="newTaskProject"
-                            class="w-full text-sm bg-slate-50 dark:bg-slate-700/50 rounded-lg px-3 py-1.5
-                                   border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
-                                   outline-none focus:border-violet-400 transition-colors">
-                        <option value="">Select project…</option>
-                        <template x-for="p in projects" :key="p.id">
-                            <option :value="p.id" x-text="p.name"></option>
-                        </template>
-                    </select>
-                    <div class="flex items-center justify-between pt-1">
-                        <button @click="cancelAdding()"
-                                class="text-xs text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
-                        <button @click="createTask()"
-                                :disabled="!newTaskTitle.trim() || !newTaskProject || taskCreating"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                                       bg-violet-600 hover:bg-violet-700 text-white transition-colors
-                                       disabled:opacity-40 disabled:cursor-not-allowed">
-                            <i class="bi" :class="taskCreating ? 'bi-arrow-repeat animate-spin' : 'bi-plus-lg'"></i>
-                            <span x-text="taskCreating ? 'Creating…' : 'Create & add'"></span>
-                        </button>
-                    </div>
-                </div>
-            </template>
-
-            {{-- Add existing task picker --}}
-            <template x-if="creatingIn === 'todo' && addingMode === 'existing'">
-                <div class="mx-2 mb-1 bg-white dark:bg-slate-800 rounded-xl px-3 py-3
-                            border border-violet-300 dark:border-violet-600 shadow-sm space-y-2">
-                    <div class="flex items-center justify-between">
-                        <p class="text-[11px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">
-                            <i class="bi bi-search mr-1"></i>Add existing
-                        </p>
-                        <button @click="cancelAdding()" class="text-slate-300 hover:text-slate-500 transition-colors">
-                            <i class="bi bi-x text-sm"></i>
-                        </button>
-                    </div>
-                    <div class="relative">
-                        <input type="text"
-                               x-model="searchQuery"
-                               @input="onSearchInput()"
-                               @keydown.escape="cancelAdding()"
-                               x-effect="addingMode === 'existing' && $nextTick(() => $el.focus())"
-                               placeholder="Search by title or ticket key…"
-                               class="w-full text-sm bg-slate-50 dark:bg-slate-700/50 rounded-lg pl-3 pr-7 py-1.5
-                                      border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
-                                      placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
-                        <span x-show="searching" x-cloak class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-                            <i class="bi bi-arrow-repeat animate-spin text-xs"></i>
-                        </span>
-                    </div>
-                    <div class="max-h-44 overflow-y-auto -mx-1 space-y-0.5">
-                        <template x-if="searchResults.length === 0 && !searching">
-                            <p class="text-xs text-slate-400 text-center py-3">
-                                <span x-text="searchQuery.length >= 2 ? 'No tasks found.' : 'Your open tasks appear here.'"></span>
-                            </p>
-                        </template>
-                        <template x-for="task in searchResults" :key="task.id">
-                            <button @click="addExistingTask(task)"
-                                    :disabled="items.some(i => i.task_id === task.id)"
-                                    class="flex items-start gap-2 w-full px-2 py-2 rounded-lg text-left transition-colors
-                                           hover:bg-violet-50 dark:hover:bg-violet-900/20
-                                           disabled:opacity-40 disabled:cursor-not-allowed">
-                                <span class="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" :class="statusDot(task.status)"></span>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-xs font-medium text-slate-700 dark:text-slate-200 truncate" x-text="task.title"></p>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">
-                                        <span x-show="task.ticket_key" x-text="task.ticket_key + ' · '"></span>
-                                        <span x-text="task.project"></span>
-                                    </p>
-                                </div>
-                                <span x-show="items.some(i => i.task_id === task.id)"
-                                      class="text-[10px] text-violet-400 flex-shrink-0 mt-1">Added</span>
-                                <i x-show="!items.some(i => i.task_id === task.id)"
-                                   class="bi bi-plus text-sm text-violet-400 flex-shrink-0 mt-0.5"></i>
-                            </button>
-                        </template>
-                    </div>
-                </div>
-            </template>
-
-            {{-- Add task / Add existing buttons — hidden while either form is open --}}
-            <div x-show="creatingIn !== 'todo'" class="px-2 pb-2 mt-1 flex gap-1.5">
-                @if($projects->count() > 0)
-                <button @click="startCreate()"
-                        class="flex items-center gap-1 flex-1 px-2 py-1.5 rounded-xl
+            <div class="px-2 pb-2 mt-1">
+                <button @click="openAddTaskModal('existing')"
+                        class="flex items-center gap-1.5 w-full px-2 py-1.5 rounded-xl
                                border border-dashed border-violet-200 dark:border-violet-800/50
                                text-xs text-violet-400 dark:text-violet-500 justify-center
                                hover:border-violet-400 hover:text-violet-600 dark:hover:border-violet-600 dark:hover:text-violet-300
                                transition-all">
-                    <i class="bi bi-plus-square text-xs"></i> New
-                </button>
-                @endif
-                <button @click="startAddExisting()"
-                        class="flex items-center gap-1 flex-1 px-2 py-1.5 rounded-xl
-                               border border-dashed border-slate-200 dark:border-slate-700
-                               text-xs text-slate-400 dark:text-slate-500 justify-center
-                               hover:border-slate-400 hover:text-slate-600 dark:hover:border-slate-500 dark:hover:text-slate-300
-                               transition-all">
-                    <i class="bi bi-search text-xs"></i> Existing
+                    <i class="bi bi-plus text-sm"></i> Add Task
                 </button>
             </div>
             @endif
@@ -655,75 +535,109 @@ window.__standupInit = function() {
                                  class="text-lg font-semibold text-slate-900 dark:text-white leading-snug outline-none rounded-lg
                                         px-2 py-1 -mx-2 cursor-text min-h-[1.5em]
                                         hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 transition-colors"></div>
-                            <p class="text-xs text-slate-400 mt-1 ml-0.5">Click to edit title</p>
                         </div>
 
-                        {{-- Fields --}}
-                        <div class="px-5 py-4 space-y-3.5 border-b border-slate-100 dark:border-slate-700/60">
-                            <div class="grid grid-cols-2 gap-x-3 gap-y-3.5">
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Type</p>
-                                    <select @change="patchPanel('type', $event.target.value)"
-                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="t in ['task','bug','feature','story','epic']" :key="t">
-                                            <option :value="t" :selected="panel.task.type === t" x-text="t.charAt(0).toUpperCase()+t.slice(1)"></option>
-                                        </template>
-                                    </select>
+                        {{-- Properties --}}
+                        <div class="border-b border-slate-100 dark:border-slate-700/60">
+                            <div class="divide-y divide-slate-50 dark:divide-slate-700/40">
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Type</span>
+                                    <div class="relative flex-1">
+                                        <select @change="patchPanel('type', $event.target.value)"
+                                                class="w-full text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
+                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
+                                            <template x-for="t in ['task','bug','feature','story','epic']" :key="t">
+                                                <option :value="t" :selected="panel.task.type === t" x-text="t.charAt(0).toUpperCase()+t.slice(1)"></option>
+                                            </template>
+                                        </select>
+                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</p>
-                                    <select @change="patchPanel('priority', $event.target.value)"
-                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="p in ['low','medium','high','critical']" :key="p">
-                                            <option :value="p" :selected="panel.task.priority === p" x-text="p.charAt(0).toUpperCase()+p.slice(1)"></option>
-                                        </template>
-                                    </select>
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Priority</span>
+                                    <div class="relative flex-1 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full flex-shrink-0"
+                                              :class="{'bg-slate-300': panel.task.priority==='low','bg-amber-400': panel.task.priority==='medium','bg-orange-500': panel.task.priority==='high','bg-rose-500': panel.task.priority==='critical'}"></span>
+                                        <select @change="patchPanel('priority', $event.target.value)"
+                                                class="flex-1 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
+                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
+                                            <template x-for="p in ['low','medium','high','critical']" :key="p">
+                                                <option :value="p" :selected="panel.task.priority === p" x-text="p.charAt(0).toUpperCase()+p.slice(1)"></option>
+                                            </template>
+                                        </select>
+                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Column / Stage</p>
-                                    <select @change="patchPanel('column_id', parseInt($event.target.value))"
-                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="col in panel.columns" :key="col.id">
-                                            <option :value="col.id" :selected="panel.task.column_id === col.id" x-text="col.name"></option>
-                                        </template>
-                                    </select>
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Column</span>
+                                    <div class="relative flex-1">
+                                        <select @change="patchPanel('column_id', parseInt($event.target.value))"
+                                                class="w-full text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
+                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
+                                            <template x-for="col in panel.columns" :key="col.id">
+                                                <option :value="col.id" :selected="panel.task.column_id === col.id" x-text="col.name"></option>
+                                            </template>
+                                        </select>
+                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Due Date</p>
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Due date</span>
                                     <input type="date" :value="panel.task.due_date || ''"
                                            @change="patchPanel('due_date', $event.target.value || null)"
-                                           class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer" />
+                                           class="flex-1 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none"
+                                           style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none" />
                                 </div>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estimate (Hours)</p>
-                                <input type="number" min="0" step="0.5" :value="panel.task.estimated_hours ?? 0"
-                                       @change="patchPanel('estimated_hours', parseFloat($event.target.value) || 0)"
-                                       class="w-28 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors" />
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Estimate</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="number" min="0" step="0.5" :value="panel.task.estimated_hours ?? 0"
+                                               @change="patchPanel('estimated_hours', parseFloat($event.target.value) || 0)"
+                                               class="w-14 text-sm text-slate-700 dark:text-slate-200 font-medium outline-none"
+                                               style="background:transparent; border:none; padding:0" />
+                                        <span class="text-xs text-slate-400">hrs</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {{-- Assignees --}}
                         <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Assignees</p>
-                            <div class="flex flex-wrap gap-1.5 mb-2.5" x-show="panel.task.assignee_ids.length > 0">
-                                <template x-for="m in panel.members.filter(m => panel.task.assignee_ids.includes(m.id))" :key="'chip-'+m.id">
-                                    <span class="inline-flex items-center gap-1 pl-1.5 pr-1 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 border border-violet-200 dark:border-violet-700 text-xs font-medium text-violet-700 dark:text-violet-300">
-                                        <span x-text="m.name.split(' ')[0]"></span>
-                                        <button @click="const ids=panel.task.assignee_ids.filter(id=>id!==m.id); panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
-                                                class="w-4 h-4 rounded-full flex items-center justify-center text-violet-400 hover:text-violet-700 hover:bg-violet-200 dark:hover:bg-violet-800 transition-colors leading-none">&times;</button>
-                                    </span>
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Assignees</p>
+                                <button @click="showAssigneePicker = !showAssigneePicker"
+                                        :class="showAssigneePicker ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-violet-500'"
+                                        class="text-xs font-medium transition-colors flex items-center gap-1">
+                                    <i :class="showAssigneePicker ? 'bi-check-lg' : 'bi-person-plus'" class="bi text-xs"></i>
+                                    <span x-text="showAssigneePicker ? 'Done' : 'Edit'"></span>
+                                </button>
+                            </div>
+                            <div class="flex items-center flex-wrap gap-2" x-show="!showAssigneePicker">
+                                <template x-if="panel.task.assignee_ids.length === 0">
+                                    <p class="text-sm text-slate-400 italic">No one assigned</p>
+                                </template>
+                                <template x-for="m in panel.members.filter(m => panel.task.assignee_ids.includes(m.id))" :key="'av-'+m.id">
+                                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 rounded-full pl-1 pr-3 py-1 border border-slate-200 dark:border-slate-700">
+                                        <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold"
+                                             style="background:#ede9fe; color:#7c3aed"
+                                             x-text="m.name.substring(0,2).toUpperCase()"></div>
+                                        <span class="text-xs font-medium text-slate-700 dark:text-slate-200" x-text="m.name.split(' ')[0]"></span>
+                                    </div>
                                 </template>
                             </div>
-                            <div class="grid grid-cols-2 gap-0.5 max-h-36 overflow-y-auto">
-                                <template x-for="m in panel.members" :key="'member-'+m.id">
+                            <div x-show="showAssigneePicker" x-cloak
+                                 class="grid grid-cols-2 gap-0.5 max-h-40 overflow-y-auto mt-1">
+                                <template x-for="m in panel.members" :key="'pick-'+m.id">
                                     <button @click="const ids=panel.task.assignee_ids.includes(m.id)?panel.task.assignee_ids.filter(id=>id!==m.id):[...panel.task.assignee_ids,m.id]; panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
-                                            :class="panel.task.assignee_ids.includes(m.id)?'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium':'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
-                                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors text-left">
-                                        <div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-600 flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-slate-600 dark:text-slate-200"
+                                            :class="panel.task.assignee_ids.includes(m.id)?'bg-violet-50 dark:bg-violet-900/20':'hover:bg-slate-50 dark:hover:bg-slate-800'"
+                                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors">
+                                        <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold"
+                                             :style="panel.task.assignee_ids.includes(m.id) ? 'background:#ede9fe;color:#7c3aed' : 'background:#e2e8f0;color:#64748b'"
                                              x-text="m.name.substring(0,2).toUpperCase()"></div>
-                                        <span class="truncate text-sm" x-text="m.name.split(' ')[0]"></span>
-                                        <i x-show="panel.task.assignee_ids.includes(m.id)" class="bi bi-check2 text-violet-500 ml-auto text-xs flex-shrink-0"></i>
+                                        <span class="flex-1 text-sm truncate"
+                                              :class="panel.task.assignee_ids.includes(m.id) ? 'text-violet-700 dark:text-violet-300 font-medium' : 'text-slate-600 dark:text-slate-300'"
+                                              x-text="m.name.split(' ')[0]"></span>
+                                        <i x-show="panel.task.assignee_ids.includes(m.id)" class="bi bi-check2 text-violet-500 text-xs flex-shrink-0"></i>
                                     </button>
                                 </template>
                             </div>
@@ -792,19 +706,193 @@ window.__standupInit = function() {
                     </div>{{-- /scrollable body --}}
 
                     {{-- Footer --}}
-                    <div class="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 flex-shrink-0 bg-slate-50/60 dark:bg-slate-800/40">
+                    <div class="flex items-center gap-2 px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 flex-shrink-0 bg-white dark:bg-slate-900">
+                        <a :href="panel.task.show_url" target="_blank"
+                           class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+                                  bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors">
+                            <i class="bi bi-box-arrow-up-right text-xs"></i> Open task
+                        </a>
                         <a :href="panel.task.edit_url"
-                           class="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 transition-colors">
-                            <i class="bi bi-pencil-square text-xs"></i> Full edit
+                           class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+                                  border border-slate-200 dark:border-slate-700 text-sm font-medium
+                                  text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <i class="bi bi-pencil text-xs"></i> Edit
                         </a>
                         <button @click="closePanel()"
-                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                            Close
+                                class="w-9 h-9 rounded-xl flex items-center justify-center border border-slate-200 dark:border-slate-700
+                                       text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex-shrink-0">
+                            <i class="bi bi-x text-base"></i>
                         </button>
                     </div>
 
                 </div>
             </template>
+        </div>
+    </template>
+
+    {{-- ── Add Task Modal ──────────────────────────────────────────────── --}}
+    <template x-teleport="body">
+        <div x-show="addTaskModal" x-cloak @click="closeAddTaskModal()"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black/40 backdrop-blur-[2px]" style="display:none; z-index:200"></div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="addTaskModal" x-cloak @keydown.escape.window="closeAddTaskModal()"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-2"
+             class="fixed inset-0 flex items-center justify-center p-4"
+             style="display:none; z-index:201">
+
+            <div @click.stop
+                 class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden"
+                 style="max-height: min(90vh, 580px)">
+
+                {{-- Modal header --}}
+                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Add Task to Standup</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">{{ $day->format('l, F j') }}</p>
+                    </div>
+                    <button @click="closeAddTaskModal()"
+                            class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400
+                                   hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <i class="bi bi-x-lg text-sm"></i>
+                    </button>
+                </div>
+
+                {{-- Tabs --}}
+                <div class="flex border-b border-slate-100 dark:border-slate-700/60 px-5 flex-shrink-0">
+                    <button @click="addTaskModalTab = 'existing'; fetchTasks(searchQuery)"
+                            :class="addTaskModalTab === 'existing'
+                                ? 'border-b-2 border-violet-600 text-violet-700 dark:text-violet-400'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+                            class="px-1 py-3 text-sm font-semibold mr-5 transition-colors -mb-px">
+                        <i class="bi bi-search text-xs mr-1.5"></i>Find Existing
+                    </button>
+                    @if($projects->count() > 0)
+                    <button @click="addTaskModalTab = 'create'"
+                            :class="addTaskModalTab === 'create'
+                                ? 'border-b-2 border-violet-600 text-violet-700 dark:text-violet-400'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+                            class="px-1 py-3 text-sm font-semibold transition-colors -mb-px">
+                        <i class="bi bi-plus-square text-xs mr-1.5"></i>Create New
+                    </button>
+                    @endif
+                </div>
+
+                {{-- Tab: Find Existing --}}
+                <div x-show="addTaskModalTab === 'existing'" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-slate-50 dark:border-slate-700/40 flex-shrink-0">
+                        <div class="relative">
+                            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text"
+                                   x-model="searchQuery"
+                                   @input="onSearchInput()"
+                                   @keydown.escape="closeAddTaskModal()"
+                                   x-effect="addTaskModal && addTaskModalTab === 'existing' && $nextTick(() => $el.focus())"
+                                   placeholder="Search by task title…"
+                                   class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl pl-8 pr-9 py-2
+                                          border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                          placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
+                            <span x-show="searching" x-cloak class="absolute right-3 top-1/2 -translate-y-1/2">
+                                <i class="bi bi-arrow-repeat animate-spin text-slate-400 text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-2 py-2">
+                        <template x-if="searchResults.length === 0 && !searching">
+                            <div class="flex flex-col items-center justify-center py-10 text-center">
+                                <i class="bi bi-clipboard text-3xl text-slate-200 dark:text-slate-700 mb-2"></i>
+                                <p class="text-sm text-slate-500"
+                                   x-text="searchQuery.length >= 2 ? 'No tasks found' : 'Your open assigned tasks'"></p>
+                                <p class="text-xs text-slate-400 mt-0.5" x-show="searchQuery.length < 2">
+                                    Type to search all accessible tasks
+                                </p>
+                            </div>
+                        </template>
+                        <template x-for="task in searchResults" :key="task.id">
+                            <button @click="addExistingTask(task)"
+                                    :disabled="items.some(i => i.task_id === task.id)"
+                                    class="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-left mb-0.5
+                                           hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors
+                                           disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="w-2 h-2 rounded-full flex-shrink-0" :class="statusDot(task.status)"></span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-slate-800 dark:text-slate-100 truncate" x-text="task.title"></p>
+                                    <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                        <span x-show="task.ticket_key"
+                                              class="text-[10px] font-mono font-semibold text-violet-500 dark:text-violet-400"
+                                              x-text="task.ticket_key"></span>
+                                        <span x-show="task.ticket_key" class="text-slate-300 text-[10px]">·</span>
+                                        <span class="text-xs text-slate-400" x-text="task.project"></span>
+                                        <span class="text-slate-300 text-[10px]">·</span>
+                                        <span class="text-xs text-slate-400 capitalize" x-text="task.status.replace('_',' ')"></span>
+                                    </div>
+                                </div>
+                                <div x-show="items.some(i => i.task_id === task.id)"
+                                     class="flex-shrink-0 text-xs text-violet-500 font-medium flex items-center gap-1">
+                                    <i class="bi bi-check2 text-sm"></i> Added
+                                </div>
+                                <div x-show="!items.some(i => i.task_id === task.id)"
+                                     class="flex-shrink-0 w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center
+                                            text-violet-500 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors">
+                                    <i class="bi bi-plus text-sm"></i>
+                                </div>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- Tab: Create New --}}
+                @if($projects->count() > 0)
+                <div x-show="addTaskModalTab === 'create'" class="flex flex-col flex-1 overflow-hidden">
+                    <div class="flex-1 px-5 py-5 space-y-4">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">Project</label>
+                            <select x-model="newTaskProject"
+                                    class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
+                                           border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                           outline-none focus:border-violet-400 transition-colors">
+                                <option value="">Select a project…</option>
+                                <template x-for="p in projects" :key="p.id">
+                                    <option :value="p.id" x-text="p.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">Task title</label>
+                            <input type="text"
+                                   x-model="newTaskTitle"
+                                   x-effect="addTaskModal && addTaskModalTab === 'create' && $nextTick(() => $el.focus())"
+                                   @keydown.enter.prevent="createTask()"
+                                   @keydown.escape="closeAddTaskModal()"
+                                   placeholder="What needs to be done?"
+                                   class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
+                                          border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                          placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
+                        </div>
+                    </div>
+                    <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2 flex-shrink-0">
+                        <button @click="closeAddTaskModal()"
+                                class="px-4 py-2 rounded-xl text-sm font-medium text-slate-500
+                                       hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            Cancel
+                        </button>
+                        <button @click="createTask()"
+                                :disabled="!newTaskTitle.trim() || !newTaskProject || taskCreating"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+                                       bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold
+                                       transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                            <i class="bi" :class="taskCreating ? 'bi-arrow-repeat animate-spin' : 'bi-plus-lg'"></i>
+                            <span x-text="taskCreating ? 'Creating…' : 'Create & Add'"></span>
+                        </button>
+                    </div>
+                </div>
+                @endif
+
+            </div>
         </div>
     </template>
 

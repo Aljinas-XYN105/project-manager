@@ -187,9 +187,7 @@ class StandupController extends Controller
         $tasks = Task::with('project')
             ->whereIn('project_id', $accessibleIds)
             ->whereNotIn('status', ['done', 'cancelled'])
-            ->when(mb_strlen($term) >= 2, fn ($q) => $q->where(fn ($q) => $q
-                ->where('title', 'like', "%{$term}%")
-                ->orWhere('ticket_key', 'like', "%{$term}%")))
+            ->when(mb_strlen($term) >= 2, fn ($q) => $q->where('title', 'like', "%{$term}%"))
             ->when(mb_strlen($term) < 2, fn ($q) => $q->whereHas('assignees', fn ($a) => $a->where('users.id', $user->id)))
             ->orderByRaw("case when status = 'in_progress' then 0 when status = 'todo' then 1 else 2 end")
             ->latest('updated_at')

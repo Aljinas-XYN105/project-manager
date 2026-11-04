@@ -67,9 +67,10 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers) {
         },
 
         // ── Task detail panel ────────────────────────────────────────────
-        panelOpen:    false,
-        panel:        null,
-        panelLoading: false,
+        panelOpen:          false,
+        panel:              null,
+        panelLoading:       false,
+        showAssigneePicker: false,
 
         ticketKey(description) {
             const m = String(description).match(/^\[([A-Z]+-\d+)\]/);
@@ -96,8 +97,9 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers) {
         },
 
         closePanel() {
-            this.panelOpen = false;
-            this.panel     = null;
+            this.panelOpen          = false;
+            this.panel              = null;
+            this.showAssigneePicker = false;
         },
 
         async patchPanel(field, value) {
@@ -341,77 +343,109 @@ $columns = [
                                  class="text-lg font-semibold text-slate-900 dark:text-white leading-snug outline-none rounded-lg
                                         px-2 py-1 -mx-2 cursor-text min-h-[1.5em]
                                         hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 transition-colors"></div>
-                            <p class="text-xs text-slate-400 mt-1 ml-0.5">Click to edit title</p>
                         </div>
 
-                        {{-- Fields --}}
-                        <div class="px-5 py-4 space-y-3.5 border-b border-slate-100 dark:border-slate-700/60">
-                            <div class="grid grid-cols-2 gap-x-3 gap-y-3.5">
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Type</p>
-                                    <select @change="patchPanel('type', $event.target.value)"
-                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="t in ['task','bug','feature','story','epic']" :key="t">
-                                            <option :value="t" :selected="panel.task.type === t" x-text="t.charAt(0).toUpperCase()+t.slice(1)"></option>
-                                        </template>
-                                    </select>
+                        {{-- Properties --}}
+                        <div class="border-b border-slate-100 dark:border-slate-700/60">
+                            <div class="divide-y divide-slate-50 dark:divide-slate-700/40">
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Type</span>
+                                    <div class="relative flex-1">
+                                        <select @change="patchPanel('type', $event.target.value)"
+                                                class="w-full text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
+                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
+                                            <template x-for="t in ['task','bug','feature','story','epic']" :key="t">
+                                                <option :value="t" :selected="panel.task.type === t" x-text="t.charAt(0).toUpperCase()+t.slice(1)"></option>
+                                            </template>
+                                        </select>
+                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</p>
-                                    <select @change="patchPanel('priority', $event.target.value)"
-                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="p in ['low','medium','high','critical']" :key="p">
-                                            <option :value="p" :selected="panel.task.priority === p" x-text="p.charAt(0).toUpperCase()+p.slice(1)"></option>
-                                        </template>
-                                    </select>
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Priority</span>
+                                    <div class="relative flex-1 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full flex-shrink-0"
+                                              :class="{'bg-slate-300': panel.task.priority==='low','bg-amber-400': panel.task.priority==='medium','bg-orange-500': panel.task.priority==='high','bg-rose-500': panel.task.priority==='critical'}"></span>
+                                        <select @change="patchPanel('priority', $event.target.value)"
+                                                class="flex-1 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
+                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
+                                            <template x-for="p in ['low','medium','high','critical']" :key="p">
+                                                <option :value="p" :selected="panel.task.priority === p" x-text="p.charAt(0).toUpperCase()+p.slice(1)"></option>
+                                            </template>
+                                        </select>
+                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Column / Stage</p>
-                                    <select @change="patchPanel('column_id', parseInt($event.target.value))"
-                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="col in panel.columns" :key="col.id">
-                                            <option :value="col.id" :selected="panel.task.column_id === col.id" x-text="col.name"></option>
-                                        </template>
-                                    </select>
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Column</span>
+                                    <div class="relative flex-1">
+                                        <select @change="patchPanel('column_id', parseInt($event.target.value))"
+                                                class="w-full text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
+                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
+                                            <template x-for="col in panel.columns" :key="col.id">
+                                                <option :value="col.id" :selected="panel.task.column_id === col.id" x-text="col.name"></option>
+                                            </template>
+                                        </select>
+                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Due Date</p>
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Due date</span>
                                     <input type="date" :value="panel.task.due_date || ''"
                                            @change="patchPanel('due_date', $event.target.value || null)"
-                                           class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer" />
+                                           class="flex-1 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none"
+                                           style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none" />
                                 </div>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estimate (Hours)</p>
-                                <input type="number" min="0" step="0.5" :value="panel.task.estimated_hours ?? 0"
-                                       @change="patchPanel('estimated_hours', parseFloat($event.target.value) || 0)"
-                                       class="w-28 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors" />
+                                <div class="flex items-center px-5 py-2.5">
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Estimate</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="number" min="0" step="0.5" :value="panel.task.estimated_hours ?? 0"
+                                               @change="patchPanel('estimated_hours', parseFloat($event.target.value) || 0)"
+                                               class="w-14 text-sm text-slate-700 dark:text-slate-200 font-medium outline-none"
+                                               style="background:transparent; border:none; padding:0" />
+                                        <span class="text-xs text-slate-400">hrs</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {{-- Assignees --}}
                         <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Assignees</p>
-                            {{-- Selected chips --}}
-                            <div class="flex flex-wrap gap-1.5 mb-2.5" x-show="panel.task.assignee_ids.length > 0">
-                                <template x-for="m in panel.members.filter(m => panel.task.assignee_ids.includes(m.id))" :key="'chip-'+m.id">
-                                    <span class="inline-flex items-center gap-1 pl-1.5 pr-1 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 border border-violet-200 dark:border-violet-700 text-xs font-medium text-violet-700 dark:text-violet-300">
-                                        <span x-text="m.name.split(' ')[0]"></span>
-                                        <button @click="const ids=panel.task.assignee_ids.filter(id=>id!==m.id); panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
-                                                class="w-4 h-4 rounded-full flex items-center justify-center text-violet-400 hover:text-violet-700 hover:bg-violet-200 dark:hover:bg-violet-800 transition-colors leading-none">&times;</button>
-                                    </span>
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Assignees</p>
+                                <button @click="showAssigneePicker = !showAssigneePicker"
+                                        :class="showAssigneePicker ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-violet-500'"
+                                        class="text-xs font-medium transition-colors flex items-center gap-1">
+                                    <i :class="showAssigneePicker ? 'bi-check-lg' : 'bi-person-plus'" class="bi text-xs"></i>
+                                    <span x-text="showAssigneePicker ? 'Done' : 'Edit'"></span>
+                                </button>
+                            </div>
+                            <div class="flex items-center flex-wrap gap-2" x-show="!showAssigneePicker">
+                                <template x-if="panel.task.assignee_ids.length === 0">
+                                    <p class="text-sm text-slate-400 italic">No one assigned</p>
+                                </template>
+                                <template x-for="m in panel.members.filter(m => panel.task.assignee_ids.includes(m.id))" :key="'av-'+m.id">
+                                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 rounded-full pl-1 pr-3 py-1 border border-slate-200 dark:border-slate-700">
+                                        <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold"
+                                             style="background:#ede9fe; color:#7c3aed"
+                                             x-text="m.name.substring(0,2).toUpperCase()"></div>
+                                        <span class="text-xs font-medium text-slate-700 dark:text-slate-200" x-text="m.name.split(' ')[0]"></span>
+                                    </div>
                                 </template>
                             </div>
-                            {{-- Member grid --}}
-                            <div class="grid grid-cols-2 gap-0.5 max-h-36 overflow-y-auto">
-                                <template x-for="m in panel.members" :key="'member-'+m.id">
+                            <div x-show="showAssigneePicker" x-cloak
+                                 class="grid grid-cols-2 gap-0.5 max-h-40 overflow-y-auto mt-1">
+                                <template x-for="m in panel.members" :key="'pick-'+m.id">
                                     <button @click="const ids=panel.task.assignee_ids.includes(m.id)?panel.task.assignee_ids.filter(id=>id!==m.id):[...panel.task.assignee_ids,m.id]; panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
-                                            :class="panel.task.assignee_ids.includes(m.id)?'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium':'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
-                                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors text-left">
-                                        <div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-600 flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-slate-600 dark:text-slate-200"
+                                            :class="panel.task.assignee_ids.includes(m.id)?'bg-violet-50 dark:bg-violet-900/20':'hover:bg-slate-50 dark:hover:bg-slate-800'"
+                                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors">
+                                        <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold"
+                                             :style="panel.task.assignee_ids.includes(m.id) ? 'background:#ede9fe;color:#7c3aed' : 'background:#e2e8f0;color:#64748b'"
                                              x-text="m.name.substring(0,2).toUpperCase()"></div>
-                                        <span class="truncate text-sm" x-text="m.name.split(' ')[0]"></span>
-                                        <i x-show="panel.task.assignee_ids.includes(m.id)" class="bi bi-check2 text-violet-500 ml-auto text-xs flex-shrink-0"></i>
+                                        <span class="flex-1 text-sm truncate"
+                                              :class="panel.task.assignee_ids.includes(m.id) ? 'text-violet-700 dark:text-violet-300 font-medium' : 'text-slate-600 dark:text-slate-300'"
+                                              x-text="m.name.split(' ')[0]"></span>
+                                        <i x-show="panel.task.assignee_ids.includes(m.id)" class="bi bi-check2 text-violet-500 text-xs flex-shrink-0"></i>
                                     </button>
                                 </template>
                             </div>
@@ -480,14 +514,23 @@ $columns = [
                     </div>{{-- /scrollable body --}}
 
                     {{-- Footer --}}
-                    <div class="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 flex-shrink-0 bg-slate-50/60 dark:bg-slate-800/40">
+                    <div class="flex items-center gap-2 px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 flex-shrink-0 bg-white dark:bg-slate-900">
+                        <a :href="panel.task.show_url" target="_blank"
+                           class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+                                  bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors">
+                            <i class="bi bi-box-arrow-up-right text-xs"></i> Open task
+                        </a>
                         <a :href="panel.task.edit_url"
-                           class="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 transition-colors">
-                            <i class="bi bi-pencil-square text-xs"></i> Full edit
+                           class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+                                  border border-slate-200 dark:border-slate-700 text-sm font-medium
+                                  text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <i class="bi bi-pencil text-xs"></i> Edit
                         </a>
                         <button @click="closePanel()"
-                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                            Close
+                                class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700
+                                       flex items-center justify-center text-slate-400 hover:text-slate-600
+                                       hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex-shrink-0">
+                            <i class="bi bi-x text-base"></i>
                         </button>
                     </div>
 
