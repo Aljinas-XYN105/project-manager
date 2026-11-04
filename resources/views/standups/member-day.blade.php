@@ -162,6 +162,7 @@ window.__memberDayInit = function() {
 $columns = [
     'todo'        => ['label' => 'To Do',       'dot' => 'text-slate-400',  'dotBg' => 'bg-slate-400',  'border' => 'border-slate-200 dark:border-slate-700',   'ring' => 'ring-slate-300'],
     'in_progress' => ['label' => 'In Progress',  'dot' => 'text-blue-500',   'dotBg' => 'bg-blue-500',   'border' => 'border-blue-200 dark:border-blue-800/50',  'ring' => 'ring-blue-300'],
+    'qa_testing'  => ['label' => 'QA Testing',   'dot' => 'text-cyan-500',   'dotBg' => 'bg-cyan-500',   'border' => 'border-cyan-200 dark:border-cyan-800/50',  'ring' => 'ring-cyan-300'],
     'in_review'   => ['label' => 'In Review',    'dot' => 'text-amber-500',  'dotBg' => 'bg-amber-400',  'border' => 'border-amber-200 dark:border-amber-800/50','ring' => 'ring-amber-300'],
     'done'        => ['label' => 'Done',         'dot' => 'text-green-500',  'dotBg' => 'bg-green-500',  'border' => 'border-green-200 dark:border-green-800/50','ring' => 'ring-green-300'],
 ];
@@ -223,10 +224,10 @@ $columns = [
     </template>
 
     {{-- Kanban board --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 items-start flex-1">
+    <div class="flex gap-3 overflow-x-auto pb-2 items-start flex-1">
 
         @foreach($columns as $status => $col)
-        <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border {{ $col['border'] }} flex flex-col min-h-[100px] transition-all duration-150"
+        <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border {{ $col['border'] }} flex flex-col min-h-[100px] transition-all duration-150 flex-shrink-0 w-56"
              @dragover.prevent="dragOver('{{ $status }}')"
              @dragleave.self="dragOverStatus = null"
              @drop.prevent="drop('{{ $status }}')"
