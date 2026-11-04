@@ -41,6 +41,37 @@ class UserSeeder extends Seeder
         );
         $manager->assignRole('manager');
 
+        // Admin 2
+        $admin2 = User::firstOrCreate(
+            ['email' => 'shajeer@xynosoft.in'],
+            [
+                'name'              => 'Shajeer',
+                'password'          => Hash::make('Golden_123'),
+                'job_title'         => 'System Administrator',
+                'department'        => 'Management',
+                'timezone'          => 'Asia/Kolkata',
+                'is_active'         => true,
+                'email_verified_at' => now(),
+            ]
+        );
+        $admin2->assignRole('admin');
+
+        // Manager 2
+        $manager2 = User::firstOrCreate(
+            ['email' => 'manager@xynosoft.in'],
+            [
+                'name'              => 'Manager',
+                'password'          => Hash::make('Golden_123'),
+                'job_title'         => 'Project Manager',
+                'department'        => 'Engineering',
+                'timezone'          => 'Asia/Kolkata',
+                'is_active'         => true,
+                'email_verified_at' => now(),
+                'manager_id'        => null,
+            ]
+        );
+        $manager2->assignRole('manager');
+
         // Members
         $members = [
             ['name' => 'Sunitha',   'email' => 'sunitha@xynosoft.in',   'job_title' => 'Full-Stack Developer',   'department' => 'Engineering'],
