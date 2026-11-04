@@ -85,6 +85,7 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                 $standup       = $standups[$member->id] ?? null;
                 $todoCount     = $standup ? $standup->items->where('status','todo')->count() : 0;
                 $inProgCount   = $standup ? $standup->items->where('status','in_progress')->count() : 0;
+                $qaCount       = $standup ? $standup->items->where('status','qa_testing')->count() : 0;
                 $reviewCount   = $standup ? $standup->items->where('status','in_review')->count() : 0;
                 $doneCount     = $standup ? $standup->items->where('status','done')->count() : 0;
                 $hasBlockers   = $standup && $standup->blockers;
@@ -173,6 +174,14 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                         <span class="text-[11px] font-bold tabular-nums leading-none
                                      {{ $inProgCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-300 dark:text-slate-600' }}">
                             {{ $inProgCount }}
+                        </span>
+                    </div>
+                    {{-- QA Testing --}}
+                    <div class="flex items-center gap-1 flex-1 justify-center">
+                        <i class="bi bi-bug-fill text-[11px] {{ $qaCount > 0 ? 'text-cyan-500' : 'text-slate-200 dark:text-slate-700' }}"></i>
+                        <span class="text-[11px] font-bold tabular-nums leading-none
+                                     {{ $qaCount > 0 ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-300 dark:text-slate-600' }}">
+                            {{ $qaCount }}
                         </span>
                     </div>
                     {{-- In Review --}}
