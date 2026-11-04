@@ -60,24 +60,18 @@ class StandupController extends Controller
         return view('standups.show', compact('day', 'standup', 'user'));
     }
 
-    // Admin/manager: member's task board during standup
+    // Admin/manager: view and manage a member's standup items for a date
     public function memberDay(string $date, User $user)
     {
         abort_unless(auth()->user()->hasRole(['admin', 'manager']), 403);
 
-        $day = Carbon::parse($date);
+        $day     = Carbon::parse($date);
+        $standup = Standup::whereDate('standup_date', $day)
+            ->where('user_id', $user->id)
+            ->with('items')
+            ->first();
 
-        // Active project tasks assigned to this member (grouped by status)
-        $tasks = $user->assignedTasks()
-            ->with('project')
-            ->whereNotIn('status', ['cancelled', 'archived'])
-            ->orderBy('position')
-            ->orderBy('id')
-            ->get();
-
-        $tasksByStatus = $tasks->groupBy('status');
-
-        return view('standups.member-day', compact('day', 'user', 'tasks', 'tasksByStatus'));
+        return view('standups.member-day', compact('day', 'standup', 'user'));
     }
 
     // Save/update standup; managers may pass user_id to save on a member's behalf
