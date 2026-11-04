@@ -38,7 +38,12 @@ class StandupController extends Controller
     // Full-page calendar for date navigation
     public function calendar(Request $request)
     {
-        return view('standups.calendar');
+        $year       = (int) $request->input('year',  now()->year);
+        $month      = (int) $request->input('month', now()->month);
+        $firstDay   = Carbon::create($year, $month, 1);
+        $returnDate = $request->input('return_date');
+
+        return view('standups.calendar', compact('firstDay', 'returnDate'));
     }
 
     // Legacy redirect — kept for backward compat

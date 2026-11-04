@@ -1,160 +1,103 @@
 @extends('layouts.app')
-@section('title', 'Pick a Standup Date')
+@section('title', 'Standup Calendar — ' . $firstDay->format('F Y'))
 
 @section('content')
-<div class="max-w-2xl mx-auto">
+@php
+$lastDay    = $firstDay->copy()->endOfMonth();
+$startWeek  = $firstDay->copy()->startOfWeek(\Carbon\Carbon::SUNDAY);
+$today      = \Carbon\Carbon::today();
+$selectedStr = $returnDate ?? $today->toDateString();
 
-    {{-- Header --}}
-    <div class="page-header">
-        <div>
-            <div class="flex items-center gap-2 text-sm text-slate-500 mb-1">
-                <a href="{{ route('standups.index') }}" class="hover:text-violet-600 transition-colors flex items-center gap-1">
-                    <i class="bi bi-arrow-left text-xs"></i> Standups
-                </a>
-            </div>
-            <h1 class="page-title">Select Date</h1>
-            <p class="text-sm text-slate-500 mt-0.5">Choose a date to view or manage standups.</p>
+$prevMonth = $firstDay->copy()->subMonth();
+$nextMonth = $firstDay->copy()->addMonth();
+$canGoNext = $nextMonth->lte($today->copy()->startOfMonth());
+@endphp
+
+{{-- Header --}}
+<div class="page-header">
+    <div>
+        <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
+            <a href="{{ route('standups.index') }}" class="hover:text-violet-600 transition-colors flex items-center gap-1">
+                <i class="bi bi-arrow-left text-[10px]"></i> Standups
+            </a>
         </div>
+        <h1 class="page-title">{{ $firstDay->format('F Y') }}</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Select a date to view that day's standups.</p>
     </div>
 
-    {{-- Calendar --}}
-    <div x-data="standupCalendar()" class="card select-none">
+    <div class="flex items-center gap-2">
+        <a href="{{ route('standups.calendar') }}?year={{ $prevMonth->year }}&month={{ $prevMonth->month }}&return_date={{ $selectedStr }}"
+           class="btn-ghost btn-sm"><i class="bi bi-chevron-left"></i></a>
 
-        {{-- Month navigation --}}
-        <div class="flex items-center justify-between mb-5">
-            <button @click="prevMonth()"
-                    class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-violet-600
-                           hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
-                <i class="bi bi-chevron-left text-sm"></i>
-            </button>
-            <h2 class="font-bold text-slate-900 dark:text-white text-base" x-text="monthLabel"></h2>
-            <button @click="nextMonth()" :disabled="isCurrentMonth"
-                    :class="isCurrentMonth ? 'opacity-30 cursor-not-allowed' : 'hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20'"
-                    class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 transition-colors">
-                <i class="bi bi-chevron-right text-sm"></i>
-            </button>
-        </div>
+        <a href="{{ route('standups.calendar') }}?return_date={{ $selectedStr }}"
+           class="btn-secondary btn-sm">Today</a>
 
-        {{-- Day-of-week headers --}}
-        <div class="grid grid-cols-7 mb-2">
-            <template x-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="d">
-                <div class="text-center text-xs font-bold text-slate-400 uppercase tracking-wide py-1" x-text="d"></div>
-            </template>
-        </div>
-
-        {{-- Day grid --}}
-        <div class="grid grid-cols-7 gap-1">
-            <template x-for="cell in calendarCells" :key="cell.key">
-                <div>
-                    {{-- Empty cell (padding) --}}
-                    <template x-if="!cell.date">
-                        <div class="aspect-square"></div>
-                    </template>
-
-                    {{-- Day cell --}}
-                    <template x-if="cell.date">
-                        <button
-                            type="button"
-                            @click="cell.isFuture ? null : selectDate(cell.dateStr)"
-                            :disabled="cell.isFuture"
-                            :class="{
-                                'bg-violet-600 text-white font-bold shadow-sm shadow-violet-200': cell.isToday,
-                                'ring-2 ring-violet-400 ring-offset-1': cell.isSelected && !cell.isToday,
-                                'opacity-30 cursor-not-allowed': cell.isFuture,
-                                'hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-700 cursor-pointer': !cell.isFuture && !cell.isToday,
-                                'text-slate-400': cell.isWeekend && !cell.isToday,
-                                'text-slate-700 dark:text-slate-200': !cell.isWeekend && !cell.isToday,
-                            }"
-                            class="aspect-square w-full rounded-xl text-sm flex items-center justify-center font-medium transition-all"
-                            x-text="cell.day">
-                        </button>
-                    </template>
-                </div>
-            </template>
-        </div>
-
-        {{-- Footer --}}
-        <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <button @click="selectDate(todayStr)"
-                    class="btn-ghost btn-sm text-violet-600 dark:text-violet-400">
-                <i class="bi bi-calendar-check text-sm"></i> Jump to today
-            </button>
-            <p class="text-xs text-slate-400">Dates after today are disabled</p>
-        </div>
+        @if($canGoNext)
+        <a href="{{ route('standups.calendar') }}?year={{ $nextMonth->year }}&month={{ $nextMonth->month }}&return_date={{ $selectedStr }}"
+           class="btn-ghost btn-sm"><i class="bi bi-chevron-right"></i></a>
+        @else
+        <span class="btn-ghost btn-sm opacity-30 cursor-not-allowed"><i class="bi bi-chevron-right"></i></span>
+        @endif
     </div>
-
 </div>
 
-<script>
-function standupCalendar() {
-    const params     = new URLSearchParams(window.location.search);
-    const returnDate = params.get('return_date') || null;
-    const today      = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
+{{-- Full-width calendar grid --}}
+<div class="card overflow-hidden">
 
-    // Start from the month of return_date (or today)
-    const startDate = returnDate ? new Date(returnDate + 'T00:00:00') : today;
+    {{-- Day-of-week headers --}}
+    <div class="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700">
+        @foreach(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as $dayLabel)
+        <div class="px-3 py-2.5 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+            {{ $dayLabel }}
+        </div>
+        @endforeach
+    </div>
 
-    return {
-        year:        startDate.getFullYear(),
-        month:       startDate.getMonth(), // 0-indexed
-        selectedStr: returnDate || todayStr,
-        todayStr,
+    {{-- Calendar cells --}}
+    <div class="grid grid-cols-7">
+        @php $current = $startWeek->copy(); @endphp
 
-        get monthLabel() {
-            return new Date(this.year, this.month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        },
+        @while($current->lte($lastDay->copy()->endOfWeek(\Carbon\Carbon::SATURDAY)))
+        @php
+            $dateStr        = $current->toDateString();
+            $isToday        = $current->isSameDay($today);
+            $isSelected     = $dateStr === $selectedStr;
+            $isFuture       = $current->gt($today);
+            $isCurrentMonth = $current->month === $firstDay->month;
+            $isWeekend      = $current->dayOfWeek === 0 || $current->dayOfWeek === 6;
+        @endphp
 
-        get isCurrentMonth() {
-            const now = new Date();
-            return this.year === now.getFullYear() && this.month === now.getMonth();
-        },
+        <div class="min-h-[100px] border-b border-r border-slate-100 dark:border-slate-700/50
+                    {{ !$isCurrentMonth ? 'bg-slate-50/40 dark:bg-slate-800/20' : '' }}
+                    {{ $isFuture || !$isCurrentMonth ? '' : 'hover:bg-violet-50/40 dark:hover:bg-violet-900/10' }}
+                    relative group">
 
-        get calendarCells() {
-            const firstDay  = new Date(this.year, this.month, 1);
-            const lastDay   = new Date(this.year, this.month + 1, 0);
-            const startDow  = firstDay.getDay(); // 0 = Sun
-            const cells     = [];
+            @if(!$isFuture && $isCurrentMonth)
+            <a href="{{ route('standups.index') }}?date={{ $dateStr }}"
+               class="absolute inset-0 z-10" aria-label="{{ $current->format('F j, Y') }}"></a>
+            @endif
 
-            // Leading empty cells
-            for (let i = 0; i < startDow; i++) {
-                cells.push({ key: `e${i}`, date: null });
-            }
+            <div class="p-2.5 relative z-20 pointer-events-none">
+                {{-- Day number --}}
+                <div class="flex items-center justify-center w-8 h-8 rounded-full mb-1 mx-auto
+                            {{ $isToday ? 'bg-violet-600 text-white font-bold text-sm'
+                             : ($isSelected && $isCurrentMonth && !$isToday ? 'ring-2 ring-violet-400 ring-offset-1 font-semibold text-sm text-violet-700 dark:text-violet-300'
+                             : ($isFuture || !$isCurrentMonth ? 'text-slate-300 dark:text-slate-600 text-sm'
+                             : ($isWeekend ? 'text-slate-400 dark:text-slate-500 text-sm font-medium'
+                             : 'text-slate-700 dark:text-slate-200 text-sm font-medium'))) }}">
+                    {{ $current->day }}
+                </div>
 
-            for (let d = 1; d <= lastDay.getDate(); d++) {
-                const dt     = new Date(this.year, this.month, d);
-                const dStr   = dt.toISOString().split('T')[0];
-                cells.push({
-                    key:        dStr,
-                    date:       dt,
-                    dateStr:    dStr,
-                    day:        d,
-                    isToday:    dStr === this.todayStr,
-                    isSelected: dStr === this.selectedStr,
-                    isFuture:   dt > today,
-                    isWeekend:  dt.getDay() === 0 || dt.getDay() === 6,
-                });
-            }
+                {{-- Today label --}}
+                @if($isToday)
+                <p class="text-center text-[10px] font-semibold text-violet-600 dark:text-violet-400">Today</p>
+                @endif
+            </div>
+        </div>
 
-            return cells;
-        },
+        @php $current->addDay(); @endphp
+        @endwhile
+    </div>
+</div>
 
-        prevMonth() {
-            if (this.month === 0) { this.year--; this.month = 11; }
-            else this.month--;
-        },
-        nextMonth() {
-            if (this.isCurrentMonth) return;
-            if (this.month === 11) { this.year++; this.month = 0; }
-            else this.month++;
-        },
-
-        selectDate(dateStr) {
-            this.selectedStr = dateStr;
-            window.location.href = `/standups?date=${dateStr}`;
-        },
-    };
-}
-</script>
 @endsection
