@@ -135,6 +135,11 @@ class User extends Authenticatable
         return $this->hasMany(LeaveRequest::class);
     }
 
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(\App\Models\Expense::class);
+    }
+
     /** Days used (approved) and pending for each leave type in a calendar year. */
     public function leaveUsage(int $year): \Illuminate\Support\Collection
     {

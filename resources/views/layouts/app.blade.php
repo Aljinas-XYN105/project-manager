@@ -127,6 +127,7 @@
                 'PEOPLE' => [
                     ['route'=>'people.index',        'icon'=>'bi-people',         'label'=>'Directory',    'match'=>'people.*'],
                     ['route'=>'teams.index',          'icon'=>'bi-diagram-3',      'label'=>'Teams',        'match'=>'teams.*'],
+                    ['route'=>'expenses.index',        'icon'=>'bi-receipt',        'label'=>'Expenses',     'match'=>'expenses.*', 'badge'=>'expenses'],
                     ['route'=>'leave.index',          'icon'=>'bi-calendar-minus', 'label'=>'Leave',        'match'=>'leave.*', 'badge'=>'leave'],
                     ['route'=>'attendance.index',     'icon'=>'bi-calendar-check', 'label'=>'Attendance',   'match'=>'attendance.*'],
                     ['route'=>'announcements.index',  'icon'=>'bi-megaphone',      'label'=>'Announcements','match'=>'announcements.*'],
@@ -137,6 +138,11 @@
                 'leave' => \App\Models\LeaveRequest::where('status', 'pending')
                     ->where('user_id', '!=', $authUser->id)
                     ->when(! ($authUser->hasRole('admin') || $authUser->can('leave.approve')),
+                        fn ($q) => $q->whereIn('user_id', $authUser->directReports()->pluck('id')))
+                    ->count(),
+                'expenses' => \App\Models\Expense::where('status', 'pending')
+                    ->where('user_id', '!=', $authUser->id)
+                    ->when(! ($authUser->hasRole('admin') || $authUser->hasRole('manager')),
                         fn ($q) => $q->whereIn('user_id', $authUser->directReports()->pluck('id')))
                     ->count(),
             ];

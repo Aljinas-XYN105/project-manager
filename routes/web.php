@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\LeaveSettingsController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\MyTasksController;
 use App\Http\Controllers\PeopleController;
@@ -179,6 +180,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('leave/approvals', [LeaveController::class, 'approvals'])->name('leave.approvals');
     Route::patch('leave/{leave}/cancel', [LeaveController::class, 'cancel'])->name('leave.cancel');
     Route::patch('leave/{leave}/review', [LeaveController::class, 'review'])->name('leave.review');
+
+    // Expenses
+    Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+    Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::get('expenses/approvals', [ExpenseController::class, 'approvals'])->name('expenses.approvals');
+    Route::patch('expenses/{expense}/cancel', [ExpenseController::class, 'cancel'])->name('expenses.cancel');
+    Route::patch('expenses/{expense}/review', [ExpenseController::class, 'review'])->name('expenses.review');
+    Route::get('expenses/{expense}/receipt', [ExpenseController::class, 'receipt'])->name('expenses.receipt');
 
     // Announcements
     Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');

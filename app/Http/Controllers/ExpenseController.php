@@ -1,0 +1,138 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Expense;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class ExpenseController extends Controller
+{
+    public function index(Request $request)
+    {
+        $user = $request->user();
+
+        $expenses = $user->expenses()
+            ->with('reviewer')
+            ->latest('expense_date')
+            ->paginate(20);
+
+        $pendingReview = $this->reviewableQuery($user)->where('status', 'pending')->count();
+
+        $summary = [
+            'total_pending'  => $user->expenses()->where('status', 'pending')->sum('amount'),
+            'total_approved' => $user->expenses()->where('status', 'approved')->sum('amount'),
+            'count_pending'  => $user->expenses()->where('status', 'pending')->count(),
+            'count_approved' => $user->expenses()->where('status', 'approved')->count(),
+        ];
+
+        return view('expenses.index', compact('expenses', 'pendingReview', 'summary'));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'title'        => ['required', 'string', 'max:255'],
+            'amount'       => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'currency'     => ['nullable', 'string', 'size:3'],
+            'category'     => ['required', 'string', 'in:'.implode(',', Expense::CATEGORIES)],
+            'expense_date' => ['required', 'date', 'before_or_equal:today'],
+            'description'  => ['nullable', 'string', 'max:1000'],
+            'receipt'      => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,webp', 'max:5120'],
+        ]);
+
+        $receiptPath = null;
+        $receiptName = null;
+        if ($request->hasFile('receipt')) {
+            $file        = $request->file('receipt');
+            $receiptPath = $file->store('expenses/receipts', 'private');
+            $receiptName = $file->getClientOriginalName();
+        }
+
+        $request->user()->expenses()->create([
+            'title'        => $data['title'],
+            'amount'       => $data['amount'],
+            'currency'     => $data['currency'] ?? 'INR',
+            'category'     => $data['category'],
+            'expense_date' => $data['expense_date'],
+            'description'  => $data['description'] ?? null,
+            'receipt_path' => $receiptPath,
+            'receipt_name' => $receiptName,
+            'status'       => 'pending',
+        ]);
+
+        return redirect()->route('expenses.index')->with('success', 'Expense submitted for approval.');
+    }
+
+    public function cancel(Request $request, Expense $expense)
+    {
+        abort_unless($expense->user_id === $request->user()->id, 403);
+        abort_unless($expense->status === 'pending', 422);
+
+        $expense->update(['status' => 'rejected', 'review_note' => 'Cancelled by submitter.']);
+
+        return back()->with('success', 'Expense cancelled.');
+    }
+
+    public function approvals(Request $request)
+    {
+        $user   = $request->user();
+        $status = $request->input('status', 'pending');
+
+        $expenses = $this->reviewableQuery($user)
+            ->with(['user', 'reviewer'])
+            ->when($status !== 'all', fn ($q) => $q->where('status', $status))
+            ->orderBy($status === 'pending' ? 'created_at' : 'reviewed_at', 'desc')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('expenses.approvals', compact('expenses', 'status'));
+    }
+
+    public function review(Request $request, Expense $expense)
+    {
+        abort_unless($expense->canBeReviewedBy($request->user()), 403);
+
+        $data = $request->validate([
+            'decision' => ['required', 'in:approved,rejected'],
+            'note'     => ['nullable', 'string', 'max:500', 'required_if:decision,rejected'],
+        ], ['note.required_if' => 'Please give a reason when rejecting.']);
+
+        if ($expense->status !== 'pending') {
+            return back()->with('error', 'This expense was already '.$expense->status.'.');
+        }
+
+        $expense->update([
+            'status'      => $data['decision'],
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
+            'review_note' => $data['note'] ?? null,
+        ]);
+
+        return back()->with('success', "{$expense->user->name}'s expense ".($data['decision'] === 'approved' ? 'approved' : 'rejected').'.');
+    }
+
+    public function receipt(Expense $expense, Request $request)
+    {
+        $user = $request->user();
+        abort_unless(
+            $expense->user_id === $user->id || $expense->canBeReviewedBy($user) || $user->hasRole('admin'),
+            403
+        );
+        abort_if(! $expense->receipt_path, 404);
+
+        return Storage::disk('private')->download($expense->receipt_path, $expense->receipt_name ?? 'receipt');
+    }
+
+    private function reviewableQuery(User $user)
+    {
+        $query = Expense::query()->where('user_id', '!=', $user->id);
+
+        if ($user->hasRole('admin') || $user->hasRole('manager')) {
+            return $query;
+        }
+
+        return $query->whereIn('user_id', $user->directReports()->pluck('id'));
+    }
+}
