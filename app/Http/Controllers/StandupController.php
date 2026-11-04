@@ -10,38 +10,36 @@ use Illuminate\Support\Carbon;
 
 class StandupController extends Controller
 {
-    // Calendar: month view of all standups
+    // Team standup dashboard — today's list by default; date picker navigates past days
     public function index(Request $request)
     {
-        $month = $request->input('month')
-            ? Carbon::parse($request->input('month') . '-01')
-            : now()->startOfMonth();
+        $authUser = auth()->user();
 
-        $start = $month->copy()->startOfMonth();
-        $end   = $month->copy()->endOfMonth();
+        // Non-managers go straight to their own standup form
+        if (!$authUser->hasRole(['admin', 'manager'])) {
+            return redirect()->route('standups.show', today()->toDateString());
+        }
 
-        // Which dates in this month have at least one standup
-        $datesWithStandups = Standup::whereBetween('standup_date', [$start, $end])
-            ->selectRaw('standup_date, COUNT(*) as count, COUNT(DISTINCT user_id) as member_count')
-            ->groupBy('standup_date')
-            ->orderBy('standup_date')
+        $date = $request->input('date')
+            ? Carbon::parse($request->input('date'))
+            : Carbon::today();
+
+        $users = \App\Models\User::where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $standups = Standup::whereDate('standup_date', $date)
+            ->with('items')
             ->get()
-            ->keyBy(fn($r) => $r->standup_date->format('Y-m-d'));
+            ->keyBy('user_id');
 
-        return view('standups.index', compact('month', 'datesWithStandups'));
+        return view('standups.index', compact('date', 'users', 'standups'));
     }
 
-    // Day view: list of members who submitted on that date
+    // Unused legacy route — kept for backward compat redirect
     public function day(string $date)
     {
-        $day = Carbon::parse($date);
-
-        $standups = Standup::whereDate('standup_date', $day)
-            ->with(['user', 'items'])
-            ->get()
-            ->sortBy('user.name');
-
-        return view('standups.day', compact('day', 'standups'));
+        return redirect()->route('standups.index', ['date' => $date]);
     }
 
     // Show or create form for the authenticated user's standup on a date
@@ -57,9 +55,11 @@ class StandupController extends Controller
         return view('standups.show', compact('day', 'standup', 'user'));
     }
 
-    // Admin/manager: view a specific member's standup on a date
+    // Admin/manager: Kanban view of a member's standup on a date
     public function memberDay(string $date, User $user)
     {
+        abort_unless(auth()->user()->hasRole(['admin', 'manager']), 403);
+
         $day     = Carbon::parse($date);
         $standup = Standup::whereDate('standup_date', $day)
             ->where('user_id', $user->id)
