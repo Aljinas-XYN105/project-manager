@@ -401,7 +401,7 @@
                                 <div>
                                     <p class="text-sm font-semibold text-slate-900 dark:text-white" x-text="clockedIn ? '🟢 Clocked in' : '⭕ Clocked out'"></p>
                                     <p class="text-xs text-slate-500 mt-0.5" x-show="clockedIn && clockInAt"
-                                       x-text="'since ' + (clockInAt ? clockInAt.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}) : '')"></p>
+                                       x-text="'since ' + (clockInAt ? clockInAt.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', hour12: true}) : '')"></p>
                                 </div>
                                 <span class="font-mono text-sm font-bold text-slate-800 dark:text-white tabular-nums" x-text="elapsed"></span>
                             </div>
