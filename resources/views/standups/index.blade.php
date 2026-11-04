@@ -158,9 +158,9 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                 </div>
 
                 {{-- Counts bar — always present, full-width, keeps all cards the same height --}}
-                <div class="grid grid-cols-4 border-t {{ $dividerColor }}">
+                <div class="flex border-t {{ $dividerColor }}">
                     {{-- To Do --}}
-                    <div class="flex flex-col items-center gap-1 py-2.5
+                    <div class="flex-1 flex flex-col items-center gap-1 py-2.5
                                 border-r {{ $dividerColor }}">
                         <i class="bi bi-circle-fill text-[11px] {{ $todoCount > 0 ? 'text-slate-400' : 'text-slate-200 dark:text-slate-700' }}"></i>
                         <span class="text-[11px] font-bold tabular-nums leading-none
@@ -169,7 +169,7 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                         </span>
                     </div>
                     {{-- In Progress --}}
-                    <div class="flex flex-col items-center gap-1 py-2.5
+                    <div class="flex-1 flex flex-col items-center gap-1 py-2.5
                                 border-r {{ $dividerColor }}">
                         <i class="bi bi-arrow-repeat text-[11px] {{ $inProgCount > 0 ? 'text-blue-500' : 'text-slate-200 dark:text-slate-700' }}"></i>
                         <span class="text-[11px] font-bold tabular-nums leading-none
@@ -178,7 +178,7 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                         </span>
                     </div>
                     {{-- In Review --}}
-                    <div class="flex flex-col items-center gap-1 py-2.5
+                    <div class="flex-1 flex flex-col items-center gap-1 py-2.5
                                 border-r {{ $dividerColor }}">
                         <i class="bi bi-eye-fill text-[11px] {{ $reviewCount > 0 ? 'text-amber-500' : 'text-slate-200 dark:text-slate-700' }}"></i>
                         <span class="text-[11px] font-bold tabular-nums leading-none
@@ -187,7 +187,7 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                         </span>
                     </div>
                     {{-- Done --}}
-                    <div class="flex flex-col items-center gap-1 py-2.5">
+                    <div class="flex-1 flex flex-col items-center gap-1 py-2.5">
                         <i class="bi bi-check-circle-fill text-[11px] {{ $doneCount > 0 ? 'text-green-500' : 'text-slate-200 dark:text-slate-700' }}"></i>
                         <span class="text-[11px] font-bold tabular-nums leading-none
                                      {{ $doneCount > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-300 dark:text-slate-600' }}">

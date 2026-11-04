@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StandupItem extends Model
 {
-    protected $fillable = ['standup_id', 'description', 'status', 'sort_order'];
+    protected $fillable = ['standup_id', 'task_id', 'description', 'status', 'sort_order'];
 
     public function standup(): BelongsTo
     {

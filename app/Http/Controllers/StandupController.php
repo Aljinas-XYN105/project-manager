@@ -79,10 +79,10 @@ class StandupController extends Controller
         if (!$standup && $day->isToday()) {
             $defaultItems = $user->assignedTasks()
                 ->whereNotIn('status', ['cancelled', 'archived', 'done'])
-                ->with('project:id,slug')
                 ->get()
                 ->map(fn ($t) => [
                     'id'          => null,
+                    'task_id'     => $t->id,
                     'description' => "[{$t->ticket_key}] {$t->title}",
                     'status'      => in_array($t->status, ['todo', 'in_progress', 'in_review']) ? $t->status : 'todo',
                 ]);
@@ -93,7 +93,11 @@ class StandupController extends Controller
             ? \App\Models\Project::where('status', 'active')->select('id', 'name', 'slug')->orderBy('name')->get()
             : $user->projects()->where('projects.status', 'active')->select('projects.id', 'projects.name', 'projects.slug')->orderBy('projects.name')->get();
 
-        return view('standups.show', compact('day', 'standup', 'user', 'defaultItems', 'projects'));
+        $seedItems = $standup
+            ? $standup->items->map(fn($i) => ['id' => $i->id, 'task_id' => $i->task_id, 'description' => $i->description, 'status' => $i->status])->values()
+            : $defaultItems;
+
+        return view('standups.show', compact('day', 'standup', 'user', 'defaultItems', 'seedItems', 'projects'));
     }
 
     // Admin/manager: view and manage a member's standup items for a date
@@ -107,7 +111,11 @@ class StandupController extends Controller
             ->with('items')
             ->first();
 
-        return view('standups.member-day', compact('day', 'standup', 'user'));
+        $memberItems = $standup
+            ? $standup->items->map(fn($i) => ['id' => $i->id, 'task_id' => $i->task_id, 'description' => $i->description, 'status' => $i->status])->values()
+            : collect();
+
+        return view('standups.member-day', compact('day', 'standup', 'user', 'memberItems'));
     }
 
     // Save/update standup; managers may pass user_id to save on a member's behalf
@@ -120,6 +128,7 @@ class StandupController extends Controller
             'items'        => 'nullable|array',
             'items.*.description' => 'required|string|max:500',
             'items.*.status'      => 'required|in:todo,in_progress,in_review,done',
+            'items.*.task_id'     => 'nullable|integer|exists:tasks,id',
         ]);
 
         $authUser = auth()->user();
@@ -141,8 +150,16 @@ class StandupController extends Controller
             $standup->items()->create([
                 'description' => $item['description'],
                 'status'      => $item['status'],
+                'task_id'     => $item['task_id'] ?? null,
                 'sort_order'  => $i,
             ]);
+
+            // Keep the actual task status in sync when it has a linked task
+            if (!empty($item['task_id'])) {
+                \App\Models\Task::where('id', $item['task_id'])
+                    ->whereNotIn('status', ['done', 'cancelled'])
+                    ->update(['status' => $item['status']]);
+            }
         }
 
         if ($request->wantsJson()) {
