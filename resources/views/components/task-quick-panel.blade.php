@@ -461,11 +461,21 @@ function panelAttachments(taskId, initialAtts) {
         uploadStatus: '',
         dropping: false,
 
+        validate(file) {
+            const maxBytes = 100 * 1024 * 1024;
+            const blocked = ['exe','bat','sh','cmd','msi','dmg','app','bin','jar','vbs','ps1'];
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (blocked.includes(ext)) { window.toast?.(`${file.name}: file type not allowed`, 'error'); return false; }
+            if (file.size > maxBytes) { window.toast?.(`${file.name}: exceeds 100 MB limit`, 'error'); return false; }
+            return true;
+        },
+
         async upload(fileList) {
             if (!fileList?.length) return;
             this.uploading = true;
             for (let i = 0; i < fileList.length; i++) {
                 const file = fileList[i];
+                if (!this.validate(file)) continue;
                 this.uploadStatus = `Uploading ${file.name}… (${i+1}/${fileList.length})`;
                 const form = new FormData();
                 form.append('file', file);

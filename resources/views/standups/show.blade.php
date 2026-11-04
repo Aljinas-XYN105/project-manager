@@ -675,33 +675,103 @@ window.__standupInit = function() {
                         </template>
 
                         {{-- Attachments --}}
-                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
+                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60"
+                             x-data="{
+                                 attachFiles: [],
+                                 dropping: false,
+                                 errors: [],
+                                 allowed: ['jpg','jpeg','png','gif','pdf','webp','mp4','mov','doc','docx','xls','xlsx','zip'],
+                                 maxBytes: 100 * 1024 * 1024,
+                                 addFiles(list) {
+                                     this.errors = [];
+                                     for (const f of list) {
+                                         const ext = f.name.split('.').pop().toLowerCase();
+                                         if (!this.allowed.includes(ext)) { this.errors.push(f.name + ': type not allowed'); continue; }
+                                         if (f.size > this.maxBytes) { this.errors.push(f.name + ': exceeds 100 MB'); continue; }
+                                         if (this.attachFiles.length >= 20) { this.errors.push('Max 20 files'); break; }
+                                         const ext2 = ext;
+                                         this.attachFiles.push({
+                                             name: f.name,
+                                             size: f.size > 1048576 ? (f.size/1048576).toFixed(1)+' MB' : Math.round(f.size/1024)+' KB',
+                                             icon: ['jpg','jpeg','png','gif','webp'].includes(ext2) ? 'bi-file-earmark-image text-violet-500'
+                                                 : ext2 === 'pdf' ? 'bi-file-earmark-pdf text-rose-500'
+                                                 : ['mp4','mov'].includes(ext2) ? 'bi-file-earmark-play text-sky-500'
+                                                 : ['doc','docx'].includes(ext2) ? 'bi-file-earmark-word text-blue-500'
+                                                 : ['xls','xlsx'].includes(ext2) ? 'bi-file-earmark-excel text-emerald-500'
+                                                 : ext2 === 'zip' ? 'bi-file-earmark-zip text-amber-500'
+                                                 : 'bi-file-earmark text-slate-400',
+                                         });
+                                     }
+                                 },
+                                 removeAttachFile(i) { this.attachFiles.splice(i,1); }
+                             }">
                             <div class="flex items-center justify-between mb-2">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     Attachments
-                                    <span x-show="panel.attachments.length > 0" x-text="'('+panel.attachments.length+')'"></span>
+                                    <span x-show="panel.attachments.length > 0 || attachFiles.length > 0"
+                                          x-text="'('+(panel.attachments.length + attachFiles.length)+')'"></span>
                                 </p>
                                 <label class="inline-flex items-center gap-1 text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-800 cursor-pointer">
                                     <i class="bi bi-plus-lg text-xs"></i> Add
-                                    <input type="file" class="hidden" multiple>
+                                    <input type="file" class="sr-only" multiple
+                                           @change="addFiles($event.target.files); $event.target.value=''">
                                 </label>
                             </div>
-                            <template x-if="panel.attachments.length === 0">
-                                <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl py-5 flex flex-col items-center gap-1.5 text-center">
-                                    <i class="bi bi-cloud-upload text-2xl text-slate-300 dark:text-slate-600"></i>
-                                    <p class="text-xs text-slate-400">Drop or <span class="text-violet-500 cursor-pointer hover:underline">browse</span></p>
-                                    <p class="text-[10px] text-slate-300 dark:text-slate-600">No files attached</p>
+
+                            {{-- Drop zone --}}
+                            <div @dragover.prevent="dropping = true"
+                                 @dragleave.prevent="dropping = false"
+                                 @drop.prevent="dropping = false; addFiles($event.dataTransfer?.files ?? [])"
+                                 @click="$el.querySelector('input[type=file]').click()"
+                                 :class="dropping ? 'border-violet-400 bg-violet-50 dark:bg-violet-900/10' : 'border-slate-200 dark:border-slate-700 hover:border-violet-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'"
+                                 class="border-2 border-dashed rounded-xl py-4 flex flex-col items-center gap-1.5 text-center cursor-pointer transition-colors mb-2">
+                                <input type="file" class="sr-only" multiple
+                                       @change.stop="addFiles($event.target.files); $event.target.value=''">
+                                <i class="bi bi-cloud-upload text-xl"
+                                   :class="dropping ? 'text-violet-500' : 'text-slate-300 dark:text-slate-600'"></i>
+                                <p class="text-xs font-medium text-slate-600 dark:text-slate-300">
+                                    <span class="text-violet-600 dark:text-violet-400">Click to upload</span> or drag & drop
+                                </p>
+                                <p class="text-[11px] text-slate-400">Images, PDF, Video, Docs — max 100 MB each</p>
+                            </div>
+
+                            {{-- Existing attachments --}}
+                            <template x-if="panel.attachments.length > 0">
+                                <div class="space-y-1 mb-1.5">
+                                    <template x-for="att in panel.attachments" :key="att.id">
+                                        <div class="flex items-center gap-2 group">
+                                            <i class="bi bi-paperclip text-xs text-slate-400 flex-shrink-0"></i>
+                                            <a :href="att.url" target="_blank"
+                                               class="flex-1 text-xs text-violet-600 dark:text-violet-400 hover:underline truncate"
+                                               x-text="att.original_name"></a>
+                                            <span class="text-[11px] text-slate-400 flex-shrink-0" x-text="att.size_formatted"></span>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
-                            <template x-if="panel.attachments.length > 0">
+
+                            {{-- Newly selected files --}}
+                            <template x-if="attachFiles.length > 0">
                                 <div class="space-y-1">
-                                    <template x-for="att in panel.attachments" :key="att.id">
-                                        <a :href="att.url" target="_blank"
-                                           class="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400 hover:underline py-0.5">
-                                            <i class="bi bi-paperclip text-xs text-slate-400"></i>
-                                            <span x-text="att.original_name"></span>
-                                            <span class="text-slate-400 ml-auto" x-text="att.size_formatted"></span>
-                                        </a>
+                                    <template x-for="(f, i) in attachFiles" :key="i">
+                                        <div class="flex items-center gap-2 px-2 py-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                                            <i class="bi flex-shrink-0 text-sm" :class="f.icon"></i>
+                                            <span class="flex-1 text-xs text-slate-700 dark:text-slate-200 truncate" x-text="f.name"></span>
+                                            <span class="text-[11px] text-slate-400 flex-shrink-0" x-text="f.size"></span>
+                                            <button type="button" @click="removeAttachFile(i)"
+                                                    class="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0">
+                                                <i class="bi bi-x-lg" style="font-size:10px"></i>
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            {{-- Errors --}}
+                            <template x-if="errors.length > 0">
+                                <div class="mt-1 space-y-0.5">
+                                    <template x-for="(e,i) in errors" :key="i">
+                                        <p class="text-[11px] text-rose-500" x-text="e"></p>
                                     </template>
                                 </div>
                             </template>

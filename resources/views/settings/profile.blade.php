@@ -37,16 +37,53 @@
                 @method('PATCH')
 
                 {{-- Avatar --}}
-                <div class="flex items-center gap-5 mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
-                    <img src="{{ auth()->user()->avatar_url }}" id="avatar-preview"
-                         class="w-16 h-16 rounded-2xl object-cover ring-2 ring-slate-200 dark:ring-slate-700" alt="">
-                    <div>
-                        <label class="btn btn-secondary btn-sm cursor-pointer">
-                            <i class="bi bi-upload"></i> Change Avatar
-                            <input type="file" name="avatar" id="avatar-input" class="hidden" accept="image/*"
-                                onchange="document.getElementById('avatar-preview').src = URL.createObjectURL(this.files[0])">
-                        </label>
-                        <p class="text-xs text-slate-400 mt-1.5">JPG or PNG, max 2 MB</p>
+                <div class="flex items-start gap-5 mb-6 pb-6 border-b border-slate-100 dark:border-slate-700"
+                     x-data="{
+                         preview: '{{ auth()->user()->avatar_url }}',
+                         isDragging: false,
+                         error: '',
+                         pickFile(file) {
+                             this.error = '';
+                             if (!file) return;
+                             const allowed = ['image/jpeg','image/png','image/gif','image/webp'];
+                             if (!allowed.includes(file.type)) { this.error = 'Only JPG, PNG, GIF or WEBP images are allowed.'; return; }
+                             if (file.size > 2 * 1024 * 1024) { this.error = 'Image must be under 2 MB.'; return; }
+                             this.preview = URL.createObjectURL(file);
+                             this.$refs.avatarInput.files = (() => { const d = new DataTransfer(); d.items.add(file); return d.files; })();
+                         }
+                     }">
+                    {{-- Avatar preview --}}
+                    <img :src="preview" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-slate-200 dark:ring-slate-700 flex-shrink-0" alt="">
+
+                    {{-- Upload zone --}}
+                    <div class="flex-1">
+                        <input type="file" name="avatar" accept="image/*" x-ref="avatarInput"
+                               @change="pickFile($event.target.files[0])" class="sr-only">
+
+                        <div @click="$refs.avatarInput.click()"
+                             @dragover.prevent="isDragging = true"
+                             @dragleave.prevent="isDragging = false"
+                             @drop.prevent="isDragging = false; pickFile($event.dataTransfer?.files?.[0])"
+                             :class="isDragging
+                                 ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
+                                 : 'border-slate-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'"
+                             class="flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                                 :class="isDragging ? 'bg-violet-100 dark:bg-violet-900/40' : 'bg-slate-100 dark:bg-slate-800'">
+                                <i class="bi bi-cloud-upload text-sm"
+                                   :class="isDragging ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400'"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    <span class="text-violet-600 dark:text-violet-400">Click to upload</span> or drag & drop
+                                </p>
+                                <p class="text-xs text-slate-400 mt-0.5">JPG, PNG, GIF, WEBP — max 2 MB</p>
+                            </div>
+                        </div>
+                        <template x-if="error">
+                            <p class="mt-1.5 text-xs text-rose-500" x-text="error"></p>
+                        </template>
+                        @error('avatar')<p class="mt-1.5 text-xs text-rose-500">{{ $message }}</p>@enderror
                     </div>
                 </div>
 

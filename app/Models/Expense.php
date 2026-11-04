@@ -19,7 +19,7 @@ class Expense extends Model
 
     protected $fillable = [
         'user_id', 'title', 'amount', 'currency', 'category',
-        'expense_date', 'description', 'receipt_path', 'receipt_name',
+        'expense_date', 'description', 'receipt_path', 'receipt_name', 'receipts',
         'status', 'reviewed_by', 'reviewed_at', 'review_note',
     ];
 
@@ -29,6 +29,7 @@ class Expense extends Model
             'expense_date' => 'date',
             'amount'       => 'decimal:2',
             'reviewed_at'  => 'datetime',
+            'receipts'     => 'array',
         ];
     }
 

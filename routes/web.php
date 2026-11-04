@@ -187,7 +187,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('expenses/approvals', [ExpenseController::class, 'approvals'])->name('expenses.approvals');
     Route::patch('expenses/{expense}/cancel', [ExpenseController::class, 'cancel'])->name('expenses.cancel');
     Route::patch('expenses/{expense}/review', [ExpenseController::class, 'review'])->name('expenses.review');
-    Route::get('expenses/{expense}/receipt', [ExpenseController::class, 'receipt'])->name('expenses.receipt');
+    Route::get('expenses/{expense}/receipt/{index?}', [ExpenseController::class, 'receipt'])->name('expenses.receipt');
 
     // Announcements
     Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');

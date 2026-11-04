@@ -33,21 +33,24 @@ class ExpenseController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'title'        => ['required', 'string', 'max:255'],
-            'amount'       => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
-            'currency'     => ['nullable', 'string', 'size:3'],
-            'category'     => ['required', 'string', 'in:'.implode(',', Expense::CATEGORIES)],
-            'expense_date' => ['required', 'date', 'before_or_equal:today'],
-            'description'  => ['nullable', 'string', 'max:1000'],
-            'receipt'      => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,webp', 'max:5120'],
+            'title'          => ['required', 'string', 'max:255'],
+            'amount'         => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'currency'       => ['nullable', 'string', 'size:3'],
+            'category'       => ['required', 'string', 'in:'.implode(',', Expense::CATEGORIES)],
+            'expense_date'   => ['required', 'date', 'before_or_equal:today'],
+            'description'    => ['nullable', 'string', 'max:1000'],
+            'receipts'       => ['nullable', 'array', 'max:10'],
+            'receipts.*'     => ['file', 'mimes:jpg,jpeg,png,pdf,webp', 'max:5120'],
         ]);
 
-        $receiptPath = null;
-        $receiptName = null;
-        if ($request->hasFile('receipt')) {
-            $file        = $request->file('receipt');
-            $receiptPath = $file->store('expenses/receipts', 'private');
-            $receiptName = $file->getClientOriginalName();
+        $receipts = [];
+        foreach ($request->file('receipts', []) as $file) {
+            $receipts[] = [
+                'path' => $file->store('expenses/receipts', 'private'),
+                'name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'mime' => $file->getMimeType(),
+            ];
         }
 
         $request->user()->expenses()->create([
@@ -57,8 +60,7 @@ class ExpenseController extends Controller
             'category'     => $data['category'],
             'expense_date' => $data['expense_date'],
             'description'  => $data['description'] ?? null,
-            'receipt_path' => $receiptPath,
-            'receipt_name' => $receiptName,
+            'receipts'     => $receipts ?: null,
             'status'       => 'pending',
         ]);
 
@@ -113,16 +115,23 @@ class ExpenseController extends Controller
         return back()->with('success', "{$expense->user->name}'s expense ".($data['decision'] === 'approved' ? 'approved' : 'rejected').'.');
     }
 
-    public function receipt(Expense $expense, Request $request)
+    public function receipt(Expense $expense, Request $request, int $index = 0)
     {
         $user = $request->user();
         abort_unless(
             $expense->user_id === $user->id || $expense->canBeReviewedBy($user) || $user->hasRole('admin'),
             403
         );
-        abort_if(! $expense->receipt_path, 404);
 
-        return Storage::disk('private')->download($expense->receipt_path, $expense->receipt_name ?? 'receipt');
+        // Support legacy single receipt_path
+        if ($expense->receipt_path && empty($expense->receipts)) {
+            return Storage::disk('private')->download($expense->receipt_path, $expense->receipt_name ?? 'receipt');
+        }
+
+        $receipt = $expense->receipts[$index] ?? null;
+        abort_if(! $receipt, 404);
+
+        return Storage::disk('private')->download($receipt['path'], $receipt['name'] ?? 'receipt');
     }
 
     private function reviewableQuery(User $user)

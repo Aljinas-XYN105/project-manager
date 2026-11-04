@@ -72,7 +72,14 @@
 
                     {{-- Right side: amount + status + receipt --}}
                     <div class="flex items-center gap-3 flex-shrink-0 self-start">
-                        @if($e->receipt_path)
+                        @if($e->receipts && count($e->receipts))
+                            @foreach($e->receipts as $i => $r)
+                            <a href="{{ route('expenses.receipt', [$e, $i]) }}" target="_blank"
+                               class="inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:underline">
+                                <i class="bi bi-paperclip text-xs"></i> {{ count($e->receipts) > 1 ? 'Receipt '.($i+1) : 'Receipt' }}
+                            </a>
+                            @endforeach
+                        @elseif($e->receipt_path)
                         <a href="{{ route('expenses.receipt', $e) }}" target="_blank"
                            class="inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:underline">
                             <i class="bi bi-paperclip text-xs"></i> Receipt
