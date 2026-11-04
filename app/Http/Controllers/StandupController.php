@@ -60,34 +60,24 @@ class StandupController extends Controller
         return view('standups.show', compact('day', 'standup', 'user'));
     }
 
-    // Admin/manager: view a member's standup; returns JSON when requested (for panel)
-    public function memberDay(string $date, User $user, Request $request)
+    // Admin/manager: member's task board during standup
+    public function memberDay(string $date, User $user)
     {
         abort_unless(auth()->user()->hasRole(['admin', 'manager']), 403);
 
-        $day     = Carbon::parse($date);
-        $standup = Standup::whereDate('standup_date', $day)
-            ->where('user_id', $user->id)
-            ->with('items')
-            ->first();
+        $day = Carbon::parse($date);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'user'    => $user->only('id', 'name', 'email', 'job_title', 'department'),
-                'standup' => $standup ? [
-                    'id'       => $standup->id,
-                    'blockers' => $standup->blockers,
-                    'items'    => $standup->items->map(fn($i) => [
-                        'id'          => $i->id,
-                        'description' => $i->description,
-                        'status'      => $i->status,
-                        'sort_order'  => $i->sort_order,
-                    ])->values(),
-                ] : null,
-            ]);
-        }
+        // Active project tasks assigned to this member (grouped by status)
+        $tasks = $user->assignedTasks()
+            ->with('project')
+            ->whereNotIn('status', ['cancelled', 'archived'])
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get();
 
-        return view('standups.member-day', compact('day', 'standup', 'user'));
+        $tasksByStatus = $tasks->groupBy('status');
+
+        return view('standups.member-day', compact('day', 'user', 'tasks', 'tasksByStatus'));
     }
 
     // Save/update standup; managers may pass user_id to save on a member's behalf
