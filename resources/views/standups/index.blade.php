@@ -86,8 +86,11 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
             @forelse($users as $member)
             @php
                 $standup      = $standups[$member->id] ?? null;
-                $openItems    = $standup ? $standup->items->whereNotIn('status', ['done'])->count() : 0;
-                $activeItems  = $standup ? $standup->items->whereIn('status', ['in_progress','in_review'])->count() : 0;
+                $todoCount    = $standup ? $standup->items->where('status','todo')->count() : 0;
+                $wipCount     = $standup ? $standup->items->whereIn('status',['in_progress','in_review'])->count() : 0;
+                $doneCount    = $standup ? $standup->items->where('status','done')->count() : 0;
+                $totalItems   = $standup ? $standup->items->count() : 0;
+                $progressPct  = $totalItems > 0 ? (int)(($doneCount / $totalItems) * 100) : 0;
                 $hasBlockers  = $standup && $standup->blockers;
                 $colorIdx     = $member->id % count($avatarBgs);
                 $avatarBg     = $avatarBgs[$colorIdx];
@@ -150,20 +153,52 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                     @endif
                 </div>
 
-                {{-- Task counts --}}
-                <div class="flex items-center gap-4 pt-1 border-t border-slate-100 dark:border-slate-700/60">
-                    <div class="flex flex-col">
-                        <span class="text-lg font-bold text-slate-900 dark:text-white leading-tight">{{ $member->open_tasks ?? 0 }}</span>
-                        <span class="text-[11px] text-slate-400 font-medium">Open</span>
-                    </div>
-                    <div class="w-px h-8 bg-slate-100 dark:bg-slate-700"></div>
-                    <div class="flex flex-col">
-                        <span class="text-lg font-bold {{ $member->active_tasks > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white' }} leading-tight">{{ $member->active_tasks ?? 0 }}</span>
-                        <span class="text-[11px] text-slate-400 font-medium">Active</span>
-                    </div>
-                    <div class="ml-auto">
-                        <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-sm"></i>
-                    </div>
+                {{-- Progress bar + status dots --}}
+                <div class="pt-1 border-t border-slate-100 dark:border-slate-700/60 space-y-2">
+                    @if($standup && $totalItems > 0)
+                        {{-- Thin segmented progress bar --}}
+                        <div class="flex gap-0.5 h-1.5 rounded-full overflow-hidden">
+                            @if($doneCount)
+                            <div class="bg-green-400 dark:bg-green-500 rounded-full"
+                                 style="flex: {{ $doneCount }}"></div>
+                            @endif
+                            @if($wipCount)
+                            <div class="bg-blue-400 dark:bg-blue-500 rounded-full"
+                                 style="flex: {{ $wipCount }}"></div>
+                            @endif
+                            @if($todoCount)
+                            <div class="bg-slate-200 dark:bg-slate-600 rounded-full"
+                                 style="flex: {{ $todoCount }}"></div>
+                            @endif
+                        </div>
+                        {{-- Status dot counts --}}
+                        <div class="flex items-center gap-3">
+                            @if($todoCount)
+                            <span class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                                <span class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-500 flex-shrink-0"></span>
+                                {{ $todoCount }}
+                            </span>
+                            @endif
+                            @if($wipCount)
+                            <span class="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                                <span class="w-2 h-2 rounded-full bg-blue-400 dark:bg-blue-500 flex-shrink-0"></span>
+                                {{ $wipCount }}
+                            </span>
+                            @endif
+                            @if($doneCount)
+                            <span class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                                <span class="w-2 h-2 rounded-full bg-green-400 dark:bg-green-500 flex-shrink-0"></span>
+                                {{ $doneCount }}
+                            </span>
+                            @endif
+                            <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-sm ml-auto"></i>
+                        </div>
+                    @else
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-300 dark:text-slate-600 italic">{{ $standup ? 'No items' : 'Not submitted' }}</span>
+                            <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-sm"></i>
+                        </div>
+                    @endif
                 </div>
 
             </button>

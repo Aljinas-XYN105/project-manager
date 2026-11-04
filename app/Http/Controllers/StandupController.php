@@ -7,7 +7,6 @@ use App\Models\StandupItem;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class StandupController extends Controller
 {
@@ -25,15 +24,6 @@ class StandupController extends Controller
             : Carbon::today();
 
         $users = User::where('is_active', true)
-            ->select('users.*')
-            ->selectRaw('(SELECT COUNT(*) FROM task_assignees ta
-                          JOIN tasks t ON ta.task_id = t.id
-                          WHERE ta.user_id = users.id
-                          AND t.status NOT IN ("done","cancelled","archived")) as open_tasks')
-            ->selectRaw('(SELECT COUNT(*) FROM task_assignees ta
-                          JOIN tasks t ON ta.task_id = t.id
-                          WHERE ta.user_id = users.id
-                          AND t.status = "in_progress") as active_tasks')
             ->orderBy('name')
             ->get();
 
