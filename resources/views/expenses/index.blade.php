@@ -201,16 +201,85 @@
             </div>
 
             {{-- Receipt --}}
-            <div>
-                <label class="form-label">Receipt <span class="text-xs font-normal text-slate-400">(optional — jpg, png, pdf, max 5 MB)</span></label>
+            <div x-data="{
+                fileName: '',
+                fileSize: '',
+                fileType: '',
+                isDragging: false,
+                clearFile() {
+                    this.fileName = '';
+                    this.fileSize = '';
+                    this.fileType = '';
+                    this.$refs.fileInput.value = '';
+                },
+                onFile(file) {
+                    if (!file) return;
+                    this.fileName = file.name;
+                    this.fileSize = file.size > 1048576
+                        ? (file.size / 1048576).toFixed(1) + ' MB'
+                        : Math.round(file.size / 1024) + ' KB';
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    this.fileType = ['jpg','jpeg','png','webp'].includes(ext) ? 'image' : 'pdf';
+                },
+                onDrop(e) {
+                    this.isDragging = false;
+                    const file = e.dataTransfer?.files?.[0];
+                    if (file) { this.$refs.fileInput.files = e.dataTransfer.files; this.onFile(file); }
+                }
+            }">
+                <label class="form-label">Receipt <span class="text-xs font-normal text-slate-400">(optional)</span></label>
+
+                {{-- Hidden real input --}}
                 <input type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf,.webp"
-                       class="block w-full text-sm text-slate-500 dark:text-slate-400
-                              file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0
-                              file:text-xs file:font-semibold file:bg-violet-50 file:text-violet-700
-                              dark:file:bg-violet-900/30 dark:file:text-violet-300
-                              hover:file:bg-violet-100 dark:hover:file:bg-violet-900/40
-                              cursor-pointer border border-slate-200 dark:border-slate-700 rounded-xl p-2
-                              @error('receipt') border-rose-400 @enderror">
+                       x-ref="fileInput"
+                       @change="onFile($event.target.files[0])"
+                       class="sr-only @error('receipt') border-rose-400 @enderror">
+
+                {{-- Drop zone (shown when no file) --}}
+                <div x-show="!fileName"
+                     @click="$refs.fileInput.click()"
+                     @dragover.prevent="isDragging = true"
+                     @dragleave.prevent="isDragging = false"
+                     @drop.prevent="onDrop($event)"
+                     :class="isDragging
+                         ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
+                         : 'border-slate-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'"
+                     class="flex flex-col items-center justify-center gap-2 py-5 px-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center"
+                         :class="isDragging ? 'bg-violet-100 dark:bg-violet-900/40' : 'bg-slate-100 dark:bg-slate-800'">
+                        <i class="bi bi-cloud-upload text-lg"
+                           :class="isDragging ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400'"></i>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-medium text-slate-700 dark:text-slate-200">
+                            <span class="text-violet-600 dark:text-violet-400">Click to upload</span> or drag & drop
+                        </p>
+                        <p class="text-xs text-slate-400 mt-0.5">JPG, PNG, PDF, WEBP — max 5 MB</p>
+                    </div>
+                </div>
+
+                {{-- File preview (shown after selection) --}}
+                <div x-show="fileName" x-cloak
+                     class="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+                    <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                         :class="fileType === 'pdf'
+                             ? 'bg-rose-100 dark:bg-rose-900/30'
+                             : 'bg-violet-100 dark:bg-violet-900/30'">
+                        <i :class="fileType === 'pdf'
+                               ? 'bi-file-earmark-pdf text-rose-600 dark:text-rose-400'
+                               : 'bi-file-earmark-image text-violet-600 dark:text-violet-400'"
+                           class="bi text-base"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-slate-800 dark:text-white truncate" x-text="fileName"></p>
+                        <p class="text-xs text-slate-400 mt-0.5" x-text="fileSize"></p>
+                    </div>
+                    <button type="button" @click="clearFile()"
+                            class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors flex-shrink-0">
+                        <i class="bi bi-x-lg text-xs"></i>
+                    </button>
+                </div>
+
                 @error('receipt')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
             </div>
 
