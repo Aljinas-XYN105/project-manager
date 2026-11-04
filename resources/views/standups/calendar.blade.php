@@ -50,8 +50,9 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
     {{-- Day headers --}}
     <div class="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
         @foreach(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as $dayLabel)
-        <div class="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-            {{ $dayLabel }}
+        <div class="py-2.5 text-center text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+            <span class="hidden sm:inline">{{ $dayLabel }}</span>
+            <span class="sm:hidden">{{ substr($dayLabel, 0, 1) }}</span>
         </div>
         @endforeach
     </div>
@@ -71,7 +72,7 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
             $dayStandups    = $standupsByDate[$dateStr] ?? collect();
         @endphp
 
-        <div class="relative min-h-[130px] flex flex-col
+        <div class="relative min-h-[90px] sm:min-h-[130px] flex flex-col
                     {{ $isToday ? 'bg-violet-50/60 dark:bg-violet-900/10' : '' }}
                     {{ !$isCurrentMonth ? 'bg-slate-50/70 dark:bg-slate-800/30' : 'bg-white dark:bg-slate-900' }}
                     {{ !$isFuture && $isCurrentMonth ? 'hover:bg-violet-50/40 dark:hover:bg-violet-900/5 cursor-pointer' : '' }}
