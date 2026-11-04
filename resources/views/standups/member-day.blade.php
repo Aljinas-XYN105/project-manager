@@ -224,7 +224,7 @@ $columns = [
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 items-start flex-1">
 
         @foreach($columns as $status => $col)
-        <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border {{ $col['border'] }} flex flex-col min-h-[180px] transition-all duration-150"
+        <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border {{ $col['border'] }} flex flex-col min-h-[100px] transition-all duration-150"
              @dragover.prevent="dragOver('{{ $status }}')"
              @dragleave.self="dragOverStatus = null"
              @drop.prevent="drop('{{ $status }}')"
@@ -281,115 +281,218 @@ $columns = [
 
     </div>
 
-    {{-- ── Task Detail Slide-in Panel ─────────────────────────────────── --}}
+    {{-- ── Backdrop (z-40, below sidebar z-50 so nav stays visible) ───── --}}
     <template x-teleport="body">
-        <div x-show="panelOpen" x-cloak class="fixed inset-0 z-[200] flex justify-end" style="display:none">
-            <div @click="closePanel()" x-show="panelOpen"
-                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="absolute inset-0 bg-black/25 dark:bg-black/50 backdrop-blur-sm"></div>
-            <div x-show="panelOpen"
-                 x-transition:enter="transition ease-out duration-250" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
-                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-                 class="relative z-10 w-full max-w-[420px] bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
-                <template x-if="panelLoading">
-                    <div class="flex-1 flex items-center justify-center"><i class="bi bi-arrow-repeat animate-spin text-slate-400 text-2xl"></i></div>
-                </template>
-                <template x-if="panel && !panelLoading">
-                    <div class="flex flex-col h-full overflow-hidden">
-                        <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
-                            <div class="flex-1 min-w-0 flex items-center gap-2 text-xs text-slate-400">
-                                <i class="bi bi-check2-square text-violet-500 text-sm flex-shrink-0"></i>
-                                <span class="font-semibold text-slate-600 dark:text-slate-300" x-text="panel.task.ticket_key"></span>
-                                <span class="text-slate-200 dark:text-slate-600">·</span>
-                                <span class="truncate" x-text="panel.task.project_name"></span>
-                            </div>
-                            <div class="flex items-center gap-1 flex-shrink-0">
-                                <a :href="panel.task.show_url" target="_blank" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"><i class="bi bi-box-arrow-up-right text-sm"></i></a>
-                                <a :href="panel.task.edit_url" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"><i class="bi bi-pencil text-sm"></i></a>
-                                <button @click="closePanel()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"><i class="bi bi-x-lg text-sm"></i></button>
-                            </div>
+        <div x-show="panelOpen" x-cloak @click="closePanel()"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black/20 backdrop-blur-[2px]" style="display:none; z-index:40"></div>
+    </template>
+
+    {{-- ── Task Detail Panel ───────────────────────────────────────────── --}}
+    <template x-teleport="body">
+        <div x-show="panelOpen" x-cloak
+             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+             class="fixed right-0 top-0 h-dvh w-full max-w-sm sm:max-w-md md:max-w-[440px]
+                    bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700
+                    shadow-2xl flex flex-col overflow-hidden" style="display:none; z-index:300">
+
+            <template x-if="panelLoading">
+                <div class="flex-1 flex items-center justify-center">
+                    <i class="bi bi-arrow-repeat animate-spin text-slate-400 text-2xl"></i>
+                </div>
+            </template>
+
+            <template x-if="panel && !panelLoading">
+                <div class="flex flex-col h-full overflow-hidden">
+
+                    {{-- Header --}}
+                    <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
+                        <div class="flex-1 min-w-0 flex items-center gap-2 text-xs">
+                            <i class="bi bi-check2-square text-violet-500 text-sm flex-shrink-0"></i>
+                            <span class="font-semibold text-slate-700 dark:text-slate-200" x-text="panel.task.ticket_key"></span>
+                            <span class="text-slate-300 dark:text-slate-600">·</span>
+                            <span class="text-slate-500 dark:text-slate-400 truncate" x-text="panel.task.project_name"></span>
                         </div>
-                        <div class="px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
+                        <div class="flex items-center gap-0.5 flex-shrink-0">
+                            <a :href="panel.task.show_url" target="_blank" title="Open"
+                               class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
+                                <i class="bi bi-box-arrow-up-right text-sm"></i>
+                            </a>
+                            <a :href="panel.task.edit_url" title="Edit"
+                               class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
+                                <i class="bi bi-pencil text-sm"></i>
+                            </a>
+                            <button @click="closePanel()" title="Close"
+                                    class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                <i class="bi bi-x-lg text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Scrollable body --}}
+                    <div class="flex-1 overflow-y-auto">
+
+                        {{-- Title --}}
+                        <div class="px-5 pt-4 pb-3.5 border-b border-slate-100 dark:border-slate-700/60">
                             <div x-text="panel.task.title" contenteditable="true"
                                  @blur="patchPanel('title', $el.textContent.trim())" @keydown.enter.prevent="$el.blur()"
-                                 class="text-lg font-semibold text-slate-900 dark:text-white leading-snug outline-none rounded-lg px-2 py-1 -mx-2 cursor-text hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 transition-colors"></div>
+                                 class="text-lg font-semibold text-slate-900 dark:text-white leading-snug outline-none rounded-lg
+                                        px-2 py-1 -mx-2 cursor-text min-h-[1.5em]
+                                        hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 transition-colors"></div>
                             <p class="text-xs text-slate-400 mt-1 ml-0.5">Click to edit title</p>
                         </div>
-                        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-                            <div class="grid grid-cols-2 gap-4">
+
+                        {{-- Fields --}}
+                        <div class="px-5 py-4 space-y-3.5 border-b border-slate-100 dark:border-slate-700/60">
+                            <div class="grid grid-cols-2 gap-x-3 gap-y-3.5">
                                 <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Type</p>
-                                    <select @change="patchPanel('type', $event.target.value)" class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="t in ['task','bug','feature','story','epic']" :key="t"><option :value="t" :selected="panel.task.type === t" x-text="t.charAt(0).toUpperCase() + t.slice(1)"></option></template>
-                                    </select>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Priority</p>
-                                    <select @change="patchPanel('priority', $event.target.value)" class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="p in ['low','medium','high','critical']" :key="p"><option :value="p" :selected="panel.task.priority === p" x-text="p.charAt(0).toUpperCase() + p.slice(1)"></option></template>
-                                    </select>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Status</p>
-                                    <select @change="patchPanel('status', $event.target.value)" class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                        <template x-for="s in ['todo','in_progress','in_review','done','cancelled']" :key="s"><option :value="s" :selected="panel.task.status === s" x-text="s.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase())"></option></template>
-                                    </select>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Due Date</p>
-                                    <input type="date" :value="panel.task.due_date || ''" @change="patchPanel('due_date', $event.target.value || null)" class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer" />
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Estimate (Hours)</p>
-                                <input type="number" min="0" step="0.5" :value="panel.task.estimated_hours || 0" @change="patchPanel('estimated_hours', parseFloat($event.target.value) || 0)" class="w-24 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors" />
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Assignees</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <template x-for="m in panel.members" :key="m.id">
-                                        <button @click="const ids = panel.task.assignee_ids.includes(m.id) ? panel.task.assignee_ids.filter(id => id !== m.id) : [...panel.task.assignee_ids, m.id]; panel.task.assignee_ids = ids; patchPanel('assignee_ids', ids);"
-                                                :class="panel.task.assignee_ids.includes(m.id) ? 'bg-violet-100 dark:bg-violet-900/40 border-violet-300 dark:border-violet-600 text-violet-700 dark:text-violet-300' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'"
-                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all">
-                                            <div class="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-[8px] font-bold" x-text="m.name.substring(0,2).toUpperCase()"></div>
-                                            <span x-text="m.name.split(' ')[0]"></span>
-                                            <i x-show="panel.task.assignee_ids.includes(m.id)" class="bi bi-check text-[10px]"></i>
-                                        </button>
-                                    </template>
-                                </div>
-                            </div>
-                            <template x-if="panel.labels && panel.labels.length">
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Labels</p>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <template x-for="lbl in panel.labels" :key="lbl.id">
-                                            <button @click="const ids = panel.task.label_ids.includes(lbl.id) ? panel.task.label_ids.filter(id => id !== lbl.id) : [...panel.task.label_ids, lbl.id]; panel.task.label_ids = ids; patchPanel('label_ids', ids);"
-                                                    :style="panel.task.label_ids.includes(lbl.id) ? `background:${lbl.color}22; border-color:${lbl.color}66; color:${lbl.color}` : ''"
-                                                    :class="panel.task.label_ids.includes(lbl.id) ? '' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'"
-                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium transition-all"
-                                                    x-text="lbl.name"></button>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Type</p>
+                                    <select @change="patchPanel('type', $event.target.value)"
+                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
+                                        <template x-for="t in ['task','bug','feature','story','epic']" :key="t">
+                                            <option :value="t" :selected="panel.task.type === t" x-text="t.charAt(0).toUpperCase()+t.slice(1)"></option>
                                         </template>
-                                    </div>
+                                    </select>
                                 </div>
-                            </template>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</p>
+                                    <select @change="patchPanel('priority', $event.target.value)"
+                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
+                                        <template x-for="p in ['low','medium','high','critical']" :key="p">
+                                            <option :value="p" :selected="panel.task.priority === p" x-text="p.charAt(0).toUpperCase()+p.slice(1)"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Column / Stage</p>
+                                    <select @change="patchPanel('column_id', parseInt($event.target.value))"
+                                            class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer">
+                                        <template x-for="col in panel.columns" :key="col.id">
+                                            <option :value="col.id" :selected="panel.task.column_id === col.id" x-text="col.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Due Date</p>
+                                    <input type="date" :value="panel.task.due_date || ''"
+                                           @change="patchPanel('due_date', $event.target.value || null)"
+                                           class="w-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors cursor-pointer" />
+                                </div>
+                            </div>
                             <div>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Attachments <span x-show="panel.attachments.length" x-text="'(' + panel.attachments.length + ')'"></span></p>
-                                <template x-if="panel.attachments.length === 0"><p class="text-xs text-slate-400 italic">No attachments</p></template>
-                                <template x-for="att in panel.attachments" :key="att.id">
-                                    <a :href="att.url" target="_blank" class="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400 hover:underline py-0.5">
-                                        <i class="bi bi-paperclip text-xs text-slate-400"></i><span x-text="att.original_name"></span>
-                                    </a>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estimate (Hours)</p>
+                                <input type="number" min="0" step="0.5" :value="panel.task.estimated_hours ?? 0"
+                                       @change="patchPanel('estimated_hours', parseFloat($event.target.value) || 0)"
+                                       class="w-28 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-400 transition-colors" />
+                            </div>
+                        </div>
+
+                        {{-- Assignees --}}
+                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Assignees</p>
+                            {{-- Selected chips --}}
+                            <div class="flex flex-wrap gap-1.5 mb-2.5" x-show="panel.task.assignee_ids.length > 0">
+                                <template x-for="m in panel.members.filter(m => panel.task.assignee_ids.includes(m.id))" :key="'chip-'+m.id">
+                                    <span class="inline-flex items-center gap-1 pl-1.5 pr-1 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 border border-violet-200 dark:border-violet-700 text-xs font-medium text-violet-700 dark:text-violet-300">
+                                        <span x-text="m.name.split(' ')[0]"></span>
+                                        <button @click="const ids=panel.task.assignee_ids.filter(id=>id!==m.id); panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
+                                                class="w-4 h-4 rounded-full flex items-center justify-center text-violet-400 hover:text-violet-700 hover:bg-violet-200 dark:hover:bg-violet-800 transition-colors leading-none">&times;</button>
+                                    </span>
+                                </template>
+                            </div>
+                            {{-- Member grid --}}
+                            <div class="grid grid-cols-2 gap-0.5">
+                                <template x-for="m in panel.members" :key="'member-'+m.id">
+                                    <button @click="const ids=panel.task.assignee_ids.includes(m.id)?panel.task.assignee_ids.filter(id=>id!==m.id):[...panel.task.assignee_ids,m.id]; panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
+                                            :class="panel.task.assignee_ids.includes(m.id)?'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium':'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
+                                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors text-left">
+                                        <div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-600 flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-slate-600 dark:text-slate-200"
+                                             x-text="m.name.substring(0,2).toUpperCase()"></div>
+                                        <span class="truncate text-sm" x-text="m.name.split(' ')[0]"></span>
+                                        <i x-show="panel.task.assignee_ids.includes(m.id)" class="bi bi-check2 text-violet-500 ml-auto text-xs flex-shrink-0"></i>
+                                    </button>
                                 </template>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-slate-700/60 flex-shrink-0 bg-slate-50/60 dark:bg-slate-800/40">
-                            <a :href="panel.task.edit_url" class="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 transition-colors"><i class="bi bi-pencil-square text-xs"></i> Full edit</a>
-                            <button @click="closePanel()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Close</button>
+
+                        {{-- Labels --}}
+                        <template x-if="panel.labels && panel.labels.length">
+                            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Labels</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <template x-for="lbl in panel.labels" :key="lbl.id">
+                                        <button @click="const ids=panel.task.label_ids.includes(lbl.id)?panel.task.label_ids.filter(id=>id!==lbl.id):[...panel.task.label_ids,lbl.id]; panel.task.label_ids=ids; patchPanel('label_ids',ids);"
+                                                :style="`border-color:${lbl.color}; color:${lbl.color}; background:${panel.task.label_ids.includes(lbl.id)?lbl.color+'22':'transparent'}`"
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full border text-xs font-medium transition-all"
+                                                x-text="lbl.name"></button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Attachments --}}
+                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Attachments
+                                    <span x-show="panel.attachments.length > 0" x-text="'('+panel.attachments.length+')'"></span>
+                                </p>
+                                <label class="inline-flex items-center gap-1 text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-800 cursor-pointer">
+                                    <i class="bi bi-plus-lg text-xs"></i> Add
+                                    <input type="file" class="hidden" multiple>
+                                </label>
+                            </div>
+                            <template x-if="panel.attachments.length === 0">
+                                <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl py-5 flex flex-col items-center gap-1.5 text-center">
+                                    <i class="bi bi-cloud-upload text-2xl text-slate-300 dark:text-slate-600"></i>
+                                    <p class="text-xs text-slate-400">Drop or <span class="text-violet-500 cursor-pointer hover:underline">browse</span></p>
+                                    <p class="text-[10px] text-slate-300 dark:text-slate-600">No files attached</p>
+                                </div>
+                            </template>
+                            <template x-if="panel.attachments.length > 0">
+                                <div class="space-y-1">
+                                    <template x-for="att in panel.attachments" :key="att.id">
+                                        <a :href="att.url" target="_blank"
+                                           class="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400 hover:underline py-0.5">
+                                            <i class="bi bi-paperclip text-xs text-slate-400"></i>
+                                            <span x-text="att.original_name"></span>
+                                            <span class="text-slate-400 ml-auto" x-text="att.size_formatted"></span>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
                         </div>
+
+                        {{-- Description --}}
+                        <div class="px-5 py-4">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Description</p>
+                            <textarea rows="4" :placeholder="'Add a description…'"
+                                      @blur="patchPanel('description', $el.value.trim())"
+                                      x-init="$el.value = panel.task.description || ''"
+                                      class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700
+                                             rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 outline-none
+                                             focus:border-violet-400 transition-colors resize-none leading-relaxed
+                                             placeholder-slate-300 dark:placeholder-slate-600"></textarea>
+                        </div>
+
+                    </div>{{-- /scrollable body --}}
+
+                    {{-- Footer --}}
+                    <div class="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 flex-shrink-0 bg-slate-50/60 dark:bg-slate-800/40">
+                        <a :href="panel.task.edit_url"
+                           class="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 transition-colors">
+                            <i class="bi bi-pencil-square text-xs"></i> Full edit
+                        </a>
+                        <button @click="closePanel()"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                            Close
+                        </button>
                     </div>
-                </template>
-            </div>
+
+                </div>
+            </template>
         </div>
     </template>
 
