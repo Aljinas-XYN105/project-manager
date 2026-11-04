@@ -861,165 +861,102 @@ window.__standupInit = function() {
                 {{-- Tab: Create New --}}
                 @if($projects->count() > 0)
                 <div x-show="addTaskModalTab === 'create'" class="flex flex-col flex-1 min-h-0 overflow-hidden">
-                    <div class="flex-1 overflow-y-auto">
+                    <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 
-                        {{-- Title block — full-width, prominent --}}
-                        <div class="px-5 pt-5 pb-4 border-b border-slate-100 dark:border-slate-700/60">
-                            <input type="text"
-                                   x-model="newTaskTitle"
-                                   x-effect="addTaskModal && addTaskModalTab === 'create' && $nextTick(() => $el.focus())"
-                                   @keydown.escape="closeAddTaskModal()"
-                                   placeholder="Task title…"
-                                   class="w-full text-base font-semibold text-slate-900 dark:text-white bg-transparent
-                                          placeholder-slate-300 dark:placeholder-slate-600 outline-none leading-snug" />
-                            <textarea x-model="newTaskDescription" rows="2"
-                                      placeholder="Add a description…"
-                                      class="w-full mt-2 text-sm text-slate-600 dark:text-slate-300 bg-transparent
-                                             placeholder-slate-300 dark:placeholder-slate-600 outline-none resize-none leading-relaxed"></textarea>
+                        {{-- Title --}}
+                        <input type="text"
+                               x-model="newTaskTitle"
+                               x-effect="addTaskModal && addTaskModalTab === 'create' && $nextTick(() => $el.focus())"
+                               @keydown.escape="closeAddTaskModal()"
+                               placeholder="Task title…"
+                               class="w-full text-sm font-medium text-slate-900 dark:text-white
+                                      bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700
+                                      rounded-xl px-3.5 py-2.5 placeholder-slate-400 outline-none
+                                      focus:border-violet-400 focus:ring-2 focus:ring-violet-100 dark:focus:ring-violet-900/30 transition-all" />
+
+                        {{-- Type pills --}}
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Type</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach(['task'=>['bi-check-square-fill','text-slate-500'],'bug'=>['bi-bug-fill','text-red-500'],'feature'=>['bi-stars','text-purple-500'],'story'=>['bi-bookmark-fill','text-blue-500'],'epic'=>['bi-lightning-fill','text-orange-500']] as $t=>$meta)
+                                <button type="button"
+                                        @click="newTaskType = '{{ $t }}'"
+                                        :class="newTaskType === '{{ $t }}'
+                                            ? 'bg-violet-600 text-white border-violet-600'
+                                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-violet-300'"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all">
+                                    <i class="bi {{ $meta[0] }} text-xs" :class="newTaskType !== '{{ $t }}' ? '{{ $meta[1] }}' : ''"></i>
+                                    {{ ucfirst($t) }}
+                                </button>
+                                @endforeach
+                            </div>
                         </div>
 
-                        {{-- Property rows --}}
-                        <div class="divide-y divide-slate-50 dark:divide-slate-700/40">
-
-                            {{-- Project --}}
-                            <div class="flex items-center px-5 py-2.5 gap-3">
-                                <div class="flex items-center gap-2 w-28 flex-shrink-0">
-                                    <i class="bi bi-folder text-slate-300 dark:text-slate-600 text-xs"></i>
-                                    <span class="text-xs text-slate-400 dark:text-slate-500">Project</span>
-                                    <span class="text-rose-400 text-xs leading-none">*</span>
-                                </div>
-                                <div class="relative flex-1">
-                                    <select x-model="newTaskProject"
-                                            class="w-full text-sm font-medium cursor-pointer outline-none pr-4 truncate"
-                                            :class="newTaskProject ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'"
-                                            style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
-                                        <option value="">Select project…</option>
-                                        <template x-for="p in projects" :key="p.id">
-                                            <option :value="p.id" x-text="p.name"></option>
-                                        </template>
-                                    </select>
-                                    <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
-                                </div>
-                            </div>
-
-                            {{-- Type --}}
-                            <div class="flex items-center px-5 py-2.5 gap-3">
-                                <div class="flex items-center gap-2 w-28 flex-shrink-0">
-                                    <i class="bi bi-tag text-slate-300 dark:text-slate-600 text-xs"></i>
-                                    <span class="text-xs text-slate-400 dark:text-slate-500">Type</span>
-                                </div>
-                                <div class="relative flex-1">
-                                    <select x-model="newTaskType"
-                                            class="w-full text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
-                                            style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
-                                        <option value="task">Task</option>
-                                        <option value="bug">Bug</option>
-                                        <option value="feature">Feature</option>
-                                        <option value="story">Story</option>
-                                        <option value="epic">Epic</option>
-                                    </select>
-                                    <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
-                                </div>
-                            </div>
-
-                            {{-- Priority --}}
-                            <div class="flex items-center px-5 py-2.5 gap-3">
-                                <div class="flex items-center gap-2 w-28 flex-shrink-0">
-                                    <i class="bi bi-flag text-slate-300 dark:text-slate-600 text-xs"></i>
-                                    <span class="text-xs text-slate-400 dark:text-slate-500">Priority</span>
-                                </div>
-                                <div class="relative flex-1 flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full flex-shrink-0"
-                                          :class="{'bg-slate-300': newTaskPriority==='low','bg-amber-400': newTaskPriority==='medium','bg-orange-500': newTaskPriority==='high','bg-rose-500': newTaskPriority==='critical'}"></span>
-                                    <select x-model="newTaskPriority"
-                                            class="flex-1 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
-                                            style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                        <option value="critical">Critical</option>
-                                    </select>
-                                    <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
-                                </div>
-                            </div>
-
-                            {{-- Due date --}}
-                            <div class="flex items-center px-5 py-2.5 gap-3">
-                                <div class="flex items-center gap-2 w-28 flex-shrink-0">
-                                    <i class="bi bi-calendar3 text-slate-300 dark:text-slate-600 text-xs"></i>
-                                    <span class="text-xs text-slate-400 dark:text-slate-500">Due date</span>
-                                </div>
-                                <input type="date" x-model="newTaskDueDate"
-                                       class="flex-1 text-sm font-medium cursor-pointer outline-none"
-                                       :class="newTaskDueDate ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'"
-                                       style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none" />
-                            </div>
-
-                            {{-- Estimate --}}
-                            <div class="flex items-center px-5 py-2.5 gap-3">
-                                <div class="flex items-center gap-2 w-28 flex-shrink-0">
-                                    <i class="bi bi-clock text-slate-300 dark:text-slate-600 text-xs"></i>
-                                    <span class="text-xs text-slate-400 dark:text-slate-500">Estimate</span>
-                                </div>
-                                <div class="flex items-center gap-1.5 flex-1">
-                                    <input type="number" min="0" step="0.5" x-model="newTaskEstimate"
-                                           placeholder="—"
-                                           class="w-14 text-sm text-slate-700 dark:text-slate-200 font-medium outline-none"
-                                           style="background:transparent; border:none; padding:0" />
-                                    <span class="text-xs text-slate-400" x-show="newTaskEstimate">hrs</span>
-                                </div>
-                            </div>
-
-                            {{-- Assignees --}}
-                            <div class="px-5 py-3 gap-3">
-                                <div class="flex items-center gap-2 mb-2.5">
-                                    <i class="bi bi-people text-slate-300 dark:text-slate-600 text-xs"></i>
-                                    <span class="text-xs text-slate-400 dark:text-slate-500">Assignees</span>
-                                </div>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <template x-for="m in members" :key="'na-'+m.id">
-                                        <button type="button"
-                                                @click="newTaskAssignees.includes(m.id) ? newTaskAssignees = newTaskAssignees.filter(id => id !== m.id) : newTaskAssignees.push(m.id)"
-                                                class="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full border transition-all text-xs font-medium"
-                                                :class="newTaskAssignees.includes(m.id)
-                                                    ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-700 text-violet-700 dark:text-violet-300'
-                                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400'">
-                                            <div class="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold"
-                                                 :style="newTaskAssignees.includes(m.id) ? 'background:#ede9fe;color:#7c3aed' : 'background:#f1f5f9;color:#94a3b8'"
-                                                 x-text="m.name.substring(0,2).toUpperCase()"></div>
-                                            <span x-text="m.name.split(' ')[0]"></span>
-                                        </button>
+                        {{-- Project + Priority (2-col) --}}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Project <span class="text-rose-400">*</span></p>
+                                <select x-model="newTaskProject"
+                                        class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700
+                                               rounded-xl px-3 py-2 outline-none focus:border-violet-400 transition-colors cursor-pointer"
+                                        :class="newTaskProject ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'">
+                                    <option value="">Select…</option>
+                                    <template x-for="p in projects" :key="p.id">
+                                        <option :value="p.id" x-text="p.name"></option>
                                     </template>
-                                </div>
+                                </select>
                             </div>
-
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Priority</p>
+                                <select x-model="newTaskPriority"
+                                        class="w-full text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800
+                                               border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2
+                                               outline-none focus:border-violet-400 transition-colors cursor-pointer">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
                         </div>
+
+                        {{-- Assignees --}}
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Assignees</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <template x-for="m in members" :key="'na-'+m.id">
+                                    <button type="button"
+                                            @click="newTaskAssignees.includes(m.id) ? newTaskAssignees = newTaskAssignees.filter(id => id !== m.id) : newTaskAssignees.push(m.id)"
+                                            class="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full border transition-all text-xs font-medium"
+                                            :class="newTaskAssignees.includes(m.id)
+                                                ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-700 text-violet-700 dark:text-violet-300'
+                                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-violet-300'">
+                                        <div class="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold"
+                                             :style="newTaskAssignees.includes(m.id) ? 'background:#ede9fe;color:#7c3aed' : 'background:#f1f5f9;color:#94a3b8'"
+                                             x-text="m.name.substring(0,2).toUpperCase()"></div>
+                                        <span x-text="m.name.split(' ')[0]"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div class="px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-800/40 flex items-center gap-2 flex-shrink-0">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs text-slate-400 truncate"
-                               x-show="!newTaskTitle.trim() || !newTaskProject">
-                                <i class="bi bi-info-circle mr-1"></i>Title and project are required
-                            </p>
-                            <p class="text-xs text-green-500 flex items-center gap-1"
-                               x-show="newTaskTitle.trim() && newTaskProject">
-                                <i class="bi bi-check-circle-fill"></i> Ready to create
-                            </p>
-                        </div>
-                        <button @click="closeAddTaskModal()"
-                                class="px-3.5 py-2 rounded-xl text-sm font-medium text-slate-500
-                                       hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            Cancel
-                        </button>
+                    {{-- Footer --}}
+                    <div class="px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 flex flex-col gap-2.5 flex-shrink-0">
                         <button @click="createTask()"
                                 :disabled="!newTaskTitle.trim() || !newTaskProject || taskCreating"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+                                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
                                        bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold
-                                       transition-all shadow-sm shadow-violet-200 dark:shadow-violet-900/30
-                                       disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
-                            <i class="bi" :class="taskCreating ? 'bi-arrow-repeat animate-spin' : 'bi-plus-lg'"></i>
+                                       transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                            <i class="bi" :class="taskCreating ? 'bi-arrow-repeat animate-spin' : 'bi-check-lg'"></i>
                             <span x-text="taskCreating ? 'Creating…' : 'Create & Add'"></span>
+                        </button>
+                        <button @click="closeAddTaskModal()"
+                                class="w-full py-2 rounded-xl text-sm font-medium text-slate-500
+                                       hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            Cancel
+                        </button>
                         </button>
                     </div>
                 </div>
