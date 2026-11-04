@@ -69,25 +69,8 @@ $existingBlockers = $standup?->blockers ?? '';
         </div>
     </template>
 
-    {{-- Empty state --}}
-    <template x-if="items.length === 0 && addingIn === null">
-        <div class="flex-1 flex flex-col items-center justify-center py-20 text-center">
-            <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
-                <i class="bi bi-calendar-x text-xl text-slate-400"></i>
-            </div>
-            <p class="font-semibold text-slate-700 dark:text-slate-300 mb-1">No standup submitted</p>
-            <p class="text-sm text-slate-400 mb-5">{{ $user->name }} hasn't added anything yet.</p>
-            <button @click="startAdd('todo')"
-                    class="btn-ghost flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
-                <i class="bi bi-pencil-square text-sm"></i>
-                Add Standup
-            </button>
-        </div>
-    </template>
-
-    {{-- Kanban board --}}
-    <template x-if="items.length > 0 || addingIn !== null">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 items-start flex-1">
+    {{-- Kanban board — always visible --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 items-start flex-1">
 
             @foreach($columns as $status => $col)
             <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border {{ $col['border'] }} p-3 flex flex-col gap-2">
@@ -149,7 +132,6 @@ $existingBlockers = $standup?->blockers ?? '';
             @endforeach
 
         </div>
-    </template>
 
 </div>
 

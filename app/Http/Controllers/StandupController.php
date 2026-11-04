@@ -62,7 +62,21 @@ class StandupController extends Controller
             ->with('items')
             ->first();
 
-        return view('standups.show', compact('day', 'standup', 'user'));
+        // Pre-populate from assigned tasks when no standup exists for today
+        $defaultItems = collect();
+        if (!$standup && $day->isToday()) {
+            $defaultItems = $user->assignedTasks()
+                ->whereNotIn('status', ['cancelled', 'archived', 'done'])
+                ->with('project:id,slug')
+                ->get()
+                ->map(fn ($t) => [
+                    'id'          => null,
+                    'description' => "[{$t->ticket_key}] {$t->title}",
+                    'status'      => in_array($t->status, ['todo', 'in_progress', 'in_review']) ? $t->status : 'todo',
+                ]);
+        }
+
+        return view('standups.show', compact('day', 'standup', 'user', 'defaultItems'));
     }
 
     // Admin/manager: view and manage a member's standup items for a date
