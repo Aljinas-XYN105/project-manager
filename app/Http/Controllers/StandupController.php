@@ -99,7 +99,9 @@ class StandupController extends Controller
             ? $standup->items->map(fn($i) => ['id' => $i->id, 'task_id' => $i->task_id, 'description' => $i->description, 'status' => $i->status])->values()
             : $defaultItems;
 
-        return view('standups.show', compact('day', 'standup', 'user', 'defaultItems', 'seedItems', 'projects'));
+        $members = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+
+        return view('standups.show', compact('day', 'standup', 'user', 'defaultItems', 'seedItems', 'projects', 'members'));
     }
 
     // Admin/manager: view and manage a member's standup items for a date

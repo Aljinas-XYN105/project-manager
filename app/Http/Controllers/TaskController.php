@@ -251,10 +251,15 @@ class TaskController extends Controller
     public function quickStore(Request $request)
     {
         $validated = $request->validate([
-            'title'      => 'required|string|max:255',
-            'type'       => 'required|in:task,bug,feature,story,epic',
-            'project_id' => 'required|exists:projects,id',
-            'priority'   => 'required|in:low,medium,high,critical',
+            'title'            => 'required|string|max:255',
+            'type'             => 'required|in:task,bug,feature,story,epic',
+            'project_id'       => 'required|exists:projects,id',
+            'priority'         => 'required|in:low,medium,high,critical',
+            'description'      => 'nullable|string|max:5000',
+            'due_date'         => 'nullable|date',
+            'estimated_hours'  => 'nullable|numeric|min:0',
+            'assignee_ids'     => 'nullable|array',
+            'assignee_ids.*'   => 'integer|exists:users,id',
         ]);
 
         $project = \App\Models\Project::findOrFail($validated['project_id']);

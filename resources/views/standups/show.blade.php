@@ -3,7 +3,7 @@
 
 @section('content')
 <script>
-function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadySubmitted, projects) {
+function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadySubmitted, projects, members) {
     let nextId = existingItems.length;
 
     return {
@@ -13,6 +13,7 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
         newTaskProject: '',
         taskCreating:   false,
         projects:       projects || [],
+        members:        members || [],
         saving:         false,
         saved:          false,
         submitted:      alreadySubmitted,
@@ -29,17 +30,31 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
         searchTimer:        null,
         showAssigneePicker: false,
 
+        // create-new form fields
+        newTaskType:        'task',
+        newTaskPriority:    'medium',
+        newTaskDueDate:     '',
+        newTaskEstimate:    '',
+        newTaskDescription: '',
+        newTaskAssignees:   [],   // array of user ids
+
         itemsFor(status) {
             return this.items.filter(i => i.status === status);
         },
 
         openAddTaskModal(tab = 'existing') {
-            this.addTaskModal    = true;
-            this.addTaskModalTab = tab;
-            this.searchQuery     = '';
-            this.searchResults   = [];
-            this.newTaskTitle    = '';
-            this.newTaskProject  = '';
+            this.addTaskModal       = true;
+            this.addTaskModalTab    = tab;
+            this.searchQuery        = '';
+            this.searchResults      = [];
+            this.newTaskTitle       = '';
+            this.newTaskProject     = '';
+            this.newTaskType        = 'task';
+            this.newTaskPriority    = 'medium';
+            this.newTaskDueDate     = '';
+            this.newTaskEstimate    = '';
+            this.newTaskDescription = '';
+            this.newTaskAssignees   = [userId];
             if (tab === 'existing') {
                 this.$nextTick(() => this.fetchTasks(''));
             }
@@ -88,11 +103,14 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
                         'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content,
                     },
                     body: JSON.stringify({
-                        title:        this.newTaskTitle.trim(),
-                        project_id:   this.newTaskProject,
-                        type:         'task',
-                        priority:     'medium',
-                        assignee_ids: [userId],
+                        title:           this.newTaskTitle.trim(),
+                        project_id:      this.newTaskProject,
+                        type:            this.newTaskType,
+                        priority:        this.newTaskPriority,
+                        description:     this.newTaskDescription.trim() || null,
+                        due_date:        this.newTaskDueDate || null,
+                        estimated_hours: this.newTaskEstimate ? parseFloat(this.newTaskEstimate) : null,
+                        assignee_ids:    this.newTaskAssignees,
                     }),
                 });
                 const data = await res.json();
@@ -277,7 +295,8 @@ window.__standupInit = function() {
         @json($seedItems),
         @json($existingBlockers),
         {{ $alreadySubmitted ? 'true' : 'false' }},
-        @json($projects->map(fn($p) => ['id' => $p->id, 'name' => $p->name]))
+        @json($projects->map(fn($p) => ['id' => $p->id, 'name' => $p->name])),
+        @json($members->map(fn($m) => ['id' => $m->id, 'name' => $m->name]))
     );
 };
 </script>
@@ -747,7 +766,7 @@ window.__standupInit = function() {
 
             <div @click.stop
                  class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden"
-                 style="max-height: min(90vh, 580px)">
+                 style="max-height: min(92vh, 680px)">
 
                 {{-- Modal header --}}
                 <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
@@ -847,10 +866,25 @@ window.__standupInit = function() {
 
                 {{-- Tab: Create New --}}
                 @if($projects->count() > 0)
-                <div x-show="addTaskModalTab === 'create'" class="flex flex-col flex-1 overflow-hidden">
-                    <div class="flex-1 px-5 py-5 space-y-4">
+                <div x-show="addTaskModalTab === 'create'" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3.5">
+
+                        {{-- Title --}}
                         <div>
-                            <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">Project</label>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Title <span class="text-rose-400">*</span></label>
+                            <input type="text"
+                                   x-model="newTaskTitle"
+                                   x-effect="addTaskModal && addTaskModalTab === 'create' && $nextTick(() => $el.focus())"
+                                   @keydown.escape="closeAddTaskModal()"
+                                   placeholder="What needs to be done?"
+                                   class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
+                                          border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                          placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
+                        </div>
+
+                        {{-- Project --}}
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Project <span class="text-rose-400">*</span></label>
                             <select x-model="newTaskProject"
                                     class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
                                            border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
@@ -861,20 +895,88 @@ window.__standupInit = function() {
                                 </template>
                             </select>
                         </div>
-                        <div>
-                            <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">Task title</label>
-                            <input type="text"
-                                   x-model="newTaskTitle"
-                                   x-effect="addTaskModal && addTaskModalTab === 'create' && $nextTick(() => $el.focus())"
-                                   @keydown.enter.prevent="createTask()"
-                                   @keydown.escape="closeAddTaskModal()"
-                                   placeholder="What needs to be done?"
-                                   class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
-                                          border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
-                                          placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
+
+                        {{-- Type + Priority (2-col) --}}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Type</label>
+                                <select x-model="newTaskType"
+                                        class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
+                                               border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                               outline-none focus:border-violet-400 transition-colors">
+                                    <option value="task">Task</option>
+                                    <option value="bug">Bug</option>
+                                    <option value="feature">Feature</option>
+                                    <option value="story">Story</option>
+                                    <option value="epic">Epic</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Priority</label>
+                                <select x-model="newTaskPriority"
+                                        class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
+                                               border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                               outline-none focus:border-violet-400 transition-colors">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
                         </div>
+
+                        {{-- Due date + Estimate (2-col) --}}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Due Date</label>
+                                <input type="date" x-model="newTaskDueDate"
+                                       class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
+                                              border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                              outline-none focus:border-violet-400 transition-colors" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Estimate (hrs)</label>
+                                <input type="number" min="0" step="0.5" x-model="newTaskEstimate"
+                                       placeholder="0"
+                                       class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
+                                              border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                              placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
+                            </div>
+                        </div>
+
+                        {{-- Assignees --}}
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Assignees</label>
+                            <div class="grid grid-cols-2 gap-0.5 max-h-28 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 p-1 bg-slate-50 dark:bg-slate-800">
+                                <template x-for="m in members" :key="'nm-'+m.id">
+                                    <button type="button"
+                                            @click="newTaskAssignees.includes(m.id) ? newTaskAssignees = newTaskAssignees.filter(id => id !== m.id) : newTaskAssignees.push(m.id)"
+                                            :class="newTaskAssignees.includes(m.id) ? 'bg-violet-50 dark:bg-violet-900/30' : 'hover:bg-white dark:hover:bg-slate-700'"
+                                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors">
+                                        <div class="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold"
+                                             :style="newTaskAssignees.includes(m.id) ? 'background:#ede9fe;color:#7c3aed' : 'background:#e2e8f0;color:#64748b'"
+                                             x-text="m.name.substring(0,2).toUpperCase()"></div>
+                                        <span class="text-xs truncate flex-1"
+                                              :class="newTaskAssignees.includes(m.id) ? 'text-violet-700 dark:text-violet-300 font-medium' : 'text-slate-600 dark:text-slate-300'"
+                                              x-text="m.name.split(' ')[0]"></span>
+                                        <i x-show="newTaskAssignees.includes(m.id)" class="bi bi-check2 text-violet-500 text-xs flex-shrink-0"></i>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- Description --}}
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Description</label>
+                            <textarea x-model="newTaskDescription" rows="3"
+                                      placeholder="Add details, context, acceptance criteria…"
+                                      class="w-full text-sm bg-slate-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5
+                                             border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                             placeholder-slate-400 outline-none focus:border-violet-400 transition-colors resize-none"></textarea>
+                        </div>
+
                     </div>
-                    <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2 flex-shrink-0">
+                    <div class="px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2 flex-shrink-0">
                         <button @click="closeAddTaskModal()"
                                 class="px-4 py-2 rounded-xl text-sm font-medium text-slate-500
                                        hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
