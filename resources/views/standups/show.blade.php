@@ -23,7 +23,8 @@ $alreadySubmitted = $standup !== null;
         '{{ $day->toDateString() }}',
         @json($seedItems),
         @json($existingBlockers),
-        {{ $alreadySubmitted ? 'true' : 'false' }}
+        {{ $alreadySubmitted ? 'true' : 'false' }},
+        @json($projects->map(fn($p) => ['id' => $p->id, 'name' => $p->name]))
      )"
      class="flex flex-col gap-4">
 
@@ -150,17 +151,71 @@ $alreadySubmitted = $standup !== null;
                 </template>
             </div>
 
-            {{-- Add button — always at bottom, full-width --}}
-            <button @click="startAdd('{{ $status }}')"
-                    x-show="addingIn !== '{{ $status }}'"
-                    class="flex items-center gap-2 mx-2 mb-2 mt-1 px-3 py-2 rounded-xl
-                           border border-dashed border-slate-200 dark:border-slate-700
-                           text-xs text-slate-400 dark:text-slate-500
-                           {{ $col['addHover'] }} dark:hover:border-slate-600 dark:hover:text-slate-300
-                           transition-all w-[calc(100%-16px)]">
-                <i class="bi bi-plus-lg text-xs"></i>
-                Add task
-            </button>
+            {{-- Create Task inline form --}}
+            <template x-if="creatingIn === '{{ $status }}'">
+                <div class="mx-2 mb-1 bg-white dark:bg-slate-800 rounded-xl px-3 py-3
+                            border border-violet-300 dark:border-violet-600 shadow-sm space-y-2">
+                    <p class="text-[11px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                        <i class="bi bi-plus-square-fill mr-1"></i>Create New Task
+                    </p>
+                    <input type="text"
+                           x-model="newTaskTitle"
+                           x-effect="creatingIn === '{{ $status }}' && $nextTick(() => $el.focus())"
+                           @keydown.escape="creatingIn = null; newTaskTitle = ''; newTaskProject = ''"
+                           placeholder="Task title…"
+                           class="w-full text-sm bg-slate-50 dark:bg-slate-700/50 rounded-lg px-3 py-1.5
+                                  border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                  placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
+                    <select x-model="newTaskProject"
+                            class="w-full text-sm bg-slate-50 dark:bg-slate-700/50 rounded-lg px-3 py-1.5
+                                   border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                   outline-none focus:border-violet-400 transition-colors">
+                        <option value="">Select project…</option>
+                        <template x-for="p in projects" :key="p.id">
+                            <option :value="p.id" x-text="p.name"></option>
+                        </template>
+                    </select>
+                    <div class="flex items-center justify-between pt-1">
+                        <button @click="creatingIn = null; newTaskTitle = ''; newTaskProject = ''"
+                                class="text-xs text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
+                        <button @click="createTask('{{ $status }}')"
+                                :disabled="!newTaskTitle.trim() || !newTaskProject || taskCreating"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                                       bg-violet-600 hover:bg-violet-700 text-white transition-colors
+                                       disabled:opacity-40 disabled:cursor-not-allowed">
+                            <i class="bi" :class="taskCreating ? 'bi-arrow-repeat animate-spin' : 'bi-plus-lg'"></i>
+                            <span x-text="taskCreating ? 'Creating…' : 'Create & add'"></span>
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            {{-- Add buttons row — always at bottom --}}
+            <div x-show="addingIn !== '{{ $status }}' && creatingIn !== '{{ $status }}'"
+                 class="flex gap-1.5 mx-2 mb-2 mt-1">
+                {{-- Add standup item --}}
+                <button @click="startAdd('{{ $status }}')"
+                        class="flex items-center gap-1.5 flex-1 px-2.5 py-2 rounded-xl
+                               border border-dashed border-slate-200 dark:border-slate-700
+                               text-xs text-slate-400 dark:text-slate-500
+                               {{ $col['addHover'] }} dark:hover:border-slate-600 dark:hover:text-slate-300
+                               transition-all">
+                    <i class="bi bi-plus-lg text-xs"></i>
+                    Add note
+                </button>
+                {{-- Create task --}}
+                @if($projects->count() > 0)
+                <button @click="startCreate('{{ $status }}')"
+                        class="flex items-center gap-1.5 px-2.5 py-2 rounded-xl
+                               border border-dashed border-violet-200 dark:border-violet-800/50
+                               text-xs text-violet-400 dark:text-violet-500
+                               hover:border-violet-400 hover:text-violet-600 dark:hover:border-violet-600 dark:hover:text-violet-300
+                               transition-all">
+                    <i class="bi bi-plus-square text-xs"></i>
+                    New task
+                </button>
+                @endif
+            </div>
 
         </div>
         @endforeach
@@ -204,26 +259,39 @@ $alreadySubmitted = $standup !== null;
 </div>
 
 <script>
-function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadySubmitted) {
+function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadySubmitted, projects) {
     let nextId = existingItems.length;
 
     return {
-        items:         existingItems.map((item, i) => ({ ...item, _id: i })),
-        blockers:      existingBlockers || '',
-        addingIn:      null,
-        newText:       '',
-        saving:        false,
-        saved:         false,
-        submitted:     alreadySubmitted,
-        justSubmitted: false,
+        items:          existingItems.map((item, i) => ({ ...item, _id: i })),
+        blockers:       existingBlockers || '',
+        addingIn:       null,
+        newText:        '',
+        creatingIn:     null,
+        newTaskTitle:   '',
+        newTaskProject: '',
+        taskCreating:   false,
+        projects:       projects || [],
+        saving:         false,
+        saved:          false,
+        submitted:      alreadySubmitted,
+        justSubmitted:  false,
 
         itemsFor(status) {
             return this.items.filter(i => i.status === status);
         },
 
         startAdd(status) {
-            this.addingIn = status;
-            this.newText  = '';
+            this.addingIn   = status;
+            this.creatingIn = null;
+            this.newText    = '';
+        },
+
+        startCreate(status) {
+            this.creatingIn     = status;
+            this.addingIn       = null;
+            this.newTaskTitle   = '';
+            this.newTaskProject = '';
         },
 
         confirmAdd(status) {
@@ -233,6 +301,38 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
             this.newText  = '';
             this.addingIn = null;
             this.autoSave();
+        },
+
+        async createTask(status) {
+            if (!this.newTaskTitle.trim() || !this.newTaskProject) return;
+            this.taskCreating = true;
+            try {
+                const res = await fetch('/tasks/quick-store', {
+                    method:  'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept':       'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content,
+                    },
+                    body: JSON.stringify({
+                        title:      this.newTaskTitle.trim(),
+                        project_id: this.newTaskProject,
+                        type:       'task',
+                        priority:   'medium',
+                    }),
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    const label = (data.ticket_key ? `[${data.ticket_key}] ` : '') + data.title;
+                    this.items.push({ _id: nextId++, description: label, status });
+                    this.creatingIn     = null;
+                    this.newTaskTitle   = '';
+                    this.newTaskProject = '';
+                    this.autoSave();
+                }
+            } finally {
+                this.taskCreating = false;
+            }
         },
 
         removeItem(id) {

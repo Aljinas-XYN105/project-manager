@@ -88,7 +88,12 @@ class StandupController extends Controller
                 ]);
         }
 
-        return view('standups.show', compact('day', 'standup', 'user', 'defaultItems'));
+        // Projects the member belongs to (for the quick-create task form)
+        $projects = $user->hasRole(['admin', 'manager'])
+            ? \App\Models\Project::where('status', 'active')->select('id', 'name', 'slug')->orderBy('name')->get()
+            : $user->projects()->where('projects.status', 'active')->select('projects.id', 'projects.name', 'projects.slug')->orderBy('projects.name')->get();
+
+        return view('standups.show', compact('day', 'standup', 'user', 'defaultItems', 'projects'));
     }
 
     // Admin/manager: view and manage a member's standup items for a date

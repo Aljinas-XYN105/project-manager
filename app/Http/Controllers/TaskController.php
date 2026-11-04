@@ -269,6 +269,16 @@ class TaskController extends Controller
             'created_by' => $request->user()->id,
         ]), $request->user());
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'ok'         => true,
+                'task_id'    => $task->id,
+                'ticket_key' => $task->ticket_key,
+                'title'      => $task->title,
+                'status'     => $task->status,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Task "' . $task->title . '" added.');
     }
 
