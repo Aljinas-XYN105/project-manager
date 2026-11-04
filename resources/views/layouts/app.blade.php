@@ -151,10 +151,23 @@
                 ['route'=>'admin.activity.index',   'match'=>'admin.activity.*',   'icon'=>'bi-activity',      'label'=>'Activity Log',     'show'=>$isAdmin || $me->can('activity.view')],
             ])->where('show', true);
 
+            // Section label colors (light / dark)
+            $sectionColors = [
+                'MAIN'   => 'text-slate-400 dark:text-slate-300/70',
+                'WORK'   => 'text-sky-500 dark:text-sky-300/70',
+                'PEOPLE' => 'text-emerald-500 dark:text-emerald-300/70',
+            ];
             @endphp
 
             @foreach($navGroups as $groupName => $items)
-            <div class="{{ $loop->index > 0 ? 'mt-3' : 'mt-1' }}">
+            <div class="{{ $loop->index > 0 ? 'mt-4' : 'mt-1' }}">
+                <!-- Section label -->
+                <div x-show="sidebarOpen || mobileSidebar"
+                     x-transition.opacity.duration.100ms
+                     class="px-2.5 mb-1 flex items-center gap-1.5">
+                    <span class="text-[9px] font-bold tracking-[0.12em] uppercase {{ $sectionColors[$groupName] ?? 'text-slate-400' }}">{{ $groupName }}</span>
+                    <div class="flex-1 h-px bg-slate-200 dark:bg-white/[0.06]"></div>
+                </div>
 
                 @foreach($items as $item)
                 @php
@@ -194,7 +207,12 @@
             @endforeach
 
             @if($adminLinks->isNotEmpty())
-            <div class="mt-3">
+            <div class="mt-4">
+                <div x-show="sidebarOpen || mobileSidebar" x-transition.opacity.duration.100ms
+                     class="px-2.5 mb-1 flex items-center gap-1.5">
+                    <span class="text-[9px] font-bold tracking-[0.12em] uppercase text-rose-400 dark:text-rose-300/50">ADMIN</span>
+                    <div class="flex-1 h-px bg-slate-200 dark:bg-white/[0.06]"></div>
+                </div>
                 @foreach($adminLinks as $link)
                 @php $on = request()->routeIs($link['match']); @endphp
                 <a href="{{ route($link['route']) }}"
