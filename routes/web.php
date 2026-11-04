@@ -159,11 +159,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Standups
     Route::prefix('standups')->name('standups.')->group(function () {
-        Route::get('/', [StandupController::class, 'index'])->name('index');           // calendar
-        Route::post('/', [StandupController::class, 'store'])->name('store');          // save my standup
-        Route::get('/my/{date}', [StandupController::class, 'show'])->name('show');   // my standup form
-        Route::get('/{date}', [StandupController::class, 'day'])->name('day');        // day view (all members)
-        Route::get('/{date}/{user}', [StandupController::class, 'memberDay'])->name('member-day'); // member detail
+        Route::get('/', [StandupController::class, 'index'])->name('index');
+        Route::post('/', [StandupController::class, 'store'])->name('store');
+        Route::get('/calendar', [StandupController::class, 'calendar'])->name('calendar');
+        Route::get('/my/{date}', [StandupController::class, 'show'])->name('show');
+        Route::get('/{date}', [StandupController::class, 'day'])->name('day');
+        Route::get('/{date}/{user}', [StandupController::class, 'memberDay'])->name('member-day');
     });
 
     // People

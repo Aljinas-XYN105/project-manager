@@ -7,15 +7,15 @@ use App\Models\StandupItem;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class StandupController extends Controller
 {
-    // Team standup dashboard — today's list by default; date picker navigates past days
+    // Team standup dashboard — card grid; non-managers go to their own form
     public function index(Request $request)
     {
         $authUser = auth()->user();
 
-        // Non-managers go straight to their own standup form
         if (!$authUser->hasRole(['admin', 'manager'])) {
             return redirect()->route('standups.show', today()->toDateString());
         }
@@ -24,7 +24,16 @@ class StandupController extends Controller
             ? Carbon::parse($request->input('date'))
             : Carbon::today();
 
-        $users = \App\Models\User::where('is_active', true)
+        $users = User::where('is_active', true)
+            ->select('users.*')
+            ->selectRaw('(SELECT COUNT(*) FROM task_assignees ta
+                          JOIN tasks t ON ta.task_id = t.id
+                          WHERE ta.user_id = users.id
+                          AND t.status NOT IN ("done","cancelled","archived")) as open_tasks')
+            ->selectRaw('(SELECT COUNT(*) FROM task_assignees ta
+                          JOIN tasks t ON ta.task_id = t.id
+                          WHERE ta.user_id = users.id
+                          AND t.status = "in_progress") as active_tasks')
             ->orderBy('name')
             ->get();
 
@@ -36,7 +45,13 @@ class StandupController extends Controller
         return view('standups.index', compact('date', 'users', 'standups'));
     }
 
-    // Unused legacy route — kept for backward compat redirect
+    // Full-page calendar for date navigation
+    public function calendar(Request $request)
+    {
+        return view('standups.calendar');
+    }
+
+    // Legacy redirect — kept for backward compat
     public function day(string $date)
     {
         return redirect()->route('standups.index', ['date' => $date]);
@@ -55,8 +70,8 @@ class StandupController extends Controller
         return view('standups.show', compact('day', 'standup', 'user'));
     }
 
-    // Admin/manager: Kanban view of a member's standup on a date
-    public function memberDay(string $date, User $user)
+    // Admin/manager: view a member's standup; returns JSON when requested (for panel)
+    public function memberDay(string $date, User $user, Request $request)
     {
         abort_unless(auth()->user()->hasRole(['admin', 'manager']), 403);
 
@@ -66,27 +81,51 @@ class StandupController extends Controller
             ->with('items')
             ->first();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'user'    => $user->only('id', 'name', 'email', 'job_title', 'department'),
+                'standup' => $standup ? [
+                    'id'       => $standup->id,
+                    'blockers' => $standup->blockers,
+                    'items'    => $standup->items->map(fn($i) => [
+                        'id'          => $i->id,
+                        'description' => $i->description,
+                        'status'      => $i->status,
+                        'sort_order'  => $i->sort_order,
+                    ])->values(),
+                ] : null,
+            ]);
+        }
+
         return view('standups.member-day', compact('day', 'standup', 'user'));
     }
 
-    // Save/update standup for today (or given date)
+    // Save/update standup; managers may pass user_id to save on a member's behalf
     public function store(Request $request)
     {
         $validated = $request->validate([
             'standup_date' => 'required|date',
+            'user_id'      => 'nullable|integer|exists:users,id',
             'blockers'     => 'nullable|string|max:2000',
             'items'        => 'nullable|array',
             'items.*.description' => 'required|string|max:500',
             'items.*.status'      => 'required|in:todo,in_progress,in_review,done',
         ]);
 
-        $user    = auth()->user();
+        $authUser = auth()->user();
+
+        // Managers/admins may save on behalf of another user
+        if (!empty($validated['user_id']) && $authUser->hasRole(['admin', 'manager'])) {
+            $targetUserId = $validated['user_id'];
+        } else {
+            $targetUserId = $authUser->id;
+        }
+
         $standup = Standup::updateOrCreate(
-            ['user_id' => $user->id, 'standup_date' => $validated['standup_date']],
+            ['user_id' => $targetUserId, 'standup_date' => $validated['standup_date']],
             ['blockers' => $validated['blockers'] ?? null]
         );
 
-        // Replace all items
         $standup->items()->delete();
         foreach ($validated['items'] ?? [] as $i => $item) {
             $standup->items()->create([
