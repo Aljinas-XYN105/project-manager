@@ -118,27 +118,6 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                     @endif
                 </div>
 
-                {{-- Standup chips --}}
-                @if($isCurrentMonth && $dayStandups->count() > 0)
-                <div class="flex flex-col gap-0.5 mt-0.5">
-                    @foreach($dayStandups->take(3) as $standup)
-                    @php
-                        $chipUser  = $standup->user;
-                        $chipIdx   = ($chipUser->id ?? 0) % count($avatarBgs);
-                        $chipBg    = $avatarBgs[$chipIdx];
-                        $chipColor = $avatarTexts[$chipIdx];
-                    @endphp
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium truncate leading-tight pointer-events-auto"
-                          style="background: {{ $chipBg }}20; color: {{ $chipColor }}">
-                        <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: {{ $chipColor }}"></span>
-                        {{ $chipUser->name ?? 'Unknown' }}
-                    </span>
-                    @endforeach
-                    @if($dayStandups->count() > 3)
-                    <span class="text-[10px] text-slate-400 pl-1">+{{ $dayStandups->count() - 3 }} more</span>
-                    @endif
-                </div>
-                @endif
 
             </div>
         </div>
