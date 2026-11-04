@@ -780,10 +780,7 @@ window.__standupInit = function() {
                 {{-- Tabs --}}
                 <div class="flex items-center border-b border-slate-100 dark:border-slate-700/60 px-5 flex-shrink-0">
                     <button @click="addTaskModalTab = 'existing'; fetchTasks(searchQuery)"
-                            :class="addTaskModalTab === 'existing'
-                                ? 'border-b-2 border-violet-600 text-violet-700 dark:text-violet-400'
-                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
-                            class="px-1 py-3 text-sm font-semibold transition-colors -mb-px">
+                            class="px-1 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
                         <i class="bi bi-search text-xs mr-1.5"></i>Find Existing
                     </button>
                     <div class="flex-1"></div>
