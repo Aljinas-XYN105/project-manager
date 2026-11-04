@@ -294,9 +294,9 @@ $columns = [
         <div x-show="panelOpen" x-cloak
              x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
              x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-             class="fixed right-0 top-0 h-dvh w-full max-w-sm sm:max-w-md md:max-w-[440px]
+             class="fixed right-0 top-0 w-full max-w-sm sm:max-w-md md:max-w-[440px]
                     bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700
-                    shadow-2xl flex flex-col overflow-hidden" style="display:none; z-index:300">
+                    shadow-2xl flex flex-col overflow-hidden" style="display:none; z-index:300; bottom:0">
 
             <template x-if="panelLoading">
                 <div class="flex-1 flex items-center justify-center">
@@ -305,7 +305,7 @@ $columns = [
             </template>
 
             <template x-if="panel && !panelLoading">
-                <div class="flex flex-col h-full overflow-hidden">
+                <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
 
                     {{-- Header --}}
                     <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
@@ -403,7 +403,7 @@ $columns = [
                                 </template>
                             </div>
                             {{-- Member grid --}}
-                            <div class="grid grid-cols-2 gap-0.5">
+                            <div class="grid grid-cols-2 gap-0.5 max-h-36 overflow-y-auto">
                                 <template x-for="m in panel.members" :key="'member-'+m.id">
                                     <button @click="const ids=panel.task.assignee_ids.includes(m.id)?panel.task.assignee_ids.filter(id=>id!==m.id):[...panel.task.assignee_ids,m.id]; panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
                                             :class="panel.task.assignee_ids.includes(m.id)?'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium':'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
 use App\Models\Standup;
 use App\Models\StandupItem;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -168,5 +170,39 @@ class StandupController extends Controller
 
         return redirect()->route('standups.day', $validated['standup_date'])
             ->with('success', 'Standup saved!');
+    }
+
+    public function taskSearch(Request $request)
+    {
+        $user  = auth()->user();
+        $term  = trim((string) $request->input('q', ''));
+
+        $accessibleIds = Project::query()
+            ->when(! $user->hasRole(['admin', 'manager']), fn ($q) => $q->where(fn ($q) => $q
+                ->where('is_public', true)
+                ->orWhere('owner_id', $user->id)
+                ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))
+            ->pluck('id');
+
+        $tasks = Task::with('project')
+            ->whereIn('project_id', $accessibleIds)
+            ->whereNotIn('status', ['done', 'cancelled'])
+            ->when(mb_strlen($term) >= 2, fn ($q) => $q->where(fn ($q) => $q
+                ->where('title', 'like', "%{$term}%")
+                ->orWhere('ticket_key', 'like', "%{$term}%")))
+            ->when(mb_strlen($term) < 2, fn ($q) => $q->whereHas('assignees', fn ($a) => $a->where('users.id', $user->id)))
+            ->orderByRaw("case when status = 'in_progress' then 0 when status = 'todo' then 1 else 2 end")
+            ->latest('updated_at')
+            ->limit(10)
+            ->get();
+
+        return response()->json($tasks->map(fn ($t) => [
+            'id'          => $t->id,
+            'title'       => $t->title,
+            'ticket_key'  => $t->ticket_key,
+            'project'     => $t->project->name ?? '',
+            'status'      => $t->status,
+            'label'       => ($t->ticket_key ? "[{$t->ticket_key}] " : '') . $t->title,
+        ]));
     }
 }

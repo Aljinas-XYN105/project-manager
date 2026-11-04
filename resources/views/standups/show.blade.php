@@ -21,14 +21,64 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
         dragging:       null,
         dragOverStatus: null,
 
+        // ── Add-existing-task picker ─────────────────────────────────────
+        addingMode:     null,   // null | 'create' | 'existing'
+        searchQuery:    '',
+        searchResults:  [],
+        searching:      false,
+        searchTimer:    null,
+
         itemsFor(status) {
             return this.items.filter(i => i.status === status);
         },
 
         startCreate() {
             this.creatingIn     = 'todo';
+            this.addingMode     = 'create';
             this.newTaskTitle   = '';
             this.newTaskProject = '';
+        },
+
+        startAddExisting() {
+            this.creatingIn    = 'todo';
+            this.addingMode    = 'existing';
+            this.searchQuery   = '';
+            this.searchResults = [];
+            this.fetchTasks('');
+        },
+
+        cancelAdding() {
+            this.creatingIn    = null;
+            this.addingMode    = null;
+            this.searchQuery   = '';
+            this.searchResults = [];
+            clearTimeout(this.searchTimer);
+        },
+
+        onSearchInput() {
+            clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => this.fetchTasks(this.searchQuery), 250);
+        },
+
+        async fetchTasks(q) {
+            this.searching = true;
+            try {
+                const res = await fetch(`/standups/tasks/search?q=${encodeURIComponent(q)}`, {
+                    headers: { Accept: 'application/json' },
+                });
+                this.searchResults = await res.json();
+            } finally {
+                this.searching = false;
+            }
+        },
+
+        addExistingTask(task) {
+            if (this.items.some(i => i.task_id === task.id)) return;
+            this.items.push({ _id: nextId++, task_id: task.id, description: task.label, status: 'todo' });
+            this.searchQuery   = '';
+            this.searchResults = [];
+            this.fetchTasks('');
+            this.autoSave();
         },
 
         async createTask() {
@@ -55,6 +105,7 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
                     const label = (data.ticket_key ? `[${data.ticket_key}] ` : '') + data.title;
                     this.items.push({ _id: nextId++, task_id: data.task_id, description: label, status: 'todo' });
                     this.creatingIn     = null;
+                    this.addingMode     = null;
                     this.newTaskTitle   = '';
                     this.newTaskProject = '';
                     this.autoSave();
@@ -67,6 +118,10 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
         removeItem(id) {
             this.items = this.items.filter(i => i._id !== id);
             this.autoSave();
+        },
+
+        statusDot(status) {
+            return { todo: 'bg-slate-400', in_progress: 'bg-blue-500', in_review: 'bg-amber-400', done: 'bg-green-500' }[status] ?? 'bg-slate-300';
         },
 
         // ── Drag & Drop ──────────────────────────────────────────────────
@@ -374,19 +429,26 @@ window.__standupInit = function() {
                 </div>
             </div>
 
-            {{-- Create Task form — only in To-Do column --}}
+            {{-- Add task controls — only in To-Do column --}}
             @if($status === 'todo')
-            <template x-if="creatingIn === 'todo'">
+
+            {{-- Create new task form --}}
+            <template x-if="creatingIn === 'todo' && addingMode === 'create'">
                 <div class="mx-2 mb-1 bg-white dark:bg-slate-800 rounded-xl px-3 py-3
                             border border-violet-300 dark:border-violet-600 shadow-sm space-y-2">
-                    <p class="text-[11px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">
-                        <i class="bi bi-plus-square-fill mr-1"></i>New Task
-                    </p>
+                    <div class="flex items-center justify-between">
+                        <p class="text-[11px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                            <i class="bi bi-plus-square-fill mr-1"></i>New task
+                        </p>
+                        <button @click="cancelAdding()" class="text-slate-300 hover:text-slate-500 transition-colors">
+                            <i class="bi bi-x text-sm"></i>
+                        </button>
+                    </div>
                     <input type="text"
                            x-model="newTaskTitle"
-                           x-effect="creatingIn === 'todo' && $nextTick(() => $el.focus())"
+                           x-effect="addingMode === 'create' && $nextTick(() => $el.focus())"
                            @keydown.enter.prevent="createTask()"
-                           @keydown.escape="creatingIn = null; newTaskTitle = ''; newTaskProject = ''"
+                           @keydown.escape="cancelAdding()"
                            placeholder="Task title…"
                            class="w-full text-sm bg-slate-50 dark:bg-slate-700/50 rounded-lg px-3 py-1.5
                                   border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
@@ -401,7 +463,7 @@ window.__standupInit = function() {
                         </template>
                     </select>
                     <div class="flex items-center justify-between pt-1">
-                        <button @click="creatingIn = null; newTaskTitle = ''; newTaskProject = ''"
+                        <button @click="cancelAdding()"
                                 class="text-xs text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
                         <button @click="createTask()"
                                 :disabled="!newTaskTitle.trim() || !newTaskProject || taskCreating"
@@ -415,20 +477,83 @@ window.__standupInit = function() {
                 </div>
             </template>
 
-            {{-- Add Task button — only in To-Do, hidden while create form is open --}}
-            @if($projects->count() > 0)
-            <div x-show="creatingIn !== 'todo'" class="px-2 pb-2 mt-1">
+            {{-- Add existing task picker --}}
+            <template x-if="creatingIn === 'todo' && addingMode === 'existing'">
+                <div class="mx-2 mb-1 bg-white dark:bg-slate-800 rounded-xl px-3 py-3
+                            border border-violet-300 dark:border-violet-600 shadow-sm space-y-2">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[11px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                            <i class="bi bi-search mr-1"></i>Add existing
+                        </p>
+                        <button @click="cancelAdding()" class="text-slate-300 hover:text-slate-500 transition-colors">
+                            <i class="bi bi-x text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input type="text"
+                               x-model="searchQuery"
+                               @input="onSearchInput()"
+                               @keydown.escape="cancelAdding()"
+                               x-effect="addingMode === 'existing' && $nextTick(() => $el.focus())"
+                               placeholder="Search by title or ticket key…"
+                               class="w-full text-sm bg-slate-50 dark:bg-slate-700/50 rounded-lg pl-3 pr-7 py-1.5
+                                      border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200
+                                      placeholder-slate-400 outline-none focus:border-violet-400 transition-colors" />
+                        <span x-show="searching" x-cloak class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
+                            <i class="bi bi-arrow-repeat animate-spin text-xs"></i>
+                        </span>
+                    </div>
+                    <div class="max-h-44 overflow-y-auto -mx-1 space-y-0.5">
+                        <template x-if="searchResults.length === 0 && !searching">
+                            <p class="text-xs text-slate-400 text-center py-3">
+                                <span x-text="searchQuery.length >= 2 ? 'No tasks found.' : 'Your open tasks appear here.'"></span>
+                            </p>
+                        </template>
+                        <template x-for="task in searchResults" :key="task.id">
+                            <button @click="addExistingTask(task)"
+                                    :disabled="items.some(i => i.task_id === task.id)"
+                                    class="flex items-start gap-2 w-full px-2 py-2 rounded-lg text-left transition-colors
+                                           hover:bg-violet-50 dark:hover:bg-violet-900/20
+                                           disabled:opacity-40 disabled:cursor-not-allowed">
+                                <span class="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" :class="statusDot(task.status)"></span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-medium text-slate-700 dark:text-slate-200 truncate" x-text="task.title"></p>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">
+                                        <span x-show="task.ticket_key" x-text="task.ticket_key + ' · '"></span>
+                                        <span x-text="task.project"></span>
+                                    </p>
+                                </div>
+                                <span x-show="items.some(i => i.task_id === task.id)"
+                                      class="text-[10px] text-violet-400 flex-shrink-0 mt-1">Added</span>
+                                <i x-show="!items.some(i => i.task_id === task.id)"
+                                   class="bi bi-plus text-sm text-violet-400 flex-shrink-0 mt-0.5"></i>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            {{-- Add task / Add existing buttons — hidden while either form is open --}}
+            <div x-show="creatingIn !== 'todo'" class="px-2 pb-2 mt-1 flex gap-1.5">
+                @if($projects->count() > 0)
                 <button @click="startCreate()"
-                        class="flex items-center gap-1.5 w-full px-2.5 py-2 rounded-xl
+                        class="flex items-center gap-1 flex-1 px-2 py-1.5 rounded-xl
                                border border-dashed border-violet-200 dark:border-violet-800/50
-                               text-xs text-violet-400 dark:text-violet-500
+                               text-xs text-violet-400 dark:text-violet-500 justify-center
                                hover:border-violet-400 hover:text-violet-600 dark:hover:border-violet-600 dark:hover:text-violet-300
                                transition-all">
-                    <i class="bi bi-plus-square text-xs"></i>
-                    Add task
+                    <i class="bi bi-plus-square text-xs"></i> New
+                </button>
+                @endif
+                <button @click="startAddExisting()"
+                        class="flex items-center gap-1 flex-1 px-2 py-1.5 rounded-xl
+                               border border-dashed border-slate-200 dark:border-slate-700
+                               text-xs text-slate-400 dark:text-slate-500 justify-center
+                               hover:border-slate-400 hover:text-slate-600 dark:hover:border-slate-500 dark:hover:text-slate-300
+                               transition-all">
+                    <i class="bi bi-search text-xs"></i> Existing
                 </button>
             </div>
-            @endif
             @endif
 
         </div>
@@ -483,9 +608,9 @@ window.__standupInit = function() {
         <div x-show="panelOpen" x-cloak
              x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
              x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-             class="fixed right-0 top-0 h-dvh w-full max-w-sm sm:max-w-md md:max-w-[440px]
+             class="fixed right-0 top-0 w-full max-w-sm sm:max-w-md md:max-w-[440px]
                     bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700
-                    shadow-2xl flex flex-col overflow-hidden" style="display:none; z-index:300">
+                    shadow-2xl flex flex-col overflow-hidden" style="display:none; z-index:300; bottom:0">
 
             <template x-if="panelLoading">
                 <div class="flex-1 flex items-center justify-center">
@@ -494,7 +619,7 @@ window.__standupInit = function() {
             </template>
 
             <template x-if="panel && !panelLoading">
-                <div class="flex flex-col h-full overflow-hidden">
+                <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
 
                     {{-- Header --}}
                     <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
@@ -590,7 +715,7 @@ window.__standupInit = function() {
                                     </span>
                                 </template>
                             </div>
-                            <div class="grid grid-cols-2 gap-0.5">
+                            <div class="grid grid-cols-2 gap-0.5 max-h-36 overflow-y-auto">
                                 <template x-for="m in panel.members" :key="'member-'+m.id">
                                     <button @click="const ids=panel.task.assignee_ids.includes(m.id)?panel.task.assignee_ids.filter(id=>id!==m.id):[...panel.task.assignee_ids,m.id]; panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
                                             :class="panel.task.assignee_ids.includes(m.id)?'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium':'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
