@@ -118,9 +118,7 @@
                     ['route'=>'projects.index',  'icon'=>'bi-folder2-open',      'label'=>'Projects',     'match'=>'projects.*'],
                 ],
                 'WORK' => array_filter([
-                    auth()->user()?->hasRole(['admin','manager'])
-                        ? ['route'=>'standups.index', 'icon'=>'bi-mic',            'label'=>'Standups',     'match'=>'standups.*']
-                        : null,
+                    ['route'=>'standups.index', 'icon'=>'bi-mic', 'label'=>'Standups', 'match'=>'standups.*'],
                     ['route'=>'bugs.index',          'icon'=>'bi-bug',           'label'=>'Bug Tracker',  'match'=>'bugs.*'],
                     ['route'=>'daily-reports.index',  'icon'=>'bi-journal-text',  'label'=>'Daily Reports','match'=>'daily-reports.*'],
                     ['route'=>'time-entries.index',   'icon'=>'bi-stopwatch',     'label'=>'Time Tracker', 'match'=>'time-entries.*'],

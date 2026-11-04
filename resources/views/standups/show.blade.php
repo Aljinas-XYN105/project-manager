@@ -1,212 +1,214 @@
 @extends('layouts.app')
-@section('title', $user->name . ' — Standup')
+@section('title', 'My Standup — ' . $day->format('F j, Y'))
 
 @section('content')
-<div class="page-header">
-    <div class="flex items-center gap-3 min-w-0">
-        <a href="{{ route('standups.index') }}"
-           class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center
-                  hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors flex-shrink-0">
-            <i class="bi bi-arrow-left text-sm text-slate-500"></i>
+<div class="max-w-2xl mx-auto">
+
+    {{-- Header --}}
+    <div class="page-header">
+        <div>
+            <div class="flex items-center gap-2 text-sm text-slate-500 mb-1">
+                <a href="{{ route('standups.index') }}" class="hover:text-violet-600 transition-colors">Standups</a>
+                <i class="bi bi-chevron-right text-xs"></i>
+                <a href="{{ route('standups.day', $day->toDateString()) }}" class="hover:text-violet-600 transition-colors">{{ $day->format('M j') }}</a>
+                <i class="bi bi-chevron-right text-xs"></i>
+                <span>My Standup</span>
+            </div>
+            <h1 class="page-title">My Standup</h1>
+            <p class="text-sm text-slate-500 mt-0.5">
+                {{ $day->isToday() ? 'Today — ' : '' }}{{ $day->format('l, F j, Y') }}
+            </p>
+        </div>
+        @if($standup)
+        <a href="{{ route('standups.day', $day->toDateString()) }}" class="btn-ghost btn-sm">
+            <i class="bi bi-people text-sm"></i> View Team
         </a>
-        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}"
-             class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-slate-800 flex-shrink-0">
-        <div class="min-w-0">
-            <h1 class="page-title truncate">{{ $user->name }}</h1>
-            <p class="text-xs text-slate-400">{{ $user->job_title }} · {{ now()->format('l, F j') }}</p>
-        </div>
+        @endif
     </div>
-    <p class="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 flex-shrink-0">
-        <i class="bi bi-info-circle"></i>
-        Drag tasks between lanes — changes sync to each project's board instantly.
-    </p>
-</div>
 
-@php
-$laneColors = [
-    'To Do'       => '#94a3b8',
-    'In Progress' => '#3b82f6',
-    'In Review'   => '#f59e0b',
-    'QA Testing'  => '#8b5cf6',
-    'Done'        => '#10b981',
-];
-@endphp
+    @if(session('success'))
+    <div class="mb-4 px-4 py-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-sm flex items-center gap-2">
+        <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+        {{ session('success') }}
+    </div>
+    @endif
 
-{{-- Drag-and-drop standup board --}}
-<div x-data="standupBoard()"
-     class="flex gap-3 overflow-x-auto pb-6 -mx-4 lg:-mx-6 px-4 lg:px-6 min-h-[calc(100vh-14rem)] items-start">
+    {{-- Form --}}
+    <div x-data="standupForm()" class="space-y-4">
 
-    @foreach($laneOrder as $lane)
-    @php
-        $tasks  = $lanes[$lane];
-        $color  = $laneColors[$lane];
-    @endphp
-
-    <div class="flex flex-col flex-shrink-0 w-[290px] rounded-2xl
-                bg-slate-100/70 dark:bg-slate-800/50 backdrop-blur-sm
-                border border-slate-200/60 dark:border-slate-700/50 overflow-hidden"
-         @dragover.prevent="dragEnter('{{ $lane }}')"
-         @drop.prevent="drop('{{ $lane }}')"
-         :class="{ 'ring-2 ring-inset ring-violet-400': dragOver === '{{ $lane }}' }">
-
-        {{-- Lane header --}}
-        <div class="flex items-center justify-between px-3 py-3 flex-shrink-0">
-            <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $color }}"></div>
-                <span class="font-semibold text-sm text-slate-800 dark:text-slate-200">{{ $lane }}</span>
-                <span class="min-w-[20px] h-5 bg-white dark:bg-slate-700 rounded-full text-xs font-semibold
-                             text-slate-500 flex items-center justify-center px-1.5 shadow-sm"
-                      x-text="counts['{{ $lane }}']">
-                    {{ $tasks->count() }}
-                </span>
+        {{-- Items section --}}
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-list-check text-violet-500"></i>
+                    Tasks &amp; Work Items
+                </h2>
+                <button type="button" @click="addItem()"
+                        class="btn-ghost btn-sm text-violet-600 dark:text-violet-400">
+                    <i class="bi bi-plus-lg text-sm"></i> Add Item
+                </button>
             </div>
-        </div>
 
-        {{-- Task cards --}}
-        <div class="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2 min-h-[60px]"
-             id="lane-{{ Str::slug($lane) }}">
-
-            @foreach($tasks as $task)
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80
-                        shadow-sm cursor-pointer p-3
-                        hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700/60
-                        hover:-translate-y-px transition-all duration-150"
-                 draggable="true"
-                 data-task-id="{{ $task->id }}"
-                 data-lane="{{ $lane }}"
-                 @click="$dispatch('open-task-panel', { taskId: {{ $task->id }} })"
-                 @dragstart="dragStart({{ $task->id }}, '{{ $lane }}'); $el.classList.add('opacity-40','rotate-1')"
-                 @dragend="$el.classList.remove('opacity-40','rotate-1')">
-
-                {{-- Project badge + type --}}
-                <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                    <span class="inline-flex items-center gap-1 text-[10px] font-medium
-                                 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400
-                                 px-1.5 py-px rounded-md truncate max-w-[120px]">
-                        <i class="bi bi-folder2 text-[9px]"></i>
-                        {{ $task->project->name }}
-                    </span>
-                    @if($task->ticket_key)
-                    <span class="font-mono text-[9px] text-slate-400">{{ $task->ticket_key }}</span>
-                    @endif
-                    <i class="bi {{ $task->type_icon }} text-xs {{ $task->type_color }}"></i>
-                </div>
-
-                <p class="font-medium text-sm text-slate-900 dark:text-white leading-snug mb-2">
-                    {{ $task->title }}
-                </p>
-
-                {{-- Labels --}}
-                @if($task->labels->isNotEmpty())
-                <div class="flex flex-wrap gap-1 mb-2">
-                    @foreach($task->labels as $label)
-                    <span class="px-1.5 py-px rounded-full text-[9px] font-semibold text-white"
-                          style="background-color: {{ $label->color }}">{{ $label->name }}</span>
-                    @endforeach
-                </div>
-                @endif
-
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1.5">
-                        <span class="badge-{{ $task->priority }} py-0 text-[9px]">{{ ucfirst($task->priority) }}</span>
-                        @if($task->due_date)
-                        <span class="text-[10px] {{ $task->is_overdue ? 'text-rose-500 font-medium' : 'text-slate-400' }}">
-                            <i class="bi bi-calendar3 mr-0.5"></i>{{ $task->due_date->format('M j') }}
-                        </span>
-                        @endif
-                    </div>
-                    <div class="flex -space-x-1.5">
-                        @foreach($task->assignees->take(3) as $a)
-                        <img src="{{ $a->avatar_url }}" title="{{ $a->name }}"
-                             class="w-5 h-5 rounded-full border border-white dark:border-slate-900 object-cover">
-                        @endforeach
-                        @if($task->assignees->count() > 3)
-                        <div class="w-5 h-5 rounded-full border border-white dark:border-slate-900
-                                    bg-slate-200 dark:bg-slate-700 text-[8px] font-bold
-                                    text-slate-500 flex items-center justify-center">
-                            +{{ $task->assignees->count() - 3 }}
+            <div class="space-y-2" x-ref="itemList">
+                <template x-for="(item, idx) in items" :key="item.id">
+                    <div class="flex items-start gap-2 group">
+                        {{-- Status pill --}}
+                        <div class="relative flex-shrink-0 mt-0.5" x-data="{open:false}">
+                            <button type="button" @click="open=!open" @click.outside="open=false"
+                                    :class="statusClass(item.status)"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer whitespace-nowrap transition-all">
+                                <span x-text="statusLabel(item.status)"></span>
+                                <i class="bi bi-chevron-down text-[9px]"></i>
+                            </button>
+                            <div x-show="open" x-transition
+                                 class="absolute left-0 top-full mt-1 w-36 rounded-xl shadow-lg bg-white dark:bg-slate-800
+                                        border border-slate-200 dark:border-slate-700 z-20 overflow-hidden">
+                                <template x-for="s in statuses" :key="s.value">
+                                    <button type="button"
+                                            @click="item.status = s.value; open=false"
+                                            :class="item.status === s.value ? 'bg-slate-50 dark:bg-slate-700/50 font-semibold' : ''"
+                                            class="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                        <span :class="s.dot" class="w-2 h-2 rounded-full flex-shrink-0"></span>
+                                        <span x-text="s.label" class="text-slate-700 dark:text-slate-200"></span>
+                                    </button>
+                                </template>
+                            </div>
                         </div>
-                        @endif
+
+                        {{-- Description --}}
+                        <input type="text" x-model="item.description"
+                               @keydown.enter.prevent="addItem()"
+                               @keydown.backspace="item.description === '' && removeItem(idx)"
+                               placeholder="What are you working on?"
+                               class="flex-1 bg-transparent border-0 text-sm text-slate-700 dark:text-slate-200
+                                      placeholder-slate-300 dark:placeholder-slate-600 outline-none py-1
+                                      focus:outline-none" />
+
+                        {{-- Remove --}}
+                        <button type="button" @click="removeItem(idx)"
+                                class="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-rose-500">
+                            <i class="bi bi-x text-base"></i>
+                        </button>
                     </div>
+                </template>
+
+                <div x-show="items.length === 0" class="text-sm text-slate-400 py-4 text-center">
+                    No items yet. Click "Add Item" to start.
                 </div>
             </div>
-            @endforeach
+        </div>
 
-            {{-- Drop placeholder --}}
-            <div x-show="dragOver === '{{ $lane }}'" x-cloak
-                 class="h-14 rounded-xl border-2 border-dashed border-violet-300 dark:border-violet-700
-                        bg-violet-50 dark:bg-violet-900/10 flex items-center justify-center">
-                <span class="text-xs text-violet-400">Move here</span>
-            </div>
+        {{-- Blockers --}}
+        <div class="card">
+            <h2 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                <i class="bi bi-exclamation-triangle text-amber-500"></i>
+                Blockers
+                <span class="text-xs font-normal text-slate-400">(optional)</span>
+            </h2>
+            <textarea x-model="blockers" rows="3"
+                      placeholder="Any blockers or impediments today?"
+                      class="form-input w-full resize-none text-sm"></textarea>
+        </div>
+
+        {{-- Save button --}}
+        <div class="flex items-center justify-between pt-1">
+            <a href="{{ route('standups.index') }}" class="btn-ghost btn-sm">Cancel</a>
+            <button type="button" @click="save()"
+                    :disabled="saving"
+                    class="btn-primary">
+                <span x-show="!saving"><i class="bi bi-check2 text-sm"></i> Save Standup</span>
+                <span x-show="saving"><i class="bi bi-arrow-repeat animate-spin text-sm"></i> Saving…</span>
+            </button>
+        </div>
+
+        {{-- Success flash --}}
+        <div x-show="saved" x-transition
+             class="text-center text-sm text-green-600 dark:text-green-400 font-medium py-2">
+            <i class="bi bi-check-circle-fill mr-1"></i> Standup saved!
         </div>
     </div>
-    @endforeach
-</div>
 
-{{-- Toast for move confirmations --}}
-<div x-data="{ msg: '', show: false }"
-     @standup-moved.window="msg = $event.detail; show = true; setTimeout(() => show = false, 2500)"
-     x-show="show" x-cloak
-     x-transition:enter="transition ease-out duration-200"
-     x-transition:enter-start="opacity-0 translate-y-2"
-     x-transition:enter-end="opacity-100 translate-y-0"
-     x-transition:leave="transition ease-in duration-150"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0"
-     class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 dark:bg-white
-            text-white dark:text-slate-900 text-sm font-medium px-4 py-2.5 rounded-xl shadow-xl pointer-events-none">
-    <i class="bi bi-check-circle-fill text-emerald-400 mr-2"></i>
-    <span x-text="msg"></span>
 </div>
 
 <script>
-function standupBoard() {
+function standupForm() {
+    let nextId = 1;
+
+    function makeItem(desc = '', status = 'todo') {
+        return { id: nextId++, description: desc, status };
+    }
+
+    // Existing items from server
+    const existing = @json($standup?->items ?? []);
+
     return {
-        dragOver: null,
-        dragging: { taskId: null, fromLane: null },
-        counts: @js(collect($laneOrder)->mapWithKeys(fn($l) => [$l => $lanes[$l]->count()])),
+        items: existing.length
+            ? existing.map(i => makeItem(i.description, i.status))
+            : [makeItem()],
+        blockers: @json($standup?->blockers ?? ''),
+        saving: false,
+        saved: false,
 
-        dragStart(taskId, fromLane) {
-            this.dragging = { taskId, fromLane };
+        statuses: [
+            { value: 'todo',        label: 'Todo',        dot: 'bg-slate-400' },
+            { value: 'in_progress', label: 'In Progress', dot: 'bg-blue-500' },
+            { value: 'in_review',   label: 'In Review',   dot: 'bg-amber-500' },
+            { value: 'done',        label: 'Done',        dot: 'bg-green-500' },
+        ],
+
+        statusLabel(s) {
+            const map = { todo:'Todo', in_progress:'In Progress', in_review:'In Review', done:'Done' };
+            return map[s] ?? s;
         },
-        dragEnter(lane) {
-            this.dragOver = lane;
+        statusClass(s) {
+            const map = {
+                todo:        'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
+                in_progress: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+                in_review:   'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+                done:        'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+            };
+            return map[s] ?? '';
         },
-        drop(toLane) {
-            const { taskId, fromLane } = this.dragging;
-            this.dragOver = null;
 
-            if (!taskId || fromLane === toLane) return;
+        addItem() {
+            this.items.push(makeItem());
+            this.$nextTick(() => {
+                const inputs = this.$refs.itemList.querySelectorAll('input[type=text]');
+                inputs[inputs.length - 1]?.focus();
+            });
+        },
+        removeItem(idx) {
+            this.items.splice(idx, 1);
+        },
 
-            // Optimistically move the card in the DOM
-            const card = document.querySelector(`[data-task-id="${taskId}"]`);
-            const targetList = document.getElementById('lane-' + toLane.toLowerCase().replace(/\s+/g, '-'));
-            if (card && targetList) {
-                card.dataset.lane = toLane;
-                targetList.insertBefore(card, targetList.firstChild);
-                this.counts[fromLane] = Math.max(0, this.counts[fromLane] - 1);
-                this.counts[toLane]   = (this.counts[toLane] || 0) + 1;
-            }
-
-            // Persist to server
-            axios.patch(`/tasks/${taskId}/standup-move`, { lane: toLane })
-                .then(() => {
-                    window.dispatchEvent(new CustomEvent('standup-moved', {
-                        detail: `Moved to ${toLane}`
-                    }));
-                })
-                .catch(() => {
-                    // Revert on failure
-                    if (card) {
-                        const origList = document.getElementById('lane-' + fromLane.toLowerCase().replace(/\s+/g, '-'));
-                        if (origList) origList.insertBefore(card, origList.firstChild);
-                        this.counts[toLane]   = Math.max(0, this.counts[toLane] - 1);
-                        this.counts[fromLane] = (this.counts[fromLane] || 0) + 1;
-                    }
-                    window.toast?.('Failed to move task', 'error');
+        async save() {
+            this.saving = true;
+            try {
+                const payload = {
+                    standup_date: '{{ $day->toDateString() }}',
+                    blockers: this.blockers || null,
+                    items: this.items
+                        .filter(i => i.description.trim())
+                        .map((i, order) => ({
+                            description: i.description.trim(),
+                            status: i.status,
+                        })),
+                    _token: document.querySelector('meta[name=csrf-token]')?.content,
+                };
+                const res = await fetch('{{ route('standups.store') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json',
+                               'X-CSRF-TOKEN': payload._token },
+                    body: JSON.stringify(payload),
                 });
-
-            this.dragging = { taskId: null, fromLane: null };
+                if (!res.ok) throw new Error(await res.text());
+                this.saved = true;
+                setTimeout(() => this.saved = false, 3000);
+            } catch (e) {
+                alert('Failed to save standup. Please try again.');
+            } finally {
+                this.saving = false;
+            }
         },
     };
 }

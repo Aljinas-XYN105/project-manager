@@ -157,10 +157,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('search', SearchController::class)->name('search');
     Route::get('my-tasks', MyTasksController::class)->name('my-tasks');
 
-    // Standups (manager/admin only)
-    Route::get('standups', [StandupController::class, 'index'])->name('standups.index');
-    Route::get('standups/{user}', [StandupController::class, 'show'])->name('standups.show');
-    Route::patch('tasks/{task}/standup-move', [StandupController::class, 'moveTask'])->name('standups.move');
+    // Standups
+    Route::prefix('standups')->name('standups.')->group(function () {
+        Route::get('/', [StandupController::class, 'index'])->name('index');           // calendar
+        Route::post('/', [StandupController::class, 'store'])->name('store');          // save my standup
+        Route::get('/my/{date}', [StandupController::class, 'show'])->name('show');   // my standup form
+        Route::get('/{date}', [StandupController::class, 'day'])->name('day');        // day view (all members)
+        Route::get('/{date}/{user}', [StandupController::class, 'memberDay'])->name('member-day'); // member detail
+    });
 
     // People
     Route::get('people', [PeopleController::class, 'index'])->name('people.index');

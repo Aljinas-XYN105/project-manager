@@ -2,132 +2,105 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Column;
-use App\Models\Task;
+use App\Models\Standup;
+use App\Models\StandupItem;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class StandupController extends Controller
 {
-    public function __construct()
+    // Calendar: month view of all standups
+    public function index(Request $request)
     {
-        $this->middleware(function ($request, $next) {
-            if (! $request->user()?->hasRole(['admin', 'manager'])) {
-                abort(403);
-            }
-            return $next($request);
-        });
-    }
+        $month = $request->input('month')
+            ? Carbon::parse($request->input('month') . '-01')
+            : now()->startOfMonth();
 
-    public function index()
-    {
-        $members = User::active()
-            ->with('roles')
-            ->orderBy('name')
+        $start = $month->copy()->startOfMonth();
+        $end   = $month->copy()->endOfMonth();
+
+        // Which dates in this month have at least one standup
+        $datesWithStandups = Standup::whereBetween('standup_date', [$start, $end])
+            ->selectRaw('standup_date, COUNT(*) as count, COUNT(DISTINCT user_id) as member_count')
+            ->groupBy('standup_date')
+            ->orderBy('standup_date')
             ->get()
-            ->map(function (User $u) {
-                $open = Task::whereHas('assignees', fn ($q) => $q->where('users.id', $u->id))
-                    ->whereNull('parent_id')
-                    ->whereNotIn('status', ['done', 'cancelled'])
-                    ->count();
+            ->keyBy(fn($r) => $r->standup_date->format('Y-m-d'));
 
-                $inProgress = Task::whereHas('assignees', fn ($q) => $q->where('users.id', $u->id))
-                    ->whereNull('parent_id')
-                    ->where('status', 'in_progress')
-                    ->count();
-
-                return [
-                    'id'          => $u->id,
-                    'name'        => $u->name,
-                    'avatar'      => $u->avatar_url,
-                    'job_title'   => $u->job_title,
-                    'department'  => $u->department,
-                    'role'        => $u->roles->first()?->name ?? 'member',
-                    'open'        => $open,
-                    'in_progress' => $inProgress,
-                ];
-            });
-
-        return view('standups.index', compact('members'));
+        return view('standups.index', compact('month', 'datesWithStandups'));
     }
 
-    public function show(User $user)
+    // Day view: list of members who submitted on that date
+    public function day(string $date)
     {
-        $tasks = Task::with(['project', 'column', 'assignees', 'labels'])
-            ->whereHas('assignees', fn ($q) => $q->where('users.id', $user->id))
-            ->whereNull('parent_id')
-            ->whereNotIn('status', ['cancelled'])
-            ->orderByRaw("CASE status WHEN 'in_progress' THEN 0 WHEN 'qa_testing' THEN 1 WHEN 'in_review' THEN 2 WHEN 'todo' THEN 3 WHEN 'done' THEN 4 ELSE 5 END")
-            ->orderByRaw("CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
-            ->get();
+        $day = Carbon::parse($date);
 
-        // Group by column name (reflects actual Kanban position), falling back to status
-        $laneOrder = ['To Do', 'In Progress', 'In Review', 'QA Testing', 'Done'];
-        $laneColors = [
-            'To Do'       => '#94a3b8',
-            'In Progress' => '#3b82f6',
-            'In Review'   => '#f59e0b',
-            'QA Testing'  => '#8b5cf6',
-            'Done'        => '#10b981',
-        ];
+        $standups = Standup::whereDate('standup_date', $day)
+            ->with(['user', 'items'])
+            ->get()
+            ->sortBy('user.name');
 
-        $statusToLane = [
-            'todo'        => 'To Do',
-            'in_progress' => 'In Progress',
-            'qa_testing'  => 'QA Testing',
-            'in_review'   => 'In Review',
-            'done'        => 'Done',
-        ];
-
-        $lanes = collect($laneOrder)->mapWithKeys(fn ($name) => [$name => collect()]);
-
-        foreach ($tasks as $task) {
-            $laneName = $task->column?->name ?? ($statusToLane[$task->status] ?? 'To Do');
-            if (! isset($lanes[$laneName])) {
-                $lanes[$laneName] = collect();
-            }
-            $lanes[$laneName]->push($task);
-        }
-
-        return view('standups.show', compact('user', 'lanes', 'laneColors', 'laneOrder'));
+        return view('standups.day', compact('day', 'standups'));
     }
 
-    // Called via PATCH /tasks/{task}/standup-move
-    // Moves task to the named lane/column in its own project, syncs status
-    public function moveTask(Request $request, Task $task)
+    // Show or create form for the authenticated user's standup on a date
+    public function show(string $date)
     {
-        $request->validate(['lane' => 'required|string|max:100']);
-
-        $lane = $request->input('lane');
-
-        // Find the matching column in this task's project
-        $column = Column::where('project_id', $task->project_id)
-            ->where('name', $lane)
+        $day     = Carbon::parse($date);
+        $user    = auth()->user();
+        $standup = Standup::whereDate('standup_date', $day)
+            ->where('user_id', $user->id)
+            ->with('items')
             ->first();
 
-        $laneToStatus = [
-            'To Do'       => 'todo',
-            'In Progress' => 'in_progress',
-            'In Review'   => 'in_review',
-            'QA Testing'  => 'qa_testing',
-            'Done'        => 'done',
-        ];
+        return view('standups.show', compact('day', 'standup', 'user'));
+    }
 
-        $updates = ['status' => $laneToStatus[$lane] ?? $task->status];
+    // Admin/manager: view a specific member's standup on a date
+    public function memberDay(string $date, User $user)
+    {
+        $day     = Carbon::parse($date);
+        $standup = Standup::whereDate('standup_date', $day)
+            ->where('user_id', $user->id)
+            ->with('items')
+            ->first();
 
-        if ($column) {
-            $updates['column_id'] = $column->id;
-            // Place at end of that column
-            $updates['position'] = Task::where('column_id', $column->id)->max('position') + 1;
+        return view('standups.member-day', compact('day', 'standup', 'user'));
+    }
 
-            if ($column->is_done) {
-                $updates['status']       = 'done';
-                $updates['completed_at'] = $updates['completed_at'] ?? now();
-            }
+    // Save/update standup for today (or given date)
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'standup_date' => 'required|date',
+            'blockers'     => 'nullable|string|max:2000',
+            'items'        => 'nullable|array',
+            'items.*.description' => 'required|string|max:500',
+            'items.*.status'      => 'required|in:todo,in_progress,in_review,done',
+        ]);
+
+        $user    = auth()->user();
+        $standup = Standup::updateOrCreate(
+            ['user_id' => $user->id, 'standup_date' => $validated['standup_date']],
+            ['blockers' => $validated['blockers'] ?? null]
+        );
+
+        // Replace all items
+        $standup->items()->delete();
+        foreach ($validated['items'] ?? [] as $i => $item) {
+            $standup->items()->create([
+                'description' => $item['description'],
+                'status'      => $item['status'],
+                'sort_order'  => $i,
+            ]);
         }
 
-        $task->update($updates);
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true, 'standup_id' => $standup->id]);
+        }
 
-        return response()->json(['success' => true, 'task' => $task->fresh(['column', 'project'])]);
+        return redirect()->route('standups.day', $validated['standup_date'])
+            ->with('success', 'Standup saved!');
     }
 }

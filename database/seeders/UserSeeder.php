@@ -12,9 +12,9 @@ class UserSeeder extends Seeder
     {
         // Admin
         $admin = User::firstOrCreate(
-            ['email' => 'admin@xynosoft.in'],
+            ['email' => 'shajeer@xynosoft.in'],
             [
-                'name'               => 'Admin',
+                'name'               => 'Shajeer',
                 'password'           => Hash::make('Golden_123'),
                 'job_title'          => 'System Administrator',
                 'department'         => 'Management',
@@ -43,10 +43,10 @@ class UserSeeder extends Seeder
 
         // HR Manager
         $hrManager = User::firstOrCreate(
-            ['email' => 'hr@xynosoft.in'],
+            ['email' => 'akshay@xynosoft.in'],
             [
-                'name'              => 'HR Manager',
-                'password'          => Hash::make('Golden_123'),
+                'name'              => 'Akshay',
+                'password'          => Hash::make('112233'),
                 'job_title'         => 'HR Manager',
                 'department'        => 'Human Resources',
                 'timezone'          => 'Asia/Kolkata',
@@ -56,38 +56,7 @@ class UserSeeder extends Seeder
             ]
         );
         $hrManager->assignRole('hr_manager');
-
-        // Admin 2
-        $admin2 = User::firstOrCreate(
-            ['email' => 'shajeer@xynosoft.in'],
-            [
-                'name'              => 'Shajeer',
-                'password'          => Hash::make('Golden_123'),
-                'job_title'         => 'System Administrator',
-                'department'        => 'Management',
-                'timezone'          => 'Asia/Kolkata',
-                'is_active'         => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $admin2->assignRole('admin');
-
-        // Manager 2
-        $manager2 = User::firstOrCreate(
-            ['email' => 'manager@xynosoft.in'],
-            [
-                'name'              => 'Manager',
-                'password'          => Hash::make('Golden_123'),
-                'job_title'         => 'Project Manager',
-                'department'        => 'Engineering',
-                'timezone'          => 'Asia/Kolkata',
-                'is_active'         => true,
-                'email_verified_at' => now(),
-                'manager_id'        => null,
-            ]
-        );
-        $manager2->assignRole('manager');
-
+        
         // Members
         $members = [
             ['name' => 'Sunitha',   'email' => 'sunitha@xynosoft.in',   'job_title' => 'Full-Stack Developer',   'department' => 'Engineering'],
@@ -100,7 +69,6 @@ class UserSeeder extends Seeder
             ['name' => 'Aishwarya', 'email' => 'aishwarya@xynosoft.in', 'job_title' => 'UI/UX Designer',       'department' => 'Design'],
             ['name' => 'Sujith',    'email' => 'sujith@xynosoft.in',    'job_title' => 'Sales Executive',       'department' => 'Marketing'],
             ['name' => 'Nooh',      'email' => 'nooh@xynosoft.in',      'job_title' => 'DevOps Engineer',           'department' => 'Engineering'],
-            ['name' => 'Akshay',    'email' => 'akshay@xynosoft.in',    'job_title' => 'Human Resources Manager',    'department' => 'Human Resources']
         ];
 
         foreach ($members as $data) {
