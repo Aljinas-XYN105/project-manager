@@ -109,49 +109,64 @@
 </div>
 
 {{-- Apply modal --}}
-<div x-show="apply" x-cloak @click.self="apply = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" @keydown.escape.window="apply = false">
+<template x-teleport="body">
+<div x-show="apply" x-cloak @keydown.escape.window="apply = false" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+    <div @click="apply = false"
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="absolute inset-0 backdrop-blur-sm" style="background-color:rgb(15 23 42/.6)"></div>
     <form method="POST" action="{{ route('leave.store') }}"
           x-data="{ start: @js(old('start_date', today()->toDateString())), end: @js(old('end_date', today()->toDateString())), half: {{ old('is_half_day') ? 'true' : 'false' }} }"
-          class="card w-full max-w-md p-6 space-y-4">
+          x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+          x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4"
+          class="relative card w-full max-w-md overflow-hidden flex flex-col max-h-[90dvh]">
         @csrf
-        <h3 class="font-semibold text-slate-900 dark:text-white">Request leave</h3>
-        @if($errors->any())
-        <div class="alert-danger text-sm"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ $errors->first() }}</span></div>
-        @endif
-        <div>
-            <label class="form-label">Leave type <span class="text-rose-500">*</span></label>
-            <select name="leave_type_id" required class="form-select">
-                @foreach($balances as $b)
-                <option value="{{ $b->type->id }}" @selected(old('leave_type_id') == $b->type->id)>
-                    {{ $b->type->name }} — {{ $b->remaining === null ? 'unlimited' : rtrim(rtrim(number_format($b->remaining, 1), '0'), '.').' left' }}
-                </option>
-                @endforeach
-            </select>
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+            <h3 class="font-semibold text-slate-900 dark:text-white">Request leave</h3>
+            <button type="button" @click="apply = false" class="p-1 -mr-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <i class="bi bi-x-lg text-base"></i>
+            </button>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="px-6 py-5 space-y-4 overflow-y-auto">
+            @if($errors->any())
+            <div class="alert-danger text-sm"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ $errors->first() }}</span></div>
+            @endif
             <div>
-                <label class="form-label">From <span class="text-rose-500">*</span></label>
-                <input type="date" name="start_date" x-model="start" @change="if (end < start) end = start" required class="form-input">
+                <label class="form-label">Leave type <span class="text-rose-500">*</span></label>
+                <select name="leave_type_id" required class="form-select">
+                    @foreach($balances as $b)
+                    <option value="{{ $b->type->id }}" @selected(old('leave_type_id') == $b->type->id)>
+                        {{ $b->type->name }} — {{ $b->remaining === null ? 'unlimited' : rtrim(rtrim(number_format($b->remaining, 1), '0'), '.').' left' }}
+                    </option>
+                    @endforeach
+                </select>
             </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="form-label">From <span class="text-rose-500">*</span></label>
+                    <input type="date" name="start_date" x-model="start" @change="if (end < start) end = start" required class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">To <span class="text-rose-500">*</span></label>
+                    <input type="date" name="end_date" x-model="end" :min="start" required class="form-input">
+                </div>
+            </div>
+            <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300" :class="start !== end && 'opacity-50'">
+                <input type="checkbox" name="is_half_day" value="1" x-model="half" :disabled="start !== end" class="rounded text-violet-600 border-slate-300">
+                Half day (single-day requests only)
+            </label>
             <div>
-                <label class="form-label">To <span class="text-rose-500">*</span></label>
-                <input type="date" name="end_date" x-model="end" :min="start" required class="form-input">
+                <label class="form-label">Reason <span class="text-slate-400 font-normal">(optional)</span></label>
+                <textarea name="reason" rows="3" maxlength="1000" class="form-input resize-none" placeholder="e.g. Family trip">{{ old('reason') }}</textarea>
             </div>
+            <p class="text-xs text-slate-400">Goes to {{ auth()->user()->manager ? auth()->user()->manager->name.' (your manager)' : 'the leave approvers' }} for approval.</p>
         </div>
-        <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300" :class="start !== end && 'opacity-50'">
-            <input type="checkbox" name="is_half_day" value="1" x-model="half" :disabled="start !== end" class="rounded text-violet-600 border-slate-300">
-            Half day (single-day requests only)
-        </label>
-        <div>
-            <label class="form-label">Reason <span class="text-slate-400 font-normal">(optional)</span></label>
-            <textarea name="reason" rows="3" maxlength="1000" class="form-input resize-none" placeholder="e.g. Family trip">{{ old('reason') }}</textarea>
-        </div>
-        <p class="text-xs text-slate-400">Goes to {{ auth()->user()->manager ? auth()->user()->manager->name.' (your manager)' : 'the leave approvers' }} for approval.</p>
-        <div class="flex justify-end gap-2">
+        <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex justify-end gap-2 flex-shrink-0">
             <button type="button" @click="apply = false" class="btn-ghost">Cancel</button>
             <button class="btn-primary"><i class="bi bi-send"></i> Submit request</button>
         </div>
     </form>
 </div>
+</template>
 </div>
 @endsection

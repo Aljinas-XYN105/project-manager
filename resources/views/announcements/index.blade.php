@@ -67,44 +67,60 @@
     @endif
 
     @if($canManage)
-    <div x-show="modal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" @keydown.escape.window="modal = false" @click.self="modal = false">
-        <form method="POST" :action="action" class="card w-full max-w-lg p-6 space-y-4">
+    <template x-teleport="body">
+    <div x-show="modal" x-cloak @keydown.escape.window="modal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+        <div @click="modal = false"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             class="absolute inset-0 backdrop-blur-sm" style="background-color:rgb(15 23 42/.6)"></div>
+        <form method="POST" :action="action"
+              x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4"
+              class="relative card w-full max-w-lg overflow-hidden flex flex-col max-h-[90dvh]">
             @csrf
             <input type="hidden" name="_method" :value="method">
-            <h3 class="font-semibold text-slate-900 dark:text-white" x-text="method === 'PUT' ? 'Edit announcement' : 'New announcement'"></h3>
-            @if($errors->any())
-            <div class="alert-danger text-sm"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ $errors->first() }}</span></div>
-            @endif
-            <div>
-                <label class="form-label">Title <span class="text-rose-500">*</span></label>
-                <input name="title" x-model="form.title" required maxlength="160" class="form-input" placeholder="e.g. Office closed on Monday">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+                <h3 class="font-semibold text-slate-900 dark:text-white" x-text="method === 'PUT' ? 'Edit announcement' : 'New announcement'"></h3>
+                <button type="button" @click="modal = false" class="p-1 -mr-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="bi bi-x-lg text-base"></i>
+                </button>
             </div>
-            <div>
-                <label class="form-label">Message <span class="text-rose-500">*</span></label>
-                <textarea name="body" x-model="form.body" rows="6" required maxlength="5000" class="form-input resize-y" placeholder="Write the full announcement here…"></textarea>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="px-6 py-5 space-y-4 overflow-y-auto">
+                @if($errors->any())
+                <div class="alert-danger text-sm"><i class="bi bi-exclamation-triangle-fill"></i><span>{{ $errors->first() }}</span></div>
+                @endif
                 <div>
-                    <label class="form-label">Category</label>
-                    <select name="category" x-model="form.category" class="form-select">
-                        @foreach($categories as $k => $c)<option value="{{ $k }}">{{ $c['label'] }}</option>@endforeach
-                    </select>
+                    <label class="form-label">Title <span class="text-rose-500">*</span></label>
+                    <input name="title" x-model="form.title" required maxlength="160" class="form-input" placeholder="e.g. Office closed on Monday">
                 </div>
                 <div>
-                    <label class="form-label">Show until <span class="text-slate-400 font-normal">(optional)</span></label>
-                    <input type="date" name="expires_on" x-model="form.expires_on" min="{{ today()->toDateString() }}" class="form-input">
+                    <label class="form-label">Message <span class="text-rose-500">*</span></label>
+                    <textarea name="body" x-model="form.body" rows="6" required maxlength="5000" class="form-input resize-y" placeholder="Write the full announcement here…"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label">Category</label>
+                        <select name="category" x-model="form.category" class="form-select">
+                            @foreach($categories as $k => $c)<option value="{{ $k }}">{{ $c['label'] }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Show until <span class="text-slate-400 font-normal">(optional)</span></label>
+                        <input type="date" name="expires_on" x-model="form.expires_on" min="{{ today()->toDateString() }}" class="form-input">
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-4 text-sm text-slate-700 dark:text-slate-300">
+                    <label class="flex items-center gap-2"><input type="checkbox" name="is_pinned" value="1" x-model="form.is_pinned" class="rounded text-violet-600"> Pin to top</label>
+                    <label class="flex items-center gap-2" x-show="method === 'POST'"><input type="checkbox" name="notify" value="1" checked class="rounded text-violet-600"> Notify everyone</label>
                 </div>
             </div>
-            <div class="flex flex-wrap gap-4 text-sm text-slate-700 dark:text-slate-300">
-                <label class="flex items-center gap-2"><input type="checkbox" name="is_pinned" value="1" x-model="form.is_pinned" class="rounded text-violet-600"> Pin to top</label>
-                <label class="flex items-center gap-2" x-show="method === 'POST'"><input type="checkbox" name="notify" value="1" checked class="rounded text-violet-600"> Notify everyone</label>
-            </div>
-            <div class="flex justify-end gap-2">
+            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex justify-end gap-2 flex-shrink-0">
                 <button type="button" @click="modal = false" class="btn-ghost">Cancel</button>
                 <button class="btn-primary"><i class="bi bi-send"></i> <span x-text="method === 'PUT' ? 'Save' : 'Publish'"></span></button>
             </div>
         </form>
     </div>
+    </template>
     @endif
 </div>
 @endsection

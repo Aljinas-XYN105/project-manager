@@ -194,48 +194,63 @@
 
 {{-- Add / edit modal --}}
 @if($canManage)
-<div x-show="modal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" @keydown.escape.window="modal = false">
-    <div @click.away="modal = false" class="card w-full max-w-md p-6">
-        <h3 class="font-semibold text-slate-900 dark:text-white mb-4" x-text="method === 'PUT' ? 'Edit attendance' : 'Add attendance entry'"></h3>
-        <form method="POST" :action="action" class="space-y-4">
+<template x-teleport="body">
+<div x-show="modal" x-cloak @keydown.escape.window="modal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+    <div @click="modal = false"
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="absolute inset-0 backdrop-blur-sm" style="background-color:rgb(15 23 42/.6)"></div>
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4"
+         class="relative card w-full max-w-md overflow-hidden flex flex-col max-h-[90dvh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+            <h3 class="font-semibold text-slate-900 dark:text-white" x-text="method === 'PUT' ? 'Edit attendance' : 'Add attendance entry'"></h3>
+            <button type="button" @click="modal = false" class="p-1 -mr-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <i class="bi bi-x-lg text-base"></i>
+            </button>
+        </div>
+        <form method="POST" :action="action" class="contents">
             @csrf
             <input type="hidden" name="_method" :value="method">
-            <div>
-                <label class="form-label">Member</label>
-                <select name="user_id" x-model="form.user_id" required class="form-select">
-                    <option value="">Select member…</option>
-                    @foreach($users as $u)
-                    <option value="{{ $u->id }}">{{ $u->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="form-label">Date</label>
-                <input type="date" name="work_date" x-model="form.work_date" required class="form-input">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="px-6 py-5 space-y-4 overflow-y-auto">
                 <div>
-                    <label class="form-label">Sign-in time</label>
-                    <input type="time" name="clock_in" x-model="form.clock_in" required class="form-input">
+                    <label class="form-label">Member</label>
+                    <select name="user_id" x-model="form.user_id" required class="form-select">
+                        <option value="">Select member…</option>
+                        @foreach($users as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
-                    <label class="form-label">Sign-out time</label>
-                    <input type="time" name="clock_out" x-model="form.clock_out" class="form-input">
-                    <p class="form-hint">Leave empty if still working</p>
+                    <label class="form-label">Date</label>
+                    <input type="date" name="work_date" x-model="form.work_date" required class="form-input">
                 </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label">Sign-in time</label>
+                        <input type="time" name="clock_in" x-model="form.clock_in" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">Sign-out time</label>
+                        <input type="time" name="clock_out" x-model="form.clock_out" class="form-input">
+                        <p class="form-hint">Leave empty if still working</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Note</label>
+                    <input type="text" name="note" x-model="form.note" maxlength="500" class="form-input" placeholder="e.g. Forgot to sign in, worked from site">
+                </div>
+                <p class="text-xs text-slate-400">Times are in your timezone ({{ $tz }}).</p>
             </div>
-            <div>
-                <label class="form-label">Note</label>
-                <input type="text" name="note" x-model="form.note" maxlength="500" class="form-input" placeholder="e.g. Forgot to sign in, worked from site">
-            </div>
-            <p class="text-xs text-slate-400">Times are in your timezone ({{ $tz }}).</p>
-            <div class="flex justify-end gap-2 pt-2">
+            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex justify-end gap-2 flex-shrink-0">
                 <button type="button" @click="modal = false" class="btn-ghost">Cancel</button>
                 <button class="btn-primary"><i class="bi bi-check-lg"></i> Save</button>
             </div>
         </form>
     </div>
 </div>
+</template>
 @endif
 </div>
 
