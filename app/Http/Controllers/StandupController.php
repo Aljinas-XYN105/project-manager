@@ -43,7 +43,19 @@ class StandupController extends Controller
         $firstDay   = Carbon::create($year, $month, 1);
         $returnDate = $request->input('return_date');
 
-        return view('standups.calendar', compact('firstDay', 'returnDate'));
+        $startWeek = $firstDay->copy()->startOfWeek(Carbon::SUNDAY);
+        $endWeek   = $firstDay->copy()->endOfMonth()->endOfWeek(Carbon::SATURDAY);
+
+        // Load submission names per day for the visible range
+        $standupsByDate = Standup::whereBetween('standup_date', [$startWeek, $endWeek])
+            ->with('user:id,name')
+            ->get()
+            ->groupBy(fn ($s) => $s->standup_date instanceof Carbon
+                ? $s->standup_date->toDateString()
+                : Carbon::parse($s->standup_date)->toDateString()
+            );
+
+        return view('standups.calendar', compact('firstDay', 'returnDate', 'standupsByDate'));
     }
 
     // Legacy redirect — kept for backward compat

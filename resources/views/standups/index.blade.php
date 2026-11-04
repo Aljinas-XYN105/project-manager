@@ -89,6 +89,12 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                 $totalItems   = $standup ? $standup->items->count() : 0;
                 $progressPct  = $totalItems > 0 ? (int)(($doneCount / $totalItems) * 100) : 0;
                 $hasBlockers  = $standup && $standup->blockers;
+                $cardShadow   = $hasBlockers
+                    ? '0 2px 10px 0 rgba(239,68,68,0.25), 0 1px 3px 0 rgba(239,68,68,0.1)'
+                    : ($standup ? '0 2px 10px 0 rgba(34,197,94,0.22), 0 1px 3px 0 rgba(34,197,94,0.08)' : '0 2px 10px 0 rgba(251,146,60,0.18), 0 1px 3px 0 rgba(251,146,60,0.07)');
+                $cardBorder   = $hasBlockers
+                    ? 'border-rose-200 dark:border-rose-800/60'
+                    : ($standup ? 'border-green-200 dark:border-green-800/50' : 'border-amber-200 dark:border-amber-700/40');
                 $colorIdx     = $member->id % count($avatarBgs);
                 $avatarBg     = $avatarBgs[$colorIdx];
                 $avatarText   = $avatarTexts[$colorIdx];
@@ -97,57 +103,84 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
             @endphp
 
             <a href="{{ route('standups.member-day', [$date->toDateString(), $member->id]) }}"
-               class="group flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700
-                      shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-600
-                      transition-all duration-200 p-3.5 w-full">
+               class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl border {{ $cardBorder }}
+                      hover:border-violet-300 dark:hover:border-violet-600
+                      transition-all duration-200 p-3.5 w-full"
+               style="box-shadow: {{ $cardShadow }}">
 
-                {{-- Avatar --}}
-                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                     style="background: {{ $avatarBg }}; color: {{ $avatarText }}">
-                    {{ $initials }}
-                </div>
+                {{-- Top row: avatar + name + badges + chevron --}}
+                <div class="flex items-center gap-3">
+                    {{-- Avatar --}}
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+                         style="background: {{ $avatarBg }}; color: {{ $avatarText }}">
+                        {{ $initials }}
+                    </div>
 
-                {{-- Name + role + designation --}}
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="font-semibold text-slate-900 dark:text-white text-sm leading-tight truncate">{{ $member->name }}</span>
-                        @foreach($member->roles as $role)
-                        @if($role->name !== 'member')
-                        <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide flex-shrink-0
-                                     {{ $role->name === 'admin' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
-                                      : ($role->name === 'manager' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                      : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300') }}">
-                            {{ ucfirst(str_replace('_', ' ', $role->name)) }}
+                    {{-- Name + role + designation --}}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-semibold text-slate-900 dark:text-white text-sm leading-tight truncate">{{ $member->name }}</span>
+                            @foreach($member->roles as $role)
+                            @if($role->name !== 'member')
+                            <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide flex-shrink-0
+                                         {{ $role->name === 'admin' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                                          : ($role->name === 'manager' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                          : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300') }}">
+                                {{ ucfirst(str_replace('_', ' ', $role->name)) }}
+                            </span>
+                            @endif
+                            @endforeach
+                        </div>
+                        @if($subtitle)
+                        <p class="text-xs text-slate-400 mt-0.5 truncate">{{ $subtitle }}</p>
+                        @endif
+                    </div>
+
+                    {{-- Status + chevron --}}
+                    <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                        @if($standup)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                         bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                <i class="bi bi-check-circle-fill text-[9px]"></i> Submitted
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                         bg-slate-100 dark:bg-slate-700 text-slate-400">
+                                <i class="bi bi-clock text-[9px]"></i> Pending
+                            </span>
+                        @endif
+                        @if($hasBlockers)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                     bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
+                            <i class="bi bi-exclamation-triangle-fill text-[9px]"></i> Blocked
                         </span>
                         @endif
-                        @endforeach
+                        <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-xs mt-0.5"></i>
                     </div>
-                    @if($subtitle)
-                    <p class="text-xs text-slate-400 mt-0.5 truncate">{{ $subtitle }}</p>
-                    @endif
                 </div>
 
-                {{-- Status + chevron --}}
-                <div class="flex flex-col items-end gap-1 flex-shrink-0">
-                    @if($standup)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                     bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                            <i class="bi bi-check-circle-fill text-[9px]"></i> Submitted
-                        </span>
-                    @else
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                     bg-slate-100 dark:bg-slate-700 text-slate-400">
-                            <i class="bi bi-clock text-[9px]"></i> Pending
-                        </span>
-                    @endif
-                    @if($hasBlockers)
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-                        <i class="bi bi-exclamation-triangle-fill text-[9px]"></i> Blocked
+                {{-- Bottom row: section counts (only for submitted standups) --}}
+                @if($standup)
+                <div class="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-700/50 pl-[52px]">
+                    <span class="flex items-center gap-1 text-xs {{ $todoCount > 0 ? 'text-slate-500 dark:text-slate-400' : 'text-slate-300 dark:text-slate-600' }}">
+                        <i class="bi bi-circle text-[11px]"></i>
+                        <span class="font-medium tabular-nums">{{ $todoCount }}</span>
                     </span>
-                    @endif
-                    <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors text-xs mt-0.5"></i>
+                    <span class="flex items-center gap-1 text-xs {{ $wipCount > 0 ? 'text-blue-500 dark:text-blue-400' : 'text-slate-300 dark:text-slate-600' }}">
+                        <i class="bi bi-arrow-repeat text-[11px]"></i>
+                        <span class="font-medium tabular-nums">{{ $wipCount }}</span>
+                    </span>
+                    @php $reviewCount = $standup->items->where('status','in_review')->count(); @endphp
+                    <span class="flex items-center gap-1 text-xs {{ $reviewCount > 0 ? 'text-amber-500 dark:text-amber-400' : 'text-slate-300 dark:text-slate-600' }}">
+                        <i class="bi bi-eye text-[11px]"></i>
+                        <span class="font-medium tabular-nums">{{ $reviewCount }}</span>
+                    </span>
+                    <span class="flex items-center gap-1 text-xs {{ $doneCount > 0 ? 'text-green-500 dark:text-green-400' : 'text-slate-300 dark:text-slate-600' }}">
+                        <i class="bi bi-check-circle-fill text-[11px]"></i>
+                        <span class="font-medium tabular-nums">{{ $doneCount }}</span>
+                    </span>
                 </div>
+                @endif
 
             </a>
             @empty
