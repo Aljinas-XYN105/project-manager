@@ -54,6 +54,24 @@ class RolePermissionSeeder extends Seeder
             'attendance.view', 'leave.approve',
         ]);
 
+        // HR Manager
+        $hrManager = Role::firstOrCreate(['name' => 'hr_manager']);
+        $hrManager->syncPermissions([
+            // HR core
+            'leave.approve', 'leave.manage', 'announcements.manage', 'employees.view-private',
+            'attendance.view', 'attendance.manage',
+            // People & teams (read-only)
+            'users.viewAny', 'users.view',
+            'teams.viewAny', 'teams.view',
+            // Projects & tasks (read-only visibility)
+            'projects.viewAny', 'projects.view',
+            'tasks.viewAny', 'tasks.view',
+            // Reports
+            'reports.view',
+            // Comments
+            'comments.create', 'comments.update',
+        ]);
+
         // Member
         $member = Role::firstOrCreate(['name' => 'member']);
         $member->syncPermissions([
