@@ -9,9 +9,10 @@
 ])
 
 @php
-$opts = collect($options)->map(function ($label, $value) {
-    if (is_int($value)) {
-        // indexed array: value === label
+$isList = is_array($options) && array_is_list($options);
+$opts = collect($options)->map(function ($label, $value) use ($isList) {
+    if ($isList) {
+        // Sequential indexed array: value === label (e.g. ['HR', 'Engineering'])
         return ['value' => (string) $label, 'label' => (string) $label];
     }
     if (is_array($label)) {
