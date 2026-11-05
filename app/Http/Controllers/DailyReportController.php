@@ -72,10 +72,20 @@ class DailyReportController extends Controller
                 ->with('info', 'You already submitted a report today. You can edit it below.');
         }
 
-        // Tasks assigned to this user that are in progress or not done
-        $myTasks = Task::with(['project'])
-            ->whereHas('assignees', fn($q) => $q->where('users.id', $user->id))
-            ->whereNotIn('status', ['done', 'cancelled'])
+        // Tasks assigned to this user (open, or completed today), including subtasks
+        $myTasks = Task::with(['project', 'parent'])
+            ->where(function ($q) use ($user) {
+                // Directly assigned to the user
+                $q->whereHas('assignees', fn($a) => $a->where('users.id', $user->id))
+                  // Or a subtask whose parent is assigned to the user
+                  ->orWhere(fn($q2) => $q2->whereNotNull('parent_id')
+                      ->whereHas('parent.assignees', fn($a) => $a->where('users.id', $user->id)));
+            })
+            ->where(function ($q) {
+                // Include open tasks and done tasks updated today (completed today)
+                $q->whereNotIn('status', ['done', 'cancelled'])
+                  ->orWhere(fn($inner) => $inner->where('status', 'done')->whereDate('updated_at', today()));
+            })
             ->orderBy('updated_at', 'desc')
             ->get();
 
@@ -148,9 +158,16 @@ class DailyReportController extends Controller
         $this->authorizeEdit($dailyReport);
 
         $user = auth()->user();
-        $myTasks = Task::with(['project'])
-            ->whereHas('assignees', fn($q) => $q->where('users.id', $user->id))
-            ->whereNotIn('status', ['done', 'cancelled'])
+        $myTasks = Task::with(['project', 'parent'])
+            ->where(function ($q) use ($user) {
+                $q->whereHas('assignees', fn($a) => $a->where('users.id', $user->id))
+                  ->orWhere(fn($q2) => $q2->whereNotNull('parent_id')
+                      ->whereHas('parent.assignees', fn($a) => $a->where('users.id', $user->id)));
+            })
+            ->where(function ($q) {
+                $q->whereNotIn('status', ['done', 'cancelled'])
+                  ->orWhere(fn($inner) => $inner->where('status', 'done')->whereDate('updated_at', today()));
+            })
             ->orderBy('updated_at', 'desc')
             ->get();
 
