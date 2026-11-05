@@ -21,7 +21,7 @@
     </div>
     <x-ui.select name="department" placeholder="All departments"
         :value="request('department','')"
-        :options="array_combine($departments,$departments)"
+        :options="$departments->toArray()"
         @change="$el.closest('form').submit()"
         class="text-sm w-auto" />
     <button class="btn-secondary btn-sm">Search</button>
