@@ -130,11 +130,17 @@ class TaskController extends Controller
 
     public function createGlobal(Request $request)
     {
-        $projects = Project::whereHas('members', fn($q) => $q->where('users.id', $request->user()->id))
-            ->orWhere('owner_id', $request->user()->id)
-            ->with(['columns', 'members', 'labels'])
-            ->orderBy('name')
-            ->get();
+        $user = $request->user();
+        $projectQuery = Project::with(['columns', 'members', 'labels'])->orderBy('name');
+
+        if (! $user->hasRole(['admin', 'manager'])) {
+            $projectQuery->where(fn ($q) =>
+                $q->whereHas('members', fn ($m) => $m->where('users.id', $user->id))
+                  ->orWhere('owner_id', $user->id)
+            );
+        }
+
+        $projects = $projectQuery->get();
 
         $defaultProject = $projects->firstWhere('id', $request->query('project_id')) ?? $projects->first();
 
@@ -404,6 +410,17 @@ class TaskController extends Controller
             ->orderByRaw("CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
             ->paginate(25);
 
+        // Stats strip — same privilege scope as the main query
+        $statsQuery = Task::where('type', 'bug');
+        if (!$isPrivileged) {
+            $statsQuery->whereHas('project', function ($q) use ($user) {
+                $q->where('owner_id', $user->id)
+                  ->orWhereHas('members', fn($m) => $m->where('users.id', $user->id))
+                  ->orWhere('is_public', true);
+            });
+        }
+        $bugsByStatus = $statsQuery->selectRaw('status, count(*) as cnt')->groupBy('status')->pluck('cnt', 'status');
+
         // Projects for filter
         $projectsQuery = \App\Models\Project::query();
         if (!$isPrivileged) {
@@ -415,6 +432,6 @@ class TaskController extends Controller
         }
         $projects = $projectsQuery->orderBy('name')->get();
 
-        return view('bugs.index', compact('bugs', 'projects'));
+        return view('bugs.index', compact('bugs', 'projects', 'bugsByStatus'));
     }
 }

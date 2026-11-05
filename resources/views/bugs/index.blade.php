@@ -19,9 +19,6 @@
 
 {{-- Stats strip --}}
 @php
-$bugsByStatus = \App\Models\Task::where('type','bug')
-    ->whereHas('project', fn($q) => $q->whereHas('members', fn($m) => $m->where('users.id', auth()->id()))->orWhere('owner_id', auth()->id()))
-    ->selectRaw('status, count(*) as cnt')->groupBy('status')->pluck('cnt','status');
 $statsConfig = [
     'todo'        => ['label'=>'Open',        'color'=>'text-slate-700 dark:text-slate-300',    'bg'=>'bg-slate-100 dark:bg-slate-800',       'icon'=>'bi-circle',             'ring'=>'ring-slate-200 dark:ring-slate-700'],
     'in_progress' => ['label'=>'In Progress', 'color'=>'text-blue-700 dark:text-blue-400',     'bg'=>'bg-blue-50 dark:bg-blue-900/20',        'icon'=>'bi-arrow-right-circle', 'ring'=>'ring-blue-200 dark:ring-blue-800'],
