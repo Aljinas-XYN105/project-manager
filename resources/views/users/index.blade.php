@@ -27,20 +27,15 @@
     </div>
     <div>
         <label class="form-label">Role</label>
-        <select name="role" class="form-select">
-            <option value="">All roles</option>
-            @foreach($roles as $role)
-            <option value="{{ $role->name }}" @selected(request('role') === $role->name)>{{ Str::headline($role->name) }} ({{ $role->users_count }})</option>
-            @endforeach
-        </select>
+        <x-ui.select name="role" placeholder="All roles"
+            :value="request('role','')"
+            :options="$roles->mapWithKeys(fn($r)=>[$r->name=>Str::headline($r->name).' ('.$r->users_count.')'])->toArray()" />
     </div>
     <div>
         <label class="form-label">Status</label>
-        <select name="active" class="form-select">
-            <option value="">All ({{ $counts['total'] }})</option>
-            <option value="1" @selected(request('active') === '1')>Active ({{ $counts['active'] }})</option>
-            <option value="0" @selected(request('active') === '0')>Inactive ({{ $counts['inactive'] }})</option>
-        </select>
+        <x-ui.select name="active" placeholder="All ({{ $counts['total'] }})"
+            :value="request('active','')"
+            :options="['1'=>'Active ('.$counts['active'].')','0'=>'Inactive ('.$counts['inactive'].')']" />
     </div>
     <button class="btn-primary"><i class="bi bi-funnel"></i> Filter</button>
     @if(request()->hasAny(['search','role','active']))

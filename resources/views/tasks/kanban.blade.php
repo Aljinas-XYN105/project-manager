@@ -275,33 +275,39 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="form-label">Type</label>
-                    <select x-model="form.type" class="form-select">
-                        <option value="task">Task</option>
-                        <option value="bug">Bug</option>
-                        <option value="feature">Feature</option>
-                        <option value="story">Story</option>
-                        <option value="epic">Epic</option>
-                    </select>
+                    <x-ui.select x-model="form.type"
+                        :options="['task'=>'Task','bug'=>'Bug','feature'=>'Feature','story'=>'Story','epic'=>'Epic']" />
                 </div>
                 <div>
                     <label class="form-label">Priority</label>
-                    <select x-model="form.priority" class="form-select">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="critical">Critical</option>
-                    </select>
+                    <x-ui.select x-model="form.priority"
+                        :options="['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical']" />
                 </div>
             </div>
 
             {{-- Column --}}
             <div>
                 <label class="form-label">Column</label>
-                <select x-model.number="form.column_id" class="form-select">
-                    <template x-for="col in columns" :key="col.id">
-                        <option :value="col.id" x-text="col.name"></option>
-                    </template>
-                </select>
+                <div x-data="{open:false,get lbl(){return columns.find(c=>c.id===form.column_id)?.name||'Select column…'}}"
+                     @click.outside="open=false" class="relative">
+                    <button type="button" @click="open=!open"
+                            :class="open?'ring-2 ring-violet-500/30 border-violet-500':''"
+                            class="form-input text-left flex items-center justify-between gap-2 w-full">
+                        <span x-text="lbl"></span>
+                        <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform duration-150" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                    </button>
+                    <div x-show="open" x-cloak style="z-index:200"
+                         class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+                        <template x-for="col in columns" :key="col.id">
+                            <button type="button" @click="form.column_id=col.id; open=false"
+                                    :class="form.column_id===col.id?'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/10 font-medium':'text-slate-700 dark:text-slate-200'"
+                                    class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                <span x-text="col.name"></span>
+                                <i x-show="form.column_id===col.id" class="bi bi-check2 text-violet-500 text-xs"></i>
+                            </button>
+                        </template>
+                    </div>
+                </div>
             </div>
 
             {{-- Assignees --}}

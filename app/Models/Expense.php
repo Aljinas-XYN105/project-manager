@@ -49,8 +49,7 @@ class Expense extends Model
             return false;
         }
 
-        return $reviewer->hasRole('admin')
-            || $reviewer->hasRole('manager')
+        return $reviewer->can('expenses.review')
             || $this->user?->manager_id === $reviewer->id;
     }
 

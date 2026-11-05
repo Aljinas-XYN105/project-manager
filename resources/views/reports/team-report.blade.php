@@ -20,12 +20,9 @@
         <form method="GET" action="{{ route('reports.teams') }}" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="form-label">Team</label>
-                <select name="team_id" class="form-select">
-                    <option value="">All Teams</option>
-                    @foreach($teams as $t)
-                    <option value="{{ $t->id }}" @selected(request('team_id') == $t->id)>{{ $t->name }}</option>
-                    @endforeach
-                </select>
+                <x-ui.select name="team_id" placeholder="All Teams"
+                    :value="request('team_id','')"
+                    :options="$teams->pluck('name','id')->toArray()" />
             </div>
             <div>
                 <label class="form-label">From</label>

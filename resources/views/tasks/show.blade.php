@@ -903,7 +903,7 @@ $typeOptions = [
         {{-- Actions --}}
         @can('delete', $task)
         <button onclick="if(confirm('Delete this task? This cannot be undone.')) document.getElementById('delete-form').submit()"
-                class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-800 transition-all">
+                class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-white bg-rose-500 hover:bg-rose-600 dark:bg-rose-600 dark:hover:bg-rose-700 transition-all">
             <i class="bi bi-trash3 text-sm"></i> Delete task
         </button>
         <form id="delete-form" method="POST" action="{{ route('tasks.destroy', $task) }}" class="hidden">

@@ -47,13 +47,39 @@
                         {{-- Task selector --}}
                         <div>
                             <label class="form-label">Task</label>
-                            <select x-model="task.task_id" @change="onTaskPicked(task)" class="form-select text-sm">
-                                <option value="">— Not linked to a task —</option>
-                                <option value="__new__">＋ Create a new task…</option>
-                                <template x-for="opt in optionsFor(task)" :key="opt.id">
-                                    <option :value="String(opt.id)" x-text="opt.label" :selected="String(opt.id) === String(task.task_id)"></option>
-                                </template>
-                            </select>
+                            <div x-data="{open:false}" @click.outside="open=false" class="relative">
+                                <input type="hidden" :name="'tasks['+idx+'][task_id]'" :value="task.task_id==='__new__'?'':task.task_id">
+                                <button type="button" @click="open=!open"
+                                        :class="open?'ring-2 ring-violet-500/30 border-violet-500':''"
+                                        class="form-input text-left flex items-center justify-between gap-2 w-full text-sm">
+                                    <span :class="!task.task_id&&'text-slate-400 dark:text-slate-500'"
+                                          x-text="task.task_id==='__new__'?'＋ Create a new task…':(optionsFor(task).find(o=>String(o.id)===String(task.task_id))?.label||'— Not linked to a task —')"></span>
+                                    <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform duration-150" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                                </button>
+                                <div x-show="open" x-cloak style="z-index:200"
+                                     class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+                                    <button type="button" @click="task.task_id=''; onTaskPicked(task); open=false"
+                                            :class="!task.task_id?'text-violet-600 bg-violet-50/50 font-medium':'text-slate-400 dark:text-slate-500'"
+                                            class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                        <span>— Not linked to a task —</span>
+                                        <i x-show="!task.task_id" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                    </button>
+                                    <button type="button" @click="task.task_id='__new__'; onTaskPicked(task); open=false"
+                                            :class="task.task_id==='__new__'?'text-violet-600 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                            class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                        <span>＋ Create a new task…</span>
+                                        <i x-show="task.task_id==='__new__'" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                    </button>
+                                    <template x-for="opt in optionsFor(task)" :key="opt.id">
+                                        <button type="button" @click="task.task_id=String(opt.id); onTaskPicked(task); open=false"
+                                                :class="String(opt.id)===String(task.task_id)?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                                class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                            <span x-text="opt.label"></span>
+                                            <i x-show="String(opt.id)===String(task.task_id)" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
                             <input type="hidden" :name="'tasks['+idx+'][task_id]'" :value="task.task_id === '__new__' ? '' : task.task_id">
                         </div>
 
@@ -77,35 +103,79 @@
                                     </div>
                                     <div class="sm:col-span-2">
                                         <label class="form-label">Project *</label>
-                                        <select :name="'tasks['+idx+'][new_task][project_id]'" x-model="task.new_task.project_id" required
-                                                :class="fieldErrors['tasks.'+idx+'.new_task.project_id'] ? 'form-select text-sm !border-rose-400 dark:!border-rose-500 !ring-rose-400/20' : 'form-select text-sm'"
-                                                @change="if(fieldErrors['tasks.'+idx+'.new_task.project_id']) delete fieldErrors['tasks.'+idx+'.new_task.project_id']">
-                                            <option value="">Select a project…</option>
-                                            @foreach($projects as $p)
-                                            <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div x-data="{open:false}" @click.outside="open=false" class="relative">
+                                            <input type="hidden" :name="'tasks['+idx+'][new_task][project_id]'" :value="task.new_task.project_id">
+                                            <button type="button" @click="open=!open; if(fieldErrors['tasks.'+idx+'.new_task.project_id']) delete fieldErrors['tasks.'+idx+'.new_task.project_id']"
+                                                    :class="[open?'ring-2 ring-violet-500/30 border-violet-500':'', fieldErrors['tasks.'+idx+'.new_task.project_id']?'border-rose-400':'']"
+                                                    class="form-input text-sm text-left flex items-center justify-between gap-2 w-full">
+                                                <span :class="!task.new_task.project_id&&'text-slate-400 dark:text-slate-500'"
+                                                      x-text="@js($projects->pluck('name','id'))[task.new_task.project_id]||'Select a project…'"></span>
+                                                <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                                            </button>
+                                            <div x-show="open" x-cloak style="z-index:200"
+                                                 class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                                                <button type="button" @click="task.new_task.project_id=''; open=false"
+                                                        :class="!task.new_task.project_id?'text-violet-600 bg-violet-50/50 font-medium':'text-slate-400 dark:text-slate-500'"
+                                                        class="w-full text-left px-3.5 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Select a project…</button>
+                                                @foreach($projects as $p)
+                                                <button type="button" @click="task.new_task.project_id='{{ $p->id }}'; open=false"
+                                                        :class="task.new_task.project_id==='{{ $p->id }}'?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                                        class="w-full text-left px-3.5 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                                    <span>{{ $p->name }}</span>
+                                                    <i x-show="task.new_task.project_id==='{{ $p->id }}'" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                                </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                         <p x-show="fieldErrors['tasks.'+idx+'.new_task.project_id']"
                                            x-text="fieldErrors['tasks.'+idx+'.new_task.project_id']?.[0]"
                                            class="mt-1 text-xs font-medium text-rose-500"></p>
                                     </div>
                                     <div>
                                         <label class="form-label">Type</label>
-                                        <select :name="'tasks['+idx+'][new_task][type]'" x-model="task.new_task.type" class="form-select text-sm">
-                                            <option value="task">Task</option>
-                                            <option value="bug">Bug</option>
-                                            <option value="feature">Feature</option>
-                                            <option value="story">Story</option>
-                                        </select>
+                                        <div x-data="{open:false,opts:{'task':'Task','bug':'Bug','feature':'Feature','story':'Story'}}" @click.outside="open=false" class="relative">
+                                            <input type="hidden" :name="'tasks['+idx+'][new_task][type]'" :value="task.new_task.type">
+                                            <button type="button" @click="open=!open"
+                                                    :class="open?'ring-2 ring-violet-500/30 border-violet-500':''"
+                                                    class="form-input text-sm text-left flex items-center justify-between gap-2 w-full">
+                                                <span x-text="opts[task.new_task.type]||task.new_task.type"></span>
+                                                <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                                            </button>
+                                            <div x-show="open" x-cloak style="z-index:200"
+                                                 class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+                                                @foreach(['task'=>'Task','bug'=>'Bug','feature'=>'Feature','story'=>'Story'] as $v=>$l)
+                                                <button type="button" @click="task.new_task.type='{{ $v }}'; open=false"
+                                                        :class="task.new_task.type==='{{ $v }}'?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                                        class="w-full text-left px-3.5 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                                    <span>{{ $l }}</span>
+                                                    <i x-show="task.new_task.type==='{{ $v }}'" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                                </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="form-label">Priority</label>
-                                        <select :name="'tasks['+idx+'][new_task][priority]'" x-model="task.new_task.priority" class="form-select text-sm">
-                                            <option value="low">Low</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="high">High</option>
-                                            <option value="critical">Critical</option>
-                                        </select>
+                                        <div x-data="{open:false,opts:{'low':'Low','medium':'Medium','high':'High','critical':'Critical'}}" @click.outside="open=false" class="relative">
+                                            <input type="hidden" :name="'tasks['+idx+'][new_task][priority]'" :value="task.new_task.priority">
+                                            <button type="button" @click="open=!open"
+                                                    :class="open?'ring-2 ring-violet-500/30 border-violet-500':''"
+                                                    class="form-input text-sm text-left flex items-center justify-between gap-2 w-full">
+                                                <span x-text="opts[task.new_task.priority]||task.new_task.priority"></span>
+                                                <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                                            </button>
+                                            <div x-show="open" x-cloak style="z-index:200"
+                                                 class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+                                                @foreach(['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical'] as $v=>$l)
+                                                <button type="button" @click="task.new_task.priority='{{ $v }}'; open=false"
+                                                        :class="task.new_task.priority==='{{ $v }}'?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                                        class="w-full text-left px-3.5 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                                    <span>{{ $l }}</span>
+                                                    <i x-show="task.new_task.priority==='{{ $v }}'" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                                </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 @if($projects->isEmpty())
@@ -140,15 +210,27 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="form-label">Status After Today</label>
-                                <select :name="'tasks['+idx+'][status_update]'" x-model="task.status_update" class="form-select text-sm">
-                                    <option value="">No change</option>
-                                    <option value="in_progress">🔵 In Progress</option>
-                                    <option value="qa_testing">🟣 QA Testing</option>
-                                    <option value="in_review">🟡 In Review</option>
-                                    <option value="done">✅ Done</option>
-                                    <option value="blocked">🔴 Blocked</option>
-                                    <option value="todo">⚪ Back to To Do</option>
-                                </select>
+                                <div x-data="{open:false,opts:{'':'No change','in_progress':'In Progress','qa_testing':'QA Testing','in_review':'In Review','done':'Done','blocked':'Blocked','todo':'Back to To Do'}}" @click.outside="open=false" class="relative">
+                                    <input type="hidden" :name="'tasks['+idx+'][status_update]'" :value="task.status_update">
+                                    <button type="button" @click="open=!open"
+                                            :class="open?'ring-2 ring-violet-500/30 border-violet-500':''"
+                                            class="form-input text-sm text-left flex items-center justify-between gap-2 w-full">
+                                        <span :class="!task.status_update&&'text-slate-400 dark:text-slate-500'"
+                                              x-text="opts[task.status_update]||'No change'"></span>
+                                        <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                                    </button>
+                                    <div x-show="open" x-cloak style="z-index:200"
+                                         class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+                                        @foreach([''=> 'No change','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','blocked'=>'Blocked','todo'=>'Back to To Do'] as $v=>$l)
+                                        <button type="button" @click="task.status_update='{{ $v }}'; open=false"
+                                                :class="task.status_update==='{{ $v }}'?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':( '{{ $v }}'===''?'text-slate-400 dark:text-slate-500':'text-slate-700 dark:text-slate-200')"
+                                                class="w-full text-left px-3.5 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                            <span>{{ $l }}</span>
+                                            <i x-show="task.status_update==='{{ $v }}'" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                        </button>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
                             <div class="flex items-end">
                                 <label class="flex items-center gap-2 cursor-pointer py-2">

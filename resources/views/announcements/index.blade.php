@@ -100,9 +100,10 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="form-label">Category</label>
-                        <select name="category" x-model="form.category" class="form-select">
-                            @foreach($categories as $k => $c)<option value="{{ $k }}">{{ $c['label'] }}</option>@endforeach
-                        </select>
+                        <x-ui.select name="category"
+                            x-model="form.category"
+                            :options="collect($categories)->mapWithKeys(fn($c,$k)=>[$k=>$c['label']])->toArray()"
+                            class="w-full" />
                     </div>
                     <div>
                         <label class="form-label">Show until <span class="text-slate-400 font-normal">(optional)</span></label>

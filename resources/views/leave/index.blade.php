@@ -133,13 +133,10 @@
             @endif
             <div>
                 <label class="form-label">Leave type <span class="text-rose-500">*</span></label>
-                <select name="leave_type_id" required class="form-select">
-                    @foreach($balances as $b)
-                    <option value="{{ $b->type->id }}" @selected(old('leave_type_id') == $b->type->id)>
-                        {{ $b->type->name }} — {{ $b->remaining === null ? 'unlimited' : rtrim(rtrim(number_format($b->remaining, 1), '0'), '.').' left' }}
-                    </option>
-                    @endforeach
-                </select>
+                <x-ui.select name="leave_type_id" placeholder="Select type…"
+                    required
+                    :value="old('leave_type_id','')"
+                    :options="$balances->mapWithKeys(fn($b)=>[$b->type->id=>$b->type->name.' — '.($b->remaining===null?'unlimited':rtrim(rtrim(number_format($b->remaining,1),'0'),'.').' left')])->toArray()" />
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>

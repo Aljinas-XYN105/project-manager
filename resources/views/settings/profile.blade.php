@@ -105,11 +105,9 @@
                     </div>
                     <div>
                         <label class="form-label">Timezone</label>
-                        <select name="timezone" class="form-select">
-                            @foreach(timezone_identifiers_list() as $tz)
-                            <option value="{{ $tz }}" @selected(auth()->user()->timezone == $tz)>{{ $tz }}</option>
-                            @endforeach
-                        </select>
+                        <x-ui.select name="timezone"
+                            :value="auth()->user()->timezone??'UTC'"
+                            :options="array_combine(timezone_identifiers_list(), timezone_identifiers_list())" />
                     </div>
                 </div>
 

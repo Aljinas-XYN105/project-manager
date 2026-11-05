@@ -20,21 +20,15 @@
         <form method="GET" action="{{ route('reports.projects') }}" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="form-label">Status</label>
-                <select name="status" class="form-select">
-                    <option value="">All Statuses</option>
-                    @foreach(['planning','active','on_hold','completed','archived'] as $s)
-                    <option value="{{ $s }}" @selected(request('status') == $s)>{{ ucfirst(str_replace('_',' ',$s)) }}</option>
-                    @endforeach
-                </select>
+                <x-ui.select name="status" placeholder="All Statuses"
+                    :value="request('status','')"
+                    :options="collect(['planning','active','on_hold','completed','archived'])->mapWithKeys(fn($s)=>[$s=>ucfirst(str_replace('_',' ',$s))])->toArray()" />
             </div>
             <div>
                 <label class="form-label">Team</label>
-                <select name="team_id" class="form-select">
-                    <option value="">All Teams</option>
-                    @foreach($teams as $t)
-                    <option value="{{ $t->id }}" @selected(request('team_id') == $t->id)>{{ $t->name }}</option>
-                    @endforeach
-                </select>
+                <x-ui.select name="team_id" placeholder="All Teams"
+                    :value="request('team_id','')"
+                    :options="$teams->pluck('name','id')->toArray()" />
             </div>
             <button type="submit" class="btn-primary">Apply Filters</button>
             <a href="{{ route('reports.projects') }}" class="btn-secondary">Reset</a>

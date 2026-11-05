@@ -169,11 +169,9 @@
 
                 <div>
                     <label class="form-label">Column / Stage</label>
-                    <select name="column_id" class="form-select">
-                        @foreach($columns as $col)
-                        <option value="{{ $col->id }}" @selected(old('column_id',$task->column_id)===$col->id)>{{ $col->name }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="column_id"
+                        :value="old('column_id',$task->column_id)"
+                        :options="$columns->pluck('name','id')->toArray()" />
                 </div>
                 <div>
                     <label class="form-label">Due Date</label>
@@ -194,14 +192,9 @@
                 @if($sprints->count())
                 <div>
                     <label class="form-label">Sprint</label>
-                    <select name="sprint_id" class="form-select">
-                        <option value="">Backlog (no sprint)</option>
-                        @foreach($sprints as $sp)
-                        <option value="{{ $sp->id }}" @selected(old('sprint_id',$task->sprint_id)===$sp->id)>
-                            {{ $sp->name }} ({{ ucfirst($sp->status) }})
-                        </option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="sprint_id" placeholder="Backlog (no sprint)"
+                        :value="old('sprint_id',$task->sprint_id??'')"
+                        :options="$sprints->mapWithKeys(fn($sp)=>[$sp->id=>$sp->name.' ('.ucfirst($sp->status).')'])->toArray()" />
                 </div>
                 @endif
             </div>
@@ -216,12 +209,9 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="form-label text-xs">Severity</label>
-                    <select name="severity" class="form-select">
-                        <option value="">Select severity</option>
-                        @foreach(['blocker'=>'🔴 Blocker','critical'=>'🟠 Critical','major'=>'🟡 Major','minor'=>'🟢 Minor','trivial'=>'⚪ Trivial'] as $sv=>$sl)
-                        <option value="{{ $sv }}" @selected(old('severity',$task->severity??'')===$sv)>{{ $sl }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="severity" placeholder="Select severity"
+                        :value="old('severity',$task->severity??'')"
+                        :options="['blocker'=>'Blocker','critical'=>'Critical','major'=>'Major','minor'=>'Minor','trivial'=>'Trivial']" />
                 </div>
                 <div>
                     <label class="form-label text-xs">Environment</label>

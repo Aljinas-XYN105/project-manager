@@ -43,24 +43,18 @@
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search tasks…"
                class="form-input pl-9 text-sm">
     </div>
-    <select name="status" class="form-select w-auto text-sm">
-        <option value="">All Status</option>
-        @foreach(['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
-        <option value="{{ $v }}" {{ request('status')===$v?'selected':'' }}>{{ $l }}</option>
-        @endforeach
-    </select>
-    <select name="priority" class="form-select w-auto text-sm">
-        <option value="">All Priority</option>
-        @foreach(['low','medium','high','critical'] as $p)
-        <option value="{{ $p }}" {{ request('priority')===$p?'selected':'' }}>{{ ucfirst($p) }}</option>
-        @endforeach
-    </select>
-    <select name="assignee" class="form-select w-auto text-sm">
-        <option value="">All Assignees</option>
-        @foreach($members as $m)
-        <option value="{{ $m->id }}" {{ request('assignee')==$m->id?'selected':'' }}>{{ $m->name }}</option>
-        @endforeach
-    </select>
+    <x-ui.select name="status" placeholder="All Status"
+        :value="request('status','')"
+        :options="['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled']"
+        class="w-auto text-sm" />
+    <x-ui.select name="priority" placeholder="All Priority"
+        :value="request('priority','')"
+        :options="['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical']"
+        class="w-auto text-sm" />
+    <x-ui.select name="assignee" placeholder="All Assignees"
+        :value="request('assignee','')"
+        :options="$members->pluck('name','id')->toArray()"
+        class="w-auto text-sm" />
     <button type="submit" class="btn-primary btn-sm">Filter</button>
     @if(request()->anyFilled(['search','status','priority','assignee']))
     <a href="{{ route('projects.tasks.index', $project) }}" class="btn-ghost btn-sm">Clear</a>
@@ -86,16 +80,29 @@
     <span class="text-sm font-medium" x-text="selected.length + ' selected'"></span>
     <div class="w-px h-4 bg-white/20"></div>
     <div class="flex items-center gap-2">
-        <select @change="if($event.target.value) { bulkAction('status', $event.target.value); $event.target.value=''; }"
-                class="bg-white/10 text-white text-xs rounded-lg px-2.5 py-1.5 border border-white/20 focus:ring-1 focus:ring-violet-500 cursor-pointer">
-            <option value="">Change status…</option>
-            <option value="todo">To Do</option>
-            <option value="in_progress">In Progress</option>
-            <option value="qa_testing">QA Testing</option>
-            <option value="in_review">In Review</option>
-            <option value="done">Done</option>
-            <option value="cancelled">Cancelled</option>
-        </select>
+        <div x-data="{open:false}" @click.outside="open=false" class="relative">
+            <button type="button" @click="open=!open"
+                    class="bg-white/10 text-white text-xs rounded-lg px-2.5 py-1.5 border border-white/20 flex items-center gap-2 hover:bg-white/20 transition-colors">
+                <span>Change status…</span>
+                <i class="bi bi-chevron-down" style="font-size:0.6rem" :class="open?'rotate-180':''"></i>
+            </button>
+            <div x-show="open" x-cloak
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="opacity-0 translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 translate-y-1"
+                 style="z-index:200"
+                 class="absolute bottom-full mb-1 left-0 w-40 bg-slate-800 rounded-xl border border-white/10 shadow-2xl overflow-hidden">
+                @foreach(['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled'] as $v=>$l)
+                <button type="button" @click="bulkAction('status','{{ $v }}'); open=false;"
+                        class="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors">
+                    {{ $l }}
+                </button>
+                @endforeach
+            </div>
+        </div>
         <button @click="bulkAction('delete')"
                 class="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 px-2.5 py-1.5 rounded-lg hover:bg-rose-900/30 transition-colors">
             <i class="bi bi-trash"></i> Delete
@@ -169,17 +176,11 @@
                     </td>
                     <td class="hidden sm:table-cell">
                         <div x-data="{ status: '{{ $task->status }}' }">
-                            <select x-model="status"
-                                    @change="axios.patch('/tasks/{{ $task->id }}/status', {status}).then(()=>window.toast?.('Status updated','success'))"
-                                    class="text-xs font-medium bg-transparent border-0 focus:ring-0 p-0 pr-5 cursor-pointer
-                                           {{ $statusStyles[$task->status] ?? 'text-slate-500' }}">
-                                <option value="todo">To Do</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="qa_testing">QA Testing</option>
-                                <option value="in_review">In Review</option>
-                                <option value="done">Done</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
+                            <x-ui.select
+                                x-model="status"
+                                @change="axios.patch('/tasks/{{ $task->id }}/status', {status}).then(()=>window.toast?.('Status updated','success'))"
+                                :options="['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done','cancelled'=>'Cancelled']"
+                                class="text-xs w-auto" />
                         </div>
                     </td>
                     <td class="hidden md:table-cell">

@@ -23,19 +23,15 @@
                 </div>
                 <div>
                     <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        @foreach(['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold','completed'=>'Completed','archived'=>'Archived'] as $s=>$l)
-                        <option value="{{ $s }}" {{ old('status', $project->status) === $s ? 'selected' : '' }}>{{ $l }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="status"
+                        :value="old('status', $project->status)"
+                        :options="['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold','completed'=>'Completed','archived'=>'Archived']" />
                 </div>
                 <div>
                     <label class="form-label">Priority</label>
-                    <select name="priority" class="form-select">
-                        @foreach(['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical'] as $p=>$l)
-                        <option value="{{ $p }}" {{ old('priority', $project->priority) === $p ? 'selected' : '' }}>{{ $l }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="priority"
+                        :value="old('priority', $project->priority)"
+                        :options="['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical']" />
                 </div>
                 <div>
                     <label class="form-label">Project Color</label>

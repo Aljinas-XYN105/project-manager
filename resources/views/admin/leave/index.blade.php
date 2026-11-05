@@ -59,7 +59,7 @@
                 <div class="col-span-2"><label class="form-label text-xs">Name</label><input name="name" value="{{ $type->name }}" required class="form-input text-sm"></div>
                 <div><label class="form-label text-xs">Days/yr</label><input type="number" name="days_per_year" value="{{ $type->days_per_year }}" min="0" max="365" step="0.5" required class="form-input text-sm"></div>
                 <div><label class="form-label text-xs">Colour</label>
-                    <select name="color" class="form-select text-sm">@foreach(\App\Models\LeaveType::COLORS as $c)<option @selected($type->color === $c)>{{ $c }}</option>@endforeach</select>
+                    <x-ui.select name="color" :value="$type->color" :options="array_combine(\App\Models\LeaveType::COLORS,\App\Models\LeaveType::COLORS)" class="text-sm" />
                 </div>
                 <div class="space-y-1 text-xs text-slate-600 dark:text-slate-400">
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="is_paid" value="1" @checked($type->is_paid) class="rounded text-violet-600"> Paid</label>
@@ -76,7 +76,7 @@
             <div class="col-span-2"><label class="form-label text-xs">New type</label><input name="name" required placeholder="e.g. Parental Leave" class="form-input text-sm"></div>
             <div><label class="form-label text-xs">Days/yr</label><input type="number" name="days_per_year" value="5" min="0" max="365" step="0.5" required class="form-input text-sm"></div>
             <div><label class="form-label text-xs">Colour</label>
-                <select name="color" class="form-select text-sm">@foreach(\App\Models\LeaveType::COLORS as $c)<option>{{ $c }}</option>@endforeach</select>
+                <x-ui.select name="color" :options="array_combine(\App\Models\LeaveType::COLORS,\App\Models\LeaveType::COLORS)" class="text-sm" />
             </div>
             <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 pb-2"><input type="checkbox" name="is_paid" value="1" checked class="rounded text-violet-600"> Paid</label>
             <button class="btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add</button>

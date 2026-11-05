@@ -431,11 +431,27 @@ $columns = [
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="form-label">Column / Stage</label>
-                                <select @change="patchPanel('column_id', parseInt($event.target.value))" class="form-select">
-                                    <template x-for="col in panel.columns" :key="col.id">
-                                        <option :value="col.id" :selected="panel.task.column_id === col.id" x-text="col.name"></option>
-                                    </template>
-                                </select>
+                                <div x-data="{open:false}" @click.outside="open=false" class="relative">
+                                    <button type="button" @click="open=!open"
+                                            :class="open?'ring-2 ring-violet-500/30 border-violet-500 dark:border-violet-400':''"
+                                            class="form-input text-left flex items-center justify-between gap-2 w-full">
+                                        <span class="text-slate-900 dark:text-slate-100"
+                                              x-text="panel.columns.find(c=>c.id===panel.task.column_id)?.name||'—'"></span>
+                                        <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform duration-150"
+                                           :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                                    </button>
+                                    <div x-show="open" x-cloak style="z-index:300"
+                                         class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                                        <template x-for="col in panel.columns" :key="col.id">
+                                            <button type="button" @click="patchPanel('column_id',col.id); open=false"
+                                                    :class="panel.task.column_id===col.id?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                                    class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                                <span x-text="col.name"></span>
+                                                <i x-show="panel.task.column_id===col.id" class="bi bi-check2 text-violet-500 text-xs ml-2"></i>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <label class="form-label">Due Date</label>

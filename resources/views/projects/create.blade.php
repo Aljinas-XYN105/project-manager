@@ -29,19 +29,15 @@
                 </div>
                 <div>
                     <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        @foreach(['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold'] as $val => $label)
-                        <option value="{{ $val }}" {{ old('status','planning') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="status"
+                        :value="old('status','planning')"
+                        :options="['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold']" />
                 </div>
                 <div>
                     <label class="form-label">Priority</label>
-                    <select name="priority" class="form-select">
-                        @foreach(['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical'] as $val => $label)
-                        <option value="{{ $val }}" {{ old('priority','medium') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="priority"
+                        :value="old('priority','medium')"
+                        :options="['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical']" />
                 </div>
                 <div>
                     <label class="form-label">Project Color</label>

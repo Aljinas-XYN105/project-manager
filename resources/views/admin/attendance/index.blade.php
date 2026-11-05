@@ -100,12 +100,9 @@
 <form method="GET" class="card p-4 mb-4 flex flex-wrap items-end gap-3">
     <div>
         <label class="form-label">Member</label>
-        <select name="user_id" class="form-select">
-            <option value="">Everyone</option>
-            @foreach($users as $u)
-            <option value="{{ $u->id }}" @selected(request('user_id') == $u->id)>{{ $u->name }}</option>
-            @endforeach
-        </select>
+        <x-ui.select name="user_id" placeholder="Everyone"
+            :value="request('user_id','')"
+            :options="$users->pluck('name','id')->toArray()" />
     </div>
     <div>
         <label class="form-label">From</label>
@@ -215,12 +212,10 @@
             <div class="px-6 py-5 space-y-4 overflow-y-auto">
                 <div>
                     <label class="form-label">Member</label>
-                    <select name="user_id" x-model="form.user_id" required class="form-select">
-                        <option value="">Select member…</option>
-                        @foreach($users as $u)
-                        <option value="{{ $u->id }}">{{ $u->name }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="user_id" placeholder="Select member…"
+                        x-model="form.user_id"
+                        required
+                        :options="$users->pluck('name','id')->toArray()" />
                 </div>
                 <div>
                     <label class="form-label">Date</label>

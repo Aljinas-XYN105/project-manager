@@ -31,15 +31,17 @@
                               'story'=>['icon'=>'bi-bookmark-fill','color'=>'text-blue-500','label'=>'Story'],
                               'epic'=>['icon'=>'bi-lightning-fill','color'=>'text-orange-500','label'=>'Epic']];
                     @endphp
+                    <input type="hidden" name="type" :value="type">
                     @foreach($types as $tv => $td)
-                    <label class="flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all
-                                  border-slate-200 dark:border-slate-600 hover:border-violet-400"
-                           :class="type==='{{ $tv }}' ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 shadow-sm' : ''"
-                           @click="type='{{ $tv }}'">
-                        <input type="radio" name="type" value="{{ $tv }}" :checked="type==='{{ $tv }}'" class="sr-only">
+                    <button type="button"
+                            class="flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all
+                                   border-slate-200 dark:border-slate-600 hover:border-violet-400"
+                            :class="type==='{{ $tv }}' ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 shadow-sm' : ''"
+                            @mousedown.prevent
+                            @click="type='{{ $tv }}'">
                         <i class="bi {{ $td['icon'] }} {{ $td['color'] }}"></i>
                         <span class="text-sm">{{ $td['label'] }}</span>
-                    </label>
+                    </button>
                     @endforeach
                 </div>
             </div>
@@ -151,14 +153,9 @@
                 @if($project->sprints()->where('status','!=','completed')->exists())
                 <div>
                     <label class="form-label">Sprint</label>
-                    <select name="sprint_id" class="form-select">
-                        <option value="">Backlog (no sprint)</option>
-                        @foreach($project->sprints()->whereIn('status',['planning','active'])->get() as $sp)
-                        <option value="{{ $sp->id }}" {{ old('sprint_id')==$sp->id?'selected':'' }}>
-                            {{ $sp->name }} ({{ ucfirst($sp->status) }})
-                        </option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="sprint_id" placeholder="Backlog (no sprint)"
+                        :value="old('sprint_id','')"
+                        :options="$project->sprints()->whereIn('status',['planning','active'])->get()->mapWithKeys(fn($sp)=>[$sp->id=>$sp->name.' ('.ucfirst($sp->status).')'])->toArray()" />
                 </div>
                 @endif
             </div>
@@ -171,12 +168,9 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="form-label text-xs">Severity</label>
-                        <select name="severity" class="form-select">
-                            <option value="">Select severity</option>
-                            @foreach(['blocker'=>'🔴 Blocker','critical'=>'🟠 Critical','major'=>'🟡 Major','minor'=>'🟢 Minor','trivial'=>'⚪ Trivial'] as $sv=>$sl)
-                            <option value="{{ $sv }}" {{ old('severity')===$sv?'selected':'' }}>{{ $sl }}</option>
-                            @endforeach
-                        </select>
+                        <x-ui.select name="severity" placeholder="Select severity"
+                            :value="old('severity','')"
+                            :options="['blocker'=>'Blocker','critical'=>'Critical','major'=>'Major','minor'=>'Minor','trivial'=>'Trivial']" />
                     </div>
                     <div>
                         <label class="form-label text-xs">Environment</label>

@@ -42,20 +42,15 @@
                 </div>
                 <div>
                     <label class="form-label">Primary team</label>
-                    <select name="team_id" class="form-select">
-                        <option value="">No team</option>
-                        @foreach($teams as $team)
-                        <option value="{{ $team->id }}" @selected(old('team_id', $user->team_id) == $team->id)>{{ $team->name }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="team_id" placeholder="No team"
+                        :value="old('team_id', $user->team_id??'')"
+                        :options="$teams->pluck('name','id')->toArray()" />
                 </div>
                 <div>
                     <label class="form-label">Timezone</label>
-                    <select name="timezone" class="form-select">
-                        @foreach(timezone_identifiers_list() as $tz)
-                        <option value="{{ $tz }}" @selected(old('timezone', $user->timezone) === $tz)>{{ $tz }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="timezone"
+                        :value="old('timezone', $user->timezone??'UTC')"
+                        :options="array_combine(timezone_identifiers_list(), timezone_identifiers_list())" />
                     <p class="form-hint">Used to show this member's attendance times.</p>
                 </div>
                 @unless($user->exists)
@@ -94,22 +89,17 @@
                 </div>
                 <div>
                     <label class="form-label">Reports to</label>
-                    <select name="manager_id" class="form-select">
-                        <option value="">— No manager —</option>
-                        @foreach($managers as $m)
-                        <option value="{{ $m->id }}" @selected(old('manager_id', $user->manager_id) == $m->id)>{{ $m->name }}{{ $m->job_title ? ' · '.$m->job_title : '' }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="manager_id" placeholder="— No manager —"
+                        :value="old('manager_id', $user->manager_id??'')"
+                        :options="$managers->mapWithKeys(fn($m)=>[$m->id=>$m->name.($m->job_title?' · '.$m->job_title:'')])->toArray()" />
                     <p class="form-hint">The manager can approve this person's leave.</p>
                     @error('manager_id')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="form-label">Employment type</label>
-                    <select name="employment_type" class="form-select">
-                        @foreach(\App\Models\User::EMPLOYMENT_TYPES as $k => $label)
-                        <option value="{{ $k }}" @selected(old('employment_type', $user->employment_type ?? 'full_time') === $k)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="employment_type"
+                        :value="old('employment_type', $user->employment_type??'full_time')"
+                        :options="\App\Models\User::EMPLOYMENT_TYPES" />
                 </div>
                 <div>
                     <label class="form-label">Joining date</label>

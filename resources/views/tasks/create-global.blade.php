@@ -36,17 +36,20 @@
                     'epic'    => ['icon'=>'bi-lightning-fill','color'=>'text-orange-500','label'=>'Epic','desc'=>'Large initiative'],
                 ];
                 @endphp
+                <input type="hidden" name="type" :value="type">
                 @foreach($types as $tv => $td)
-                <label class="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all
-                              border-slate-200 dark:border-slate-700 hover:border-violet-400"
-                       :class="type==='{{ $tv }}' ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 shadow-sm' : ''">
-                    <input type="radio" name="type" value="{{ $tv }}" x-model="type" class="sr-only">
+                <button type="button"
+                        class="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all
+                               border-slate-200 dark:border-slate-700 hover:border-violet-400"
+                        :class="type==='{{ $tv }}' ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 shadow-sm' : ''"
+                        @mousedown.prevent
+                        @click="type='{{ $tv }}'">
                     <i class="bi {{ $td['icon'] }} {{ $td['color'] }} text-base"></i>
                     <div>
                         <span class="text-sm font-medium text-slate-900 dark:text-white">{{ $td['label'] }}</span>
                         <p class="text-[10px] text-slate-400 leading-none mt-0.5">{{ $td['desc'] }}</p>
                     </div>
-                </label>
+                </button>
                 @endforeach
             </div>
         </div>
@@ -67,14 +70,11 @@
             {{-- Project selector --}}
             <div>
                 <label class="form-label">Project *</label>
-                <select name="project_id" x-model="projectId" @change="loadProjectData()" class="form-select">
-                    <option value="">Select a project…</option>
-                    @foreach($projects as $proj)
-                    <option value="{{ $proj->id }}" {{ old('project_id', $defaultProject?->id) == $proj->id ? 'selected' : '' }}>
-                        {{ $proj->name }}
-                    </option>
-                    @endforeach
-                </select>
+                <x-ui.select name="project_id" placeholder="Select a project…"
+                    x-model="projectId"
+                    @change="loadProjectData()"
+                    :value="old('project_id', $defaultProject?->id??'')"
+                    :options="$projects->pluck('name','id')->toArray()" />
             </div>
         </div>
 
@@ -84,19 +84,15 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        @foreach(['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done'] as $v=>$l)
-                        <option value="{{ $v }}" {{ old('status','todo')===$v?'selected':'' }}>{{ $l }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="status"
+                        :value="old('status','todo')"
+                        :options="['todo'=>'To Do','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Done']" />
                 </div>
                 <div>
                     <label class="form-label">Priority</label>
-                    <select name="priority" class="form-select">
-                        @foreach(['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical'] as $v=>$l)
-                        <option value="{{ $v }}" {{ old('priority','medium')===$v?'selected':'' }}>{{ $l }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="priority"
+                        :value="old('priority','medium')"
+                        :options="['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical']" />
                 </div>
                 <div>
                     <label class="form-label">Due Date</label>
@@ -114,12 +110,32 @@
                 </div>
                 <div x-show="sprints.length > 0" x-cloak>
                     <label class="form-label">Sprint</label>
-                    <select name="sprint_id" class="form-select">
-                        <option value="">Backlog (no sprint)</option>
-                        <template x-for="sprint in sprints" :key="sprint.id">
-                            <option :value="sprint.id" x-text="sprint.name + ' (' + sprint.status + ')'"></option>
-                        </template>
-                    </select>
+                    <div x-data="{open:false,val:'',lbl:'Backlog (no sprint)'}" @click.outside="open=false" class="relative">
+                        <input type="hidden" name="sprint_id" :value="val">
+                        <button type="button" @click="open=!open"
+                                :class="open?'ring-2 ring-violet-500/30 border-violet-500':''"
+                                class="form-input text-left flex items-center justify-between gap-2 w-full">
+                            <span :class="val===''?'text-slate-400 dark:text-slate-500':''" x-text="lbl"></span>
+                            <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform duration-150" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                        </button>
+                        <div x-show="open" x-cloak style="z-index:200"
+                             class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+                            <button type="button" @click="val=''; lbl='Backlog (no sprint)'; open=false"
+                                    :class="val===''?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-400 dark:text-slate-500'"
+                                    class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                <span>Backlog (no sprint)</span>
+                                <i x-show="val===''" class="bi bi-check2 text-violet-500 text-xs"></i>
+                            </button>
+                            <template x-for="sp in sprints" :key="sp.id">
+                                <button type="button" @click="val=sp.id; lbl=sp.name+' ('+sp.status+')'; open=false"
+                                        :class="val===sp.id?'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/10 font-medium':'text-slate-700 dark:text-slate-200'"
+                                        class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                    <span x-text="sp.name+' ('+sp.status+')'"></span>
+                                    <i x-show="val===sp.id" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -133,12 +149,9 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="form-label text-xs">Severity</label>
-                    <select name="severity" class="form-select">
-                        <option value="">Select severity</option>
-                        @foreach(['blocker'=>'🔴 Blocker','critical'=>'🟠 Critical','major'=>'🟡 Major','minor'=>'🟢 Minor','trivial'=>'⚪ Trivial'] as $sv=>$sl)
-                        <option value="{{ $sv }}" {{ old('severity')===$sv?'selected':'' }}>{{ $sl }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="severity" placeholder="Select severity"
+                        :value="old('severity','')"
+                        :options="['blocker'=>'Blocker','critical'=>'Critical','major'=>'Major','minor'=>'Minor','trivial'=>'Trivial']" />
                 </div>
                 <div>
                     <label class="form-label text-xs">Environment</label>

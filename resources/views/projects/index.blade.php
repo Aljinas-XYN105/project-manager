@@ -22,18 +22,14 @@
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Search projects…"
                    class="form-input pl-9 text-sm">
         </div>
-        <select name="status" class="form-select w-auto text-sm">
-            <option value="">All Status</option>
-            @foreach(['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold','completed'=>'Completed','archived'=>'Archived'] as $v=>$l)
-            <option value="{{ $v }}" {{ request('status') === $v ? 'selected' : '' }}>{{ $l }}</option>
-            @endforeach
-        </select>
-        <select name="priority" class="form-select w-auto text-sm">
-            <option value="">All Priority</option>
-            @foreach(['low','medium','high','critical'] as $p)
-            <option value="{{ $p }}" {{ request('priority') === $p ? 'selected' : '' }}>{{ ucfirst($p) }}</option>
-            @endforeach
-        </select>
+        <x-ui.select name="status" placeholder="All Status"
+            :value="request('status','')"
+            :options="['planning'=>'Planning','active'=>'Active','on_hold'=>'On Hold','completed'=>'Completed','archived'=>'Archived']"
+            class="w-auto text-sm" />
+        <x-ui.select name="priority" placeholder="All Priority"
+            :value="request('priority','')"
+            :options="['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical']"
+            class="w-auto text-sm" />
         <button type="submit" class="btn-primary btn-sm">Filter</button>
         @if(request()->anyFilled(['search','status','priority']))
         <a href="{{ route('projects.index') }}" class="btn-ghost btn-sm">Clear</a>

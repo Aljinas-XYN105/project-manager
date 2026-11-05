@@ -50,31 +50,27 @@
 <form method="GET" class="flex flex-wrap gap-2 mb-5">
     <input type="hidden" name="view" value="{{ $view }}">
     <input type="hidden" name="scope" value="{{ $scope }}">
-    <select name="project_id" onchange="this.form.submit()" class="form-select text-sm w-auto">
-        <option value="">All projects</option>
-        @foreach($projects as $p)
-        <option value="{{ $p->id }}" @selected(request('project_id') == $p->id)>{{ $p->name }}</option>
-        @endforeach
-    </select>
-    <select name="priority" onchange="this.form.submit()" class="form-select text-sm w-auto">
-        <option value="">Any priority</option>
-        @foreach(['critical','high','medium','low'] as $pr)
-        <option value="{{ $pr }}" @selected(request('priority') === $pr)>{{ ucfirst($pr) }}</option>
-        @endforeach
-    </select>
+    <x-ui.select name="project_id" placeholder="All projects"
+        :value="request('project_id','')"
+        :options="$projects->pluck('name','id')->toArray()"
+        @change="$el.closest('form').submit()"
+        class="text-sm w-auto" />
+    <x-ui.select name="priority" placeholder="Any priority"
+        :value="request('priority','')"
+        :options="['critical'=>'Critical','high'=>'High','medium'=>'Medium','low'=>'Low']"
+        @change="$el.closest('form').submit()"
+        class="text-sm w-auto" />
     @if($isManager)
-    <select name="type" onchange="this.form.submit()" class="form-select text-sm w-auto">
-        <option value="">Any type</option>
-        @foreach(['bug' => 'Bug', 'feature' => 'Feature', 'task' => 'Task', 'improvement' => 'Improvement', 'chore' => 'Chore'] as $tv => $tl)
-        <option value="{{ $tv }}" @selected(request('type') === $tv)>{{ $tl }}</option>
-        @endforeach
-    </select>
-    <select name="assignee_id" onchange="this.form.submit()" class="form-select text-sm w-auto">
-        <option value="">Any person</option>
-        @foreach($members as $member)
-        <option value="{{ $member->id }}" @selected(request('assignee_id') == $member->id)>{{ $member->name }}</option>
-        @endforeach
-    </select>
+    <x-ui.select name="type" placeholder="Any type"
+        :value="request('type','')"
+        :options="['bug'=>'Bug','feature'=>'Feature','task'=>'Task','improvement'=>'Improvement','chore'=>'Chore']"
+        @change="$el.closest('form').submit()"
+        class="text-sm w-auto" />
+    <x-ui.select name="assignee_id" placeholder="Any person"
+        :value="request('assignee_id','')"
+        :options="$members->pluck('name','id')->toArray()"
+        @change="$el.closest('form').submit()"
+        class="text-sm w-auto" />
     @endif
     @if(request()->hasAny(['project_id','priority','type','assignee_id']))
     <a href="{{ route('my-tasks', ['view' => $view, 'scope' => $scope]) }}" class="btn-ghost btn-sm">Clear</a>

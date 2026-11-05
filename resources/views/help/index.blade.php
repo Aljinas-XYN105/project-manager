@@ -61,11 +61,10 @@
 
             {{-- Mobile section picker --}}
             <div class="lg:hidden card p-3">
-                <select class="form-select w-full" @change="activeSection = $event.target.value">
-                    @foreach($sections as $id => $s)
-                    <option value="{{ $id }}">{{ $s['label'] }}</option>
-                    @endforeach
-                </select>
+                <x-ui.select
+                    @change="activeSection = $event.detail"
+                    :options="collect($sections)->mapWithKeys(fn($s,$id)=>[$id=>$s['label']])->toArray()"
+                    class="w-full" />
             </div>
 
             {{-- ── OVERVIEW ── --}}

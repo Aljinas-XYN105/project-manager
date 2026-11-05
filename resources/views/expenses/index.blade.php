@@ -180,12 +180,11 @@
                 </div>
                 <div>
                     <label class="form-label">Category <span class="text-rose-500">*</span></label>
-                    <select name="category" class="form-select @error('category') border-rose-400 @enderror" required>
-                        <option value="">Select…</option>
-                        @foreach($categories as $cat)
-                        <option value="{{ $cat }}" {{ old('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="category" placeholder="Select…"
+                        :value="old('category','')"
+                        :options="array_combine($categories, $categories)"
+                        required
+                        class="@error('category') ring-2 ring-rose-400/30 border-rose-400 @enderror" />
                     @error('category')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
                 </div>
             </div>

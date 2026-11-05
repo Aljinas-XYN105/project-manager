@@ -36,21 +36,15 @@
             </div>
             <div>
                 <label class="form-label">Project</label>
-                <select name="project_id" class="form-select">
-                    <option value="">All Projects</option>
-                    @foreach($projects as $p)
-                    <option value="{{ $p->id }}" @selected(request('project_id') == $p->id)>{{ $p->name }}</option>
-                    @endforeach
-                </select>
+                <x-ui.select name="project_id" placeholder="All Projects"
+                    :value="request('project_id','')"
+                    :options="$projects->pluck('name','id')->toArray()" />
             </div>
             <div>
                 <label class="form-label">User</label>
-                <select name="user_id" class="form-select">
-                    <option value="">All Users</option>
-                    @foreach($users as $u)
-                    <option value="{{ $u->id }}" @selected(request('user_id') == $u->id)>{{ $u->name }}</option>
-                    @endforeach
-                </select>
+                <x-ui.select name="user_id" placeholder="All Users"
+                    :value="request('user_id','')"
+                    :options="$users->pluck('name','id')->toArray()" />
             </div>
             <button type="submit" class="btn-primary">Apply Filters</button>
             <a href="{{ route('reports.time') }}" class="btn-secondary">Reset</a>

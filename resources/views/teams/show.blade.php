@@ -85,20 +85,16 @@
             <div class="px-6 py-5 space-y-4 overflow-y-auto">
                 <div>
                     <label class="form-label">Member</label>
-                    <select name="user_id" class="form-select" required>
-                        <option value="">Select a user…</option>
-                        @foreach($availableUsers as $u)
-                        <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="user_id" placeholder="Select a user…"
+                        required
+                        :options="$availableUsers->mapWithKeys(fn($u)=>[$u->id=>$u->name.' ('.$u->email.')'])->toArray()" />
                 </div>
                 <div>
                     <label class="form-label">Role</label>
-                    <select name="role" class="form-select" required>
-                        <option value="member">Member</option>
-                        <option value="admin">Admin</option>
-                        <option value="viewer">Viewer</option>
-                    </select>
+                    <x-ui.select name="role"
+                        value="member"
+                        required
+                        :options="['member'=>'Member','admin'=>'Admin','viewer'=>'Viewer']" />
                 </div>
             </div>
             <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex justify-end gap-2 flex-shrink-0">

@@ -179,11 +179,6 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
 
         async autoSave() { await this.save(); },
 
-        // ── Task detail panel ────────────────────────────────────────────
-        panelOpen:    false,
-        panel:        null,
-        panelLoading: false,
-
         ticketKey(description) {
             const m = String(description).match(/^\[([A-Z]+-\d+)\]/);
             return m ? m[1] : null;
@@ -193,47 +188,9 @@ function standupBoard(userId, dateStr, existingItems, existingBlockers, alreadyS
             return String(description).replace(/^\[[A-Z]+-\d+\]\s*/, '');
         },
 
-        async openPanel(taskId) {
+        openTaskPanel(taskId) {
             if (!taskId) return;
-            this.panelOpen    = true;
-            this.panelLoading = true;
-            this.panel        = null;
-            try {
-                const res = await fetch(`/tasks/${taskId}/panel-data`, {
-                    headers: { Accept: 'application/json' },
-                });
-                if (res.ok) this.panel = await res.json();
-            } finally {
-                this.panelLoading = false;
-            }
-        },
-
-        closePanel() {
-            this.panelOpen          = false;
-            this.panel              = null;
-            this.showAssigneePicker = false;
-        },
-
-        async patchPanel(field, value) {
-            if (!this.panel?.task?.id) return;
-            const id = this.panel.task.id;
-            const res = await fetch(`/tasks/${id}`, {
-                method:  'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept':       'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content,
-                },
-                body: JSON.stringify({ [field]: value }),
-            });
-            if (res.ok) {
-                this.panel.task[field] = value;
-                // Reflect priority/status change back onto the standup card
-                if (field === 'status') {
-                    const item = this.items.find(i => i.task_id === id);
-                    if (item) { item.status = value; this.autoSave(); }
-                }
-            }
+            window.dispatchEvent(new CustomEvent('open-task-panel', { detail: { taskId } }));
         },
 
         async submitStandup() {
@@ -400,7 +357,7 @@ window.__standupInit = function() {
                     <div draggable="true"
                          @dragstart="dragStart($event, item._id)"
                          @dragend="dragging = null; dragOverStatus = null"
-                         @click="!dragging && item.task_id && openPanel(item.task_id)"
+                         @click="!dragging && item.task_id && openTaskPanel(item.task_id)"
                          :class="[
                              dragging === item._id ? 'opacity-40 cursor-grabbing' : (item.task_id ? 'cursor-pointer' : 'cursor-grab')
                          ]"
@@ -491,330 +448,8 @@ window.__standupInit = function() {
         </button>
     </div>
 
-    {{-- ── Backdrop (z-40, below sidebar z-50 so nav stays visible) ───── --}}
-    <template x-teleport="body">
-        <div x-show="panelOpen" x-cloak @click="closePanel()"
-             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-black/20 backdrop-blur-[2px]" style="display:none; z-index:40"></div>
-    </template>
+    {{-- ── Task Detail Panel: handled by global <x-task-quick-panel /> in layouts/app.blade.php ── --}}
 
-    {{-- ── Task Detail Panel ───────────────────────────────────────────── --}}
-    <template x-teleport="body">
-        <div x-show="panelOpen" x-cloak
-             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
-             x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-             class="fixed right-0 top-0 w-full max-w-sm sm:max-w-md md:max-w-[440px]
-                    bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700
-                    shadow-2xl flex flex-col overflow-hidden" style="display:none; z-index:300; bottom:0">
-
-            <template x-if="panelLoading">
-                <div class="flex-1 flex items-center justify-center">
-                    <i class="bi bi-arrow-repeat animate-spin text-slate-400 text-2xl"></i>
-                </div>
-            </template>
-
-            <template x-if="panel && !panelLoading">
-                <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
-
-                    {{-- Header --}}
-                    <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
-                        <div class="flex-1 min-w-0 flex items-center gap-2 text-xs">
-                            <i class="bi bi-check2-square text-violet-500 text-sm flex-shrink-0"></i>
-                            <span class="font-semibold text-slate-700 dark:text-slate-200" x-text="panel.task.ticket_key"></span>
-                            <span class="text-slate-300 dark:text-slate-600">·</span>
-                            <span class="text-slate-500 dark:text-slate-400 truncate" x-text="panel.task.project_name"></span>
-                        </div>
-                        <div class="flex items-center gap-0.5 flex-shrink-0">
-                            <a :href="panel.task.show_url" target="_blank" title="Open"
-                               class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
-                                <i class="bi bi-box-arrow-up-right text-sm"></i>
-                            </a>
-                            <a :href="panel.task.edit_url" title="Edit"
-                               class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
-                                <i class="bi bi-pencil text-sm"></i>
-                            </a>
-                            <button @click="closePanel()" title="Close"
-                                    class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                                <i class="bi bi-x-lg text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    {{-- Scrollable body --}}
-                    <div class="flex-1 overflow-y-auto">
-
-                        {{-- Title --}}
-                        <div class="px-5 pt-4 pb-3.5 border-b border-slate-100 dark:border-slate-700/60">
-                            <div x-text="panel.task.title" contenteditable="true"
-                                 @blur="patchPanel('title', $el.textContent.trim())" @keydown.enter.prevent="$el.blur()"
-                                 class="text-lg font-semibold text-slate-900 dark:text-white leading-snug outline-none rounded-lg
-                                        px-2 py-1 -mx-2 cursor-text min-h-[1.5em]
-                                        hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 transition-colors"></div>
-                        </div>
-
-                        {{-- Properties --}}
-                        <div class="border-b border-slate-100 dark:border-slate-700/60">
-                            <div class="divide-y divide-slate-50 dark:divide-slate-700/40">
-                                <div class="flex items-center px-5 py-2.5">
-                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Type</span>
-                                    <div class="relative flex-1">
-                                        <select @change="patchPanel('type', $event.target.value)"
-                                                class="w-full text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
-                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
-                                            <template x-for="t in ['task','bug','feature','story','epic']" :key="t">
-                                                <option :value="t" :selected="panel.task.type === t" x-text="t.charAt(0).toUpperCase()+t.slice(1)"></option>
-                                            </template>
-                                        </select>
-                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
-                                    </div>
-                                </div>
-                                <div class="flex items-center px-5 py-2.5">
-                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Priority</span>
-                                    <div class="relative flex-1 flex items-center gap-2">
-                                        <span class="w-2 h-2 rounded-full flex-shrink-0"
-                                              :class="{'bg-slate-300': panel.task.priority==='low','bg-amber-400': panel.task.priority==='medium','bg-orange-500': panel.task.priority==='high','bg-rose-500': panel.task.priority==='critical'}"></span>
-                                        <select @change="patchPanel('priority', $event.target.value)"
-                                                class="flex-1 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
-                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
-                                            <template x-for="p in ['low','medium','high','critical']" :key="p">
-                                                <option :value="p" :selected="panel.task.priority === p" x-text="p.charAt(0).toUpperCase()+p.slice(1)"></option>
-                                            </template>
-                                        </select>
-                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
-                                    </div>
-                                </div>
-                                <div class="flex items-center px-5 py-2.5">
-                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Column</span>
-                                    <div class="relative flex-1">
-                                        <select @change="patchPanel('column_id', parseInt($event.target.value))"
-                                                class="w-full text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none pr-4"
-                                                style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none">
-                                            <template x-for="col in panel.columns" :key="col.id">
-                                                <option :value="col.id" :selected="panel.task.column_id === col.id" x-text="col.name"></option>
-                                            </template>
-                                        </select>
-                                        <i class="bi bi-chevron-expand absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-300 pointer-events-none"></i>
-                                    </div>
-                                </div>
-                                <div class="flex items-center px-5 py-2.5">
-                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Due date</span>
-                                    <input type="date" :value="panel.task.due_date || ''"
-                                           @change="patchPanel('due_date', $event.target.value || null)"
-                                           class="flex-1 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer outline-none"
-                                           style="background:transparent; border:none; padding:0; appearance:none; -webkit-appearance:none" />
-                                </div>
-                                <div class="flex items-center px-5 py-2.5">
-                                    <span class="text-xs text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">Estimate</span>
-                                    <div class="flex items-center gap-1.5">
-                                        <input type="number" min="0" step="0.5" :value="panel.task.estimated_hours ?? 0"
-                                               @change="patchPanel('estimated_hours', parseFloat($event.target.value) || 0)"
-                                               class="w-14 text-sm text-slate-700 dark:text-slate-200 font-medium outline-none"
-                                               style="background:transparent; border:none; padding:0" />
-                                        <span class="text-xs text-slate-400">hrs</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Assignees --}}
-                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
-                            <div class="flex items-center justify-between mb-3">
-                                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Assignees</p>
-                                <button @click="showAssigneePicker = !showAssigneePicker"
-                                        :class="showAssigneePicker ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-violet-500'"
-                                        class="text-xs font-medium transition-colors flex items-center gap-1">
-                                    <i :class="showAssigneePicker ? 'bi-check-lg' : 'bi-person-plus'" class="bi text-xs"></i>
-                                    <span x-text="showAssigneePicker ? 'Done' : 'Edit'"></span>
-                                </button>
-                            </div>
-                            <div class="flex items-center flex-wrap gap-2" x-show="!showAssigneePicker">
-                                <template x-if="panel.task.assignee_ids.length === 0">
-                                    <p class="text-sm text-slate-400 italic">No one assigned</p>
-                                </template>
-                                <template x-for="m in panel.members.filter(m => panel.task.assignee_ids.includes(m.id))" :key="'av-'+m.id">
-                                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 rounded-full pl-1 pr-3 py-1 border border-slate-200 dark:border-slate-700">
-                                        <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold"
-                                             style="background:#ede9fe; color:#7c3aed"
-                                             x-text="m.name.substring(0,2).toUpperCase()"></div>
-                                        <span class="text-xs font-medium text-slate-700 dark:text-slate-200" x-text="m.name.split(' ')[0]"></span>
-                                    </div>
-                                </template>
-                            </div>
-                            <div x-show="showAssigneePicker" x-cloak
-                                 class="grid grid-cols-2 gap-0.5 max-h-40 overflow-y-auto mt-1">
-                                <template x-for="m in panel.members" :key="'pick-'+m.id">
-                                    <button @click="const ids=panel.task.assignee_ids.includes(m.id)?panel.task.assignee_ids.filter(id=>id!==m.id):[...panel.task.assignee_ids,m.id]; panel.task.assignee_ids=ids; patchPanel('assignee_ids',ids);"
-                                            :class="panel.task.assignee_ids.includes(m.id)?'bg-violet-50 dark:bg-violet-900/20':'hover:bg-slate-50 dark:hover:bg-slate-800'"
-                                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors">
-                                        <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold"
-                                             :style="panel.task.assignee_ids.includes(m.id) ? 'background:#ede9fe;color:#7c3aed' : 'background:#e2e8f0;color:#64748b'"
-                                             x-text="m.name.substring(0,2).toUpperCase()"></div>
-                                        <span class="flex-1 text-sm truncate"
-                                              :class="panel.task.assignee_ids.includes(m.id) ? 'text-violet-700 dark:text-violet-300 font-medium' : 'text-slate-600 dark:text-slate-300'"
-                                              x-text="m.name.split(' ')[0]"></span>
-                                        <i x-show="panel.task.assignee_ids.includes(m.id)" class="bi bi-check2 text-violet-500 text-xs flex-shrink-0"></i>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-
-                        {{-- Labels --}}
-                        <template x-if="panel.labels && panel.labels.length">
-                            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Labels</p>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <template x-for="lbl in panel.labels" :key="lbl.id">
-                                        <button @click="const ids=panel.task.label_ids.includes(lbl.id)?panel.task.label_ids.filter(id=>id!==lbl.id):[...panel.task.label_ids,lbl.id]; panel.task.label_ids=ids; patchPanel('label_ids',ids);"
-                                                :style="`border-color:${lbl.color}; color:${lbl.color}; background:${panel.task.label_ids.includes(lbl.id)?lbl.color+'22':'transparent'}`"
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full border text-xs font-medium transition-all"
-                                                x-text="lbl.name"></button>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-
-                        {{-- Attachments --}}
-                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60"
-                             x-data="{
-                                 attachFiles: [],
-                                 dropping: false,
-                                 errors: [],
-                                 allowed: ['jpg','jpeg','png','gif','pdf','webp','mp4','mov','doc','docx','xls','xlsx','zip'],
-                                 maxBytes: 100 * 1024 * 1024,
-                                 addFiles(list) {
-                                     this.errors = [];
-                                     for (const f of list) {
-                                         const ext = f.name.split('.').pop().toLowerCase();
-                                         if (!this.allowed.includes(ext)) { this.errors.push(f.name + ': type not allowed'); continue; }
-                                         if (f.size > this.maxBytes) { this.errors.push(f.name + ': exceeds 100 MB'); continue; }
-                                         if (this.attachFiles.length >= 20) { this.errors.push('Max 20 files'); break; }
-                                         const ext2 = ext;
-                                         this.attachFiles.push({
-                                             name: f.name,
-                                             size: f.size > 1048576 ? (f.size/1048576).toFixed(1)+' MB' : Math.round(f.size/1024)+' KB',
-                                             icon: ['jpg','jpeg','png','gif','webp'].includes(ext2) ? 'bi-file-earmark-image text-violet-500'
-                                                 : ext2 === 'pdf' ? 'bi-file-earmark-pdf text-rose-500'
-                                                 : ['mp4','mov'].includes(ext2) ? 'bi-file-earmark-play text-sky-500'
-                                                 : ['doc','docx'].includes(ext2) ? 'bi-file-earmark-word text-blue-500'
-                                                 : ['xls','xlsx'].includes(ext2) ? 'bi-file-earmark-excel text-emerald-500'
-                                                 : ext2 === 'zip' ? 'bi-file-earmark-zip text-amber-500'
-                                                 : 'bi-file-earmark text-slate-400',
-                                         });
-                                     }
-                                 },
-                                 removeAttachFile(i) { this.attachFiles.splice(i,1); }
-                             }">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                    Attachments
-                                    <span x-show="panel.attachments.length > 0 || attachFiles.length > 0"
-                                          x-text="'('+(panel.attachments.length + attachFiles.length)+')'"></span>
-                                </p>
-                                <label class="inline-flex items-center gap-1 text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-800 cursor-pointer">
-                                    <i class="bi bi-plus-lg text-xs"></i> Add
-                                    <input type="file" class="sr-only" multiple
-                                           @change="addFiles($event.target.files); $event.target.value=''">
-                                </label>
-                            </div>
-
-                            {{-- Drop zone --}}
-                            <div @dragover.prevent="dropping = true"
-                                 @dragleave.prevent="dropping = false"
-                                 @drop.prevent="dropping = false; addFiles($event.dataTransfer?.files ?? [])"
-                                 @click="$el.querySelector('input[type=file]').click()"
-                                 :class="dropping ? 'border-violet-400 bg-violet-50 dark:bg-violet-900/10' : 'border-slate-200 dark:border-slate-700 hover:border-violet-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'"
-                                 class="border-2 border-dashed rounded-xl py-4 flex flex-col items-center gap-1.5 text-center cursor-pointer transition-colors mb-2">
-                                <input type="file" class="sr-only" multiple
-                                       @change.stop="addFiles($event.target.files); $event.target.value=''">
-                                <i class="bi bi-cloud-upload text-xl"
-                                   :class="dropping ? 'text-violet-500' : 'text-slate-300 dark:text-slate-600'"></i>
-                                <p class="text-xs font-medium text-slate-600 dark:text-slate-300">
-                                    <span class="text-violet-600 dark:text-violet-400">Click to upload</span> or drag & drop
-                                </p>
-                                <p class="text-[11px] text-slate-400">Images, PDF, Video, Docs — max 100 MB each</p>
-                            </div>
-
-                            {{-- Existing attachments --}}
-                            <template x-if="panel.attachments.length > 0">
-                                <div class="space-y-1 mb-1.5">
-                                    <template x-for="att in panel.attachments" :key="att.id">
-                                        <div class="flex items-center gap-2 group">
-                                            <i class="bi bi-paperclip text-xs text-slate-400 flex-shrink-0"></i>
-                                            <a :href="att.url" target="_blank"
-                                               class="flex-1 text-xs text-violet-600 dark:text-violet-400 hover:underline truncate"
-                                               x-text="att.original_name"></a>
-                                            <span class="text-[11px] text-slate-400 flex-shrink-0" x-text="att.size_formatted"></span>
-                                        </div>
-                                    </template>
-                                </div>
-                            </template>
-
-                            {{-- Newly selected files --}}
-                            <template x-if="attachFiles.length > 0">
-                                <div class="space-y-1">
-                                    <template x-for="(f, i) in attachFiles" :key="i">
-                                        <div class="flex items-center gap-2 px-2 py-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                                            <i class="bi flex-shrink-0 text-sm" :class="f.icon"></i>
-                                            <span class="flex-1 text-xs text-slate-700 dark:text-slate-200 truncate" x-text="f.name"></span>
-                                            <span class="text-[11px] text-slate-400 flex-shrink-0" x-text="f.size"></span>
-                                            <button type="button" @click="removeAttachFile(i)"
-                                                    class="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0">
-                                                <i class="bi bi-x-lg" style="font-size:10px"></i>
-                                            </button>
-                                        </div>
-                                    </template>
-                                </div>
-                            </template>
-
-                            {{-- Errors --}}
-                            <template x-if="errors.length > 0">
-                                <div class="mt-1 space-y-0.5">
-                                    <template x-for="(e,i) in errors" :key="i">
-                                        <p class="text-[11px] text-rose-500" x-text="e"></p>
-                                    </template>
-                                </div>
-                            </template>
-                        </div>
-
-                        {{-- Description --}}
-                        <div class="px-5 py-4">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Description</p>
-                            <textarea rows="4" placeholder="Add a description…"
-                                      @blur="patchPanel('description', $el.value.trim())"
-                                      x-init="$el.value = panel.task.description || ''"
-                                      class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700
-                                             rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 outline-none
-                                             focus:border-violet-400 transition-colors resize-none leading-relaxed
-                                             placeholder-slate-300 dark:placeholder-slate-600"></textarea>
-                        </div>
-
-                    </div>{{-- /scrollable body --}}
-
-                    {{-- Footer --}}
-                    <div class="flex items-center gap-2 px-5 py-3.5 border-t border-slate-100 dark:border-slate-700/60 flex-shrink-0 bg-white dark:bg-slate-900">
-                        <a :href="panel.task.show_url" target="_blank"
-                           class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
-                                  bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors">
-                            <i class="bi bi-box-arrow-up-right text-xs"></i> Open task
-                        </a>
-                        <a :href="panel.task.edit_url"
-                           class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
-                                  border border-slate-200 dark:border-slate-700 text-sm font-medium
-                                  text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                            <i class="bi bi-pencil text-xs"></i> Edit
-                        </a>
-                        <button @click="closePanel()"
-                                class="w-9 h-9 rounded-xl flex items-center justify-center border border-slate-200 dark:border-slate-700
-                                       text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex-shrink-0">
-                            <i class="bi bi-x text-base"></i>
-                        </button>
-                    </div>
-
-                </div>
-            </template>
-        </div>
-    </template>
 
     {{-- ── Add Task Modal ──────────────────────────────────────────────── --}}
     <template x-teleport="body">
@@ -967,27 +602,52 @@ window.__standupInit = function() {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Project <span class="text-rose-400">*</span></p>
-                                <select x-model="newTaskProject"
-                                        class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700
-                                               rounded-xl px-3 py-2 outline-none focus:border-violet-400 transition-colors cursor-pointer"
-                                        :class="newTaskProject ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'">
-                                    <option value="">Select…</option>
-                                    <template x-for="p in projects" :key="p.id">
-                                        <option :value="p.id" x-text="p.name"></option>
-                                    </template>
-                                </select>
+                                <div x-data="{open:false}" @click.outside="open=false" class="relative">
+                                    <button type="button" @click="open=!open"
+                                            :class="[open?'ring-2 ring-violet-500/30 border-violet-500 dark:border-violet-400':'','w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 flex items-center justify-between transition-colors']">
+                                        <span :class="newTaskProject?'text-slate-700 dark:text-slate-200':'text-slate-400'"
+                                              x-text="newTaskProject ? (projects.find(p=>p.id==newTaskProject)||{name:'Select…'}).name : 'Select…'"></span>
+                                        <i class="bi bi-chevron-down text-slate-400 flex-shrink-0 transition-transform duration-150" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                                    </button>
+                                    <div x-show="open" x-cloak style="z-index:300"
+                                         class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                                        <button type="button" @click="newTaskProject=''; open=false"
+                                                :class="newTaskProject===''?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-400 dark:text-slate-500'"
+                                                class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                            <span>Select…</span>
+                                            <i x-show="newTaskProject===''" class="bi bi-check2 text-violet-500 text-xs ml-2"></i>
+                                        </button>
+                                        <template x-for="p in projects" :key="p.id">
+                                            <button type="button" @click="newTaskProject=p.id; open=false"
+                                                    :class="newTaskProject==p.id?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                                    class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                                <span x-text="p.name"></span>
+                                                <i x-show="newTaskProject==p.id" class="bi bi-check2 text-violet-500 text-xs ml-2"></i>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Priority</p>
-                                <select x-model="newTaskPriority"
-                                        class="w-full text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800
-                                               border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2
-                                               outline-none focus:border-violet-400 transition-colors cursor-pointer">
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </select>
+                                <div x-data="{open:false}" @click.outside="open=false" class="relative">
+                                    <button type="button" @click="open=!open"
+                                            :class="[open?'ring-2 ring-violet-500/30 border-violet-500 dark:border-violet-400':'','w-full text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 flex items-center justify-between transition-colors']">
+                                        <span x-text="newTaskPriority ? newTaskPriority.charAt(0).toUpperCase()+newTaskPriority.slice(1) : 'Medium'"></span>
+                                        <i class="bi bi-chevron-down text-slate-400 flex-shrink-0 transition-transform duration-150" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
+                                    </button>
+                                    <div x-show="open" x-cloak style="z-index:300"
+                                         class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+                                        @foreach(['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical'] as $v=>$l)
+                                        <button type="button" @click="newTaskPriority='{{ $v }}'; open=false"
+                                                :class="newTaskPriority==='{{ $v }}'?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                                class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                            <span>{{ $l }}</span>
+                                            <i x-show="newTaskPriority==='{{ $v }}'" class="bi bi-check2 text-violet-500 text-xs ml-2"></i>
+                                        </button>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

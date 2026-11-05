@@ -19,12 +19,11 @@
         <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
         <input type="search" name="q" value="{{ request('q') }}" class="form-input pl-9 text-sm" placeholder="Name or email…">
     </div>
-    <select name="department" onchange="this.form.submit()" class="form-select text-sm w-auto">
-        <option value="">All departments</option>
-        @foreach($departments as $d)
-        <option value="{{ $d }}" @selected(request('department') === $d)>{{ $d }}</option>
-        @endforeach
-    </select>
+    <x-ui.select name="department" placeholder="All departments"
+        :value="request('department','')"
+        :options="array_combine($departments,$departments)"
+        @change="$el.closest('form').submit()"
+        class="text-sm w-auto" />
     <button class="btn-secondary btn-sm">Search</button>
 </form>
 

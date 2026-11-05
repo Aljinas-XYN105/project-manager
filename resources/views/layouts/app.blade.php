@@ -142,7 +142,7 @@
                     ->count(),
                 'expenses' => \App\Models\Expense::where('status', 'pending')
                     ->where('user_id', '!=', $authUser->id)
-                    ->when(! ($authUser->hasRole('admin') || $authUser->hasRole('manager')),
+                    ->when(! $authUser->can('expenses.review'),
                         fn ($q) => $q->whereIn('user_id', $authUser->directReports()->pluck('id')))
                     ->count(),
             ];
@@ -768,18 +768,21 @@
 
             <!-- Type pills -->
             <div class="flex items-center gap-1.5 flex-wrap">
+                <input type="hidden" name="type" :value="quickAddType">
                 @foreach(['task'=>['bi-check-square-fill','text-slate-500','Task'],
                            'bug'=>['bi-bug-fill','text-red-500','Bug'],
                            'feature'=>['bi-stars','text-purple-500','Feature'],
                            'story'=>['bi-bookmark-fill','text-blue-500','Story'],
                            'epic'=>['bi-lightning-fill','text-orange-500','Epic']] as $tv => [$icon,$color,$label])
-                <label class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-all duration-100
+                <button type="button"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-all duration-100
                                border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400
                                hover:border-violet-400 hover:text-violet-600"
-                       :class="quickAddType === '{{ $tv }}' ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300' : ''">
-                    <input type="radio" name="type" value="{{ $tv }}" x-model="quickAddType" class="sr-only">
+                        :class="quickAddType === '{{ $tv }}' ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300' : ''"
+                        @mousedown.prevent
+                        @click="quickAddType = '{{ $tv }}'">
                     <i class="bi {{ $icon }} {{ $color }}"></i> {{ $label }}
-                </label>
+                </button>
                 @endforeach
             </div>
 
@@ -787,23 +790,17 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="form-label">Project</label>
-                    <select name="project_id" class="form-select text-sm" required>
-                        <option value="">Select project…</option>
-                        @foreach(\App\Models\Project::where('status','!=','archived')
-                                    ->orderBy('name')
-                                    ->get() as $p)
-                        <option value="{{ $p->id }}">{{ $p->name }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.select name="project_id" placeholder="Select project…"
+                        required
+                        :options="\App\Models\Project::where('status','!=','archived')->orderBy('name')->pluck('name','id')->toArray()"
+                        class="text-sm" />
                 </div>
                 <div>
                     <label class="form-label">Priority</label>
-                    <select name="priority" class="form-select text-sm">
-                        <option value="low">Low</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="high">High</option>
-                        <option value="critical">Critical</option>
-                    </select>
+                    <x-ui.select name="priority"
+                        value="medium"
+                        :options="['low'=>'Low','medium'=>'Medium','high'=>'High','critical'=>'Critical']"
+                        class="text-sm" />
                 </div>
             </div>
 

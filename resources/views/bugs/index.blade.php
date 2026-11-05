@@ -52,39 +52,31 @@ $statsConfig = [
     <form method="GET" action="{{ route('bugs.index') }}" class="flex flex-wrap items-end gap-3">
         <div class="flex-1 min-w-[160px]">
             <label class="form-label">Status</label>
-            <select name="status" class="form-select text-sm">
-                <option value="">All Statuses</option>
-                @foreach(['todo'=>'Open','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Resolved','cancelled'=>'Closed'] as $v=>$l)
-                <option value="{{ $v }}" {{ request('status')===$v?'selected':'' }}>{{ $l }}</option>
-                @endforeach
-            </select>
+            <x-ui.select name="status" placeholder="All Statuses"
+                :value="request('status','')"
+                :options="['todo'=>'Open','in_progress'=>'In Progress','qa_testing'=>'QA Testing','in_review'=>'In Review','done'=>'Resolved','cancelled'=>'Closed']"
+                class="text-sm" />
         </div>
         <div class="min-w-[130px]">
             <label class="form-label">Severity</label>
-            <select name="severity" class="form-select text-sm">
-                <option value="">All Severity</option>
-                @foreach(['blocker'=>'🔴 Blocker','critical'=>'🟠 Critical','major'=>'🟡 Major','minor'=>'🟢 Minor','trivial'=>'⚪ Trivial'] as $v=>$l)
-                <option value="{{ $v }}" {{ request('severity')===$v?'selected':'' }}>{{ $l }}</option>
-                @endforeach
-            </select>
+            <x-ui.select name="severity" placeholder="All Severity"
+                :value="request('severity','')"
+                :options="['blocker'=>'Blocker','critical'=>'Critical','major'=>'Major','minor'=>'Minor','trivial'=>'Trivial']"
+                class="text-sm" />
         </div>
         <div class="min-w-[120px]">
             <label class="form-label">Priority</label>
-            <select name="priority" class="form-select text-sm">
-                <option value="">All Priority</option>
-                @foreach(['critical','high','medium','low'] as $p)
-                <option value="{{ $p }}" {{ request('priority')===$p?'selected':'' }}>{{ ucfirst($p) }}</option>
-                @endforeach
-            </select>
+            <x-ui.select name="priority" placeholder="All Priority"
+                :value="request('priority','')"
+                :options="['critical'=>'Critical','high'=>'High','medium'=>'Medium','low'=>'Low']"
+                class="text-sm" />
         </div>
         <div class="min-w-[160px]">
             <label class="form-label">Project</label>
-            <select name="project_id" class="form-select text-sm">
-                <option value="">All Projects</option>
-                @foreach($projects as $proj)
-                <option value="{{ $proj->id }}" {{ request('project_id')==$proj->id?'selected':'' }}>{{ $proj->name }}</option>
-                @endforeach
-            </select>
+            <x-ui.select name="project_id" placeholder="All Projects"
+                :value="request('project_id','')"
+                :options="$projects->pluck('name','id')->toArray()"
+                class="text-sm" />
         </div>
         <div class="flex gap-2">
             <button type="submit" class="btn-primary btn-sm"><i class="bi bi-funnel"></i> Filter</button>

@@ -14,12 +14,11 @@
     </div>
     <div class="flex items-center gap-3">
         <form method="GET">
-            <select name="period" onchange="this.form.submit()" class="form-select text-sm">
-                <option value="7"  {{ $period=='7'  ? 'selected':'' }}>Last 7 days</option>
-                <option value="14" {{ $period=='14' ? 'selected':'' }}>Last 14 days</option>
-                <option value="30" {{ $period=='30' ? 'selected':'' }}>Last 30 days</option>
-                <option value="90" {{ $period=='90' ? 'selected':'' }}>Last 90 days</option>
-            </select>
+            <x-ui.select name="period"
+                :value="$period"
+                :options="['7'=>'Last 7 days','14'=>'Last 14 days','30'=>'Last 30 days','90'=>'Last 90 days']"
+                @change="$el.closest('form').submit()"
+                class="text-sm" />
         </form>
         <a href="{{ route('users.index') }}" class="btn-primary">
             <i class="bi bi-people-fill"></i> Manage Members

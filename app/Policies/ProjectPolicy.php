@@ -29,7 +29,7 @@ class ProjectPolicy
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('projects.create');
     }
 
     public function update(User $user, Project $project): bool

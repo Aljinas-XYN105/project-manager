@@ -15,12 +15,11 @@
     <div class="flex flex-wrap items-center gap-2">
         <form method="GET" class="flex gap-2">
             <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
-            <select name="department" onchange="this.form.submit()" class="form-select text-sm w-auto">
-                <option value="">All departments</option>
-                @foreach($departments as $d)
-                <option value="{{ $d }}" @selected(request('department') === $d)>{{ $d }}</option>
-                @endforeach
-            </select>
+            <x-ui.select name="department" placeholder="All departments"
+                :value="request('department','')"
+                :options="array_combine($departments,$departments)"
+                @change="$el.closest('form').submit()"
+                class="text-sm w-auto" />
         </form>
         <a href="{{ route('leave.calendar', ['month' => $prev] + $qs) }}" class="btn-ghost btn-sm"><i class="bi bi-chevron-left"></i></a>
         <a href="{{ route('leave.calendar', $qs) }}" class="btn-secondary btn-sm">This month</a>

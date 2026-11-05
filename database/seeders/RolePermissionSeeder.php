@@ -29,8 +29,10 @@ class RolePermissionSeeder extends Seeder
             'comments.create', 'comments.update', 'comments.delete', 'comments.pin',
             // Administration
             'activity.view', 'attendance.view', 'attendance.manage', 'roles.manage',
-            // HR
-            'leave.approve', 'leave.manage', 'announcements.manage', 'employees.view-private',
+            // HR & Leave
+            'leave.view', 'leave.approve', 'leave.manage', 'announcements.manage', 'employees.view-private',
+            // Expenses
+            'expenses.view', 'expenses.submit', 'expenses.review', 'expenses.manage',
         ];
 
         foreach ($permissions as $perm) {
@@ -51,14 +53,15 @@ class RolePermissionSeeder extends Seeder
             'users.viewAny', 'users.view',
             'reports.view', 'reports.export',
             'comments.create', 'comments.update', 'comments.delete', 'comments.pin',
-            'attendance.view', 'leave.approve',
+            'attendance.view', 'activity.view', 'leave.view', 'leave.approve',
+            'expenses.view', 'expenses.submit', 'expenses.review',
         ]);
 
         // HR Manager
         $hrManager = Role::firstOrCreate(['name' => 'hr_manager']);
         $hrManager->syncPermissions([
             // HR core
-            'leave.approve', 'leave.manage', 'announcements.manage', 'employees.view-private',
+            'leave.view', 'leave.approve', 'leave.manage', 'announcements.manage', 'employees.view-private',
             'attendance.view', 'attendance.manage',
             // People & teams (read-only)
             'users.viewAny', 'users.view',
@@ -67,9 +70,11 @@ class RolePermissionSeeder extends Seeder
             'projects.viewAny', 'projects.view',
             'tasks.viewAny', 'tasks.view',
             // Reports
-            'reports.view',
-            // Comments
+            'reports.view', 'activity.view',
+            // Comments (can read and comment, not moderate)
             'comments.create', 'comments.update',
+            // Expenses (can submit own, not review)
+            'expenses.view', 'expenses.submit',
         ]);
 
         // Member
@@ -82,6 +87,8 @@ class RolePermissionSeeder extends Seeder
             'users.viewAny', 'users.view',
             'reports.view',
             'comments.create', 'comments.update',
+            'leave.view',
+            'expenses.view', 'expenses.submit',
         ]);
     }
 }

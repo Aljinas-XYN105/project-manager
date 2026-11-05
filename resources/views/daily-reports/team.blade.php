@@ -23,12 +23,9 @@
         </div>
         <div class="flex-1 min-w-[180px]">
             <label class="form-label">Team Member</label>
-            <select name="user_id" class="form-select">
-                <option value="">All Members</option>
-                @foreach($users as $u)
-                <option value="{{ $u->id }}" {{ $userId == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                @endforeach
-            </select>
+            <x-ui.select name="user_id" placeholder="All Members"
+                :value="$userId??''"
+                :options="$users->pluck('name','id')->toArray()" />
         </div>
         <button type="submit" class="btn-primary">
             <i class="bi bi-funnel"></i> Filter

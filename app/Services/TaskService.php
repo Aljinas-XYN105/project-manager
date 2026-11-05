@@ -36,9 +36,8 @@ class TaskService
 
             $task = $this->taskRepository->create($data);
 
-            if (!empty($data['assignee_ids'])) {
-                $this->assignUsers($task, $data['assignee_ids'], $creator);
-            }
+            $assigneeIds = !empty($data['assignee_ids']) ? $data['assignee_ids'] : [$creator->id];
+            $this->assignUsers($task, $assigneeIds, $creator);
 
             if (!empty($data['label_ids'])) {
                 $this->syncLabels($task, $data['label_ids']);

@@ -42,21 +42,15 @@
     </div>
     <div>
         <label class="form-label">User</label>
-        <select name="user_id" class="form-select">
-            <option value="">All users</option>
-            @foreach($users as $u)
-            <option value="{{ $u->id }}" @selected(request('user_id') == $u->id)>{{ $u->name }}</option>
-            @endforeach
-        </select>
+        <x-ui.select name="user_id" placeholder="All users"
+            :value="request('user_id','')"
+            :options="$users->pluck('name','id')->toArray()" />
     </div>
     <div>
         <label class="form-label">Type</label>
-        <select name="category" class="form-select">
-            <option value="">All types</option>
-            @foreach($categories as $key => $label)
-            <option value="{{ $key }}" @selected(request('category') === $key)>{{ $label }}</option>
-            @endforeach
-        </select>
+        <x-ui.select name="category" placeholder="All types"
+            :value="request('category','')"
+            :options="$categories" />
     </div>
     <div>
         <label class="form-label">From</label>

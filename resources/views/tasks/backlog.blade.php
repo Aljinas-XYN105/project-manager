@@ -53,13 +53,22 @@
     <span class="text-sm font-medium" x-text="selected.length + ' selected'"></span>
     <div class="h-4 w-px bg-slate-600"></div>
     <div class="flex items-center gap-2">
-        <select @change="if($event.target.value) { moveToColumn($event.target.value); $event.target.value=''; }"
-                class="bg-slate-800 dark:bg-slate-600 text-white text-xs rounded-lg px-2.5 py-1.5 border border-slate-600 focus:ring-1 focus:ring-violet-500">
-            <option value="">Move to column...</option>
-            @foreach($columns as $col)
-            <option value="{{ $col->id }}">{{ $col->name }}</option>
-            @endforeach
-        </select>
+        <div x-data="{open:false}" @click.outside="open=false" class="relative">
+            <button type="button" @click="open=!open"
+                    class="bg-slate-800 dark:bg-slate-600 text-white text-xs rounded-lg px-2.5 py-1.5 border border-slate-600 flex items-center gap-2 hover:bg-slate-700 transition-colors">
+                <span>Move to column…</span>
+                <i class="bi bi-chevron-down" style="font-size:0.6rem" :class="open?'rotate-180':''"></i>
+            </button>
+            <div x-show="open" x-cloak style="z-index:200"
+                 class="absolute bottom-full mb-1 left-0 w-44 bg-slate-800 rounded-xl border border-white/10 shadow-2xl overflow-hidden">
+                @foreach($columns as $col)
+                <button type="button" @click="moveToColumn('{{ $col->id }}'); open=false;"
+                        class="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors">
+                    {{ $col->name }}
+                </button>
+                @endforeach
+            </div>
+        </div>
     </div>
     <button @click="selected = []" class="ml-2 text-slate-400 hover:text-white"><i class="bi bi-x-lg text-sm"></i></button>
 </div>
