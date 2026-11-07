@@ -23,7 +23,7 @@
 
     {{-- Trigger button --}}
     <button type="button"
-            @click="open = !open"
+            @click="toggleOpen()"
             :class="open ? 'ring-2 ring-violet-500/30 border-violet-500 dark:border-violet-400' : ''"
             class="form-input text-left flex items-center gap-2 w-full">
         <i class="bi bi-calendar3 text-slate-400 flex-shrink-0 text-sm"></i>
@@ -42,6 +42,7 @@
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 translate-y-1"
          style="min-width:22rem"
+         :class="alignRight ? 'right-0' : 'left-0'"
          class="absolute z-50 mt-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl p-4">
 
         {{-- Month / Year navigation --}}
@@ -101,17 +102,28 @@
 if (typeof datepicker === 'undefined') {
 function datepicker(initial, minDate, maxDate) {
     return {
-        open:     false,
-        selected: initial || '',
+        open:      false,
+        alignRight: false,
+        selected:  initial || '',
         viewYear:  0,
         viewMonth: 0,
-        minDate:  minDate || '',
-        maxDate:  maxDate || '',
+        minDate:   minDate || '',
+        maxDate:   maxDate || '',
 
         init() {
             const base = this.selected ? new Date(this.selected + 'T00:00:00') : new Date();
             this.viewYear  = base.getFullYear();
             this.viewMonth = base.getMonth();
+        },
+
+        toggleOpen() {
+            this.open = !this.open;
+            if (this.open) {
+                this.$nextTick(() => {
+                    const rect = this.$el.getBoundingClientRect();
+                    this.alignRight = (rect.left + 352) > window.innerWidth;
+                });
+            }
         },
 
         dispatch() {
