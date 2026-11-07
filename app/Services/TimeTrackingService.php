@@ -64,7 +64,7 @@ class TimeTrackingService
         ]);
 
         $this->activityLogService->log(
-            "paused timer on \"{$entry->task->title}\"",
+            "paused timer on \"{$entry->task?->title}\"",
             $entry->task,
             $entry->user
         );
@@ -88,7 +88,7 @@ class TimeTrackingService
         ]);
 
         $this->activityLogService->log(
-            "resumed timer on \"{$entry->task->title}\"",
+            "resumed timer on \"{$entry->task?->title}\"",
             $entry->task,
             $entry->user
         );

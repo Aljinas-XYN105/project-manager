@@ -17,7 +17,7 @@
             <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
             <x-ui.select name="department" placeholder="All departments"
                 :value="request('department','')"
-                :options="array_combine($departments,$departments)"
+                :options="$departments->toArray()"
                 @change="$el.closest('form').submit()"
                 class="text-sm w-auto" />
         </form>
