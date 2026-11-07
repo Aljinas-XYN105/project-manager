@@ -62,6 +62,18 @@
                     </label>
                     <p class="text-xs text-slate-400 mt-1 ml-7">All members can view this project, even if they're not assigned to it.</p>
                 </div>
+
+                @include('projects._member-picker', [
+                    'pickerUsers'   => $users,
+                    'pickerOwnerId' => $project->owner_id,
+                    'pickerInitial' => $project->members->map(fn($m) => [
+                        'id'        => $m->id,
+                        'name'      => $m->name,
+                        'job_title' => $m->job_title ?? '',
+                        'avatar'    => $m->avatar ?? null,
+                        'role'      => $m->pivot->role ?? 'developer',
+                    ])->values()->toArray(),
+                ])
             </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
                 <a href="{{ route('projects.show', $project) }}" class="btn-secondary">Cancel</a>

@@ -29,7 +29,11 @@ class UpdateProjectRequest extends FormRequest
             'start_date'  => ['nullable', 'date'],
             'due_date'    => ['nullable', 'date'],
             'budget'      => ['nullable', 'numeric', 'min:0'],
-            'is_public'   => ['nullable', 'boolean'],
+            'is_public'    => ['nullable', 'boolean'],
+            'member_ids'   => ['nullable', 'array'],
+            'member_ids.*' => ['integer', 'exists:users,id'],
+            'member_roles' => ['nullable', 'array'],
+            'member_roles.*' => ['nullable', 'in:developer,manager,viewer'],
         ];
     }
 }

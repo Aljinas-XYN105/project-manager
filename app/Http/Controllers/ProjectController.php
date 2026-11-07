@@ -25,12 +25,24 @@ class ProjectController extends Controller
     public function create()
     {
         $this->authorize('create', Project::class);
-        return view('projects.create');
+        $users = User::active()->orderBy('name')->get(['id', 'name', 'job_title', 'avatar']);
+        return view('projects.create', compact('users'));
     }
 
     public function store(StoreProjectRequest $request)
     {
-        $project = $this->projectService->createProject($request->validated(), $request->user());
+        $data = $request->validated();
+        $memberIds = collect($data['member_ids'] ?? [])->map(fn($id) => (int) $id)->unique();
+        $memberRoles = $data['member_roles'] ?? [];
+        unset($data['member_ids'], $data['member_roles']);
+
+        $project = $this->projectService->createProject($data, $request->user());
+
+        foreach ($memberIds as $userId) {
+            if ($userId === $request->user()->id) continue; // owner already added as manager
+            $role = $memberRoles[$userId] ?? 'developer';
+            $this->projectService->addMember($project, User::findOrFail($userId), $role);
+        }
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project created successfully.');
@@ -49,12 +61,30 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
-        return view('projects.edit', compact('project'));
+        $users = User::active()->orderBy('name')->get(['id', 'name', 'job_title', 'avatar']);
+        $project->load('members');
+        return view('projects.edit', compact('project', 'users'));
     }
 
     public function update(UpdateProjectRequest $request, Project $project)
     {
-        $this->projectService->updateProject($project, $request->validated());
+        $data = $request->validated();
+        $memberIds = collect($data['member_ids'] ?? [])->map(fn($id) => (int) $id)->unique();
+        $memberRoles = $data['member_roles'] ?? [];
+        unset($data['member_ids'], $data['member_roles']);
+
+        $this->projectService->updateProject($project, $data);
+
+        // Sync members: keep owner as manager, sync the rest
+        $ownerId = $project->owner_id;
+        $syncData = [];
+        foreach ($memberIds as $userId) {
+            if ($userId === $ownerId) continue;
+            $syncData[$userId] = ['role' => $memberRoles[$userId] ?? 'developer'];
+        }
+        // Always keep owner
+        $syncData[$ownerId] = ['role' => 'manager'];
+        $project->members()->sync($syncData);
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project updated.');

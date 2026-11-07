@@ -70,6 +70,12 @@
                     </div>
                     <p class="text-xs text-slate-400 mt-1 ml-7">All members can view this project, even if they're not assigned to it.</p>
                 </div>
+
+                @include('projects._member-picker', [
+                    'pickerUsers'   => $users,
+                    'pickerOwnerId' => auth()->id(),
+                    'pickerInitial' => [],
+                ])
             </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
                 <a href="{{ route('projects.index') }}" class="btn-secondary">Cancel</a>
