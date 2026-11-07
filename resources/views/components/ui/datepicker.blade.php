@@ -37,7 +37,8 @@
          x-transition:leave="transition ease-in duration-75"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 translate-y-1"
-         class="absolute z-50 mt-1 w-72 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl p-3">
+         style="min-width:22rem"
+         class="absolute z-50 mt-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl p-4">
 
         {{-- Month / Year navigation --}}
         <div class="flex items-center justify-between mb-3">
@@ -75,7 +76,7 @@
                             'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 font-medium': isToday(day) && !isSelected(day),
                             'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800': !isSelected(day) && !isToday(day),
                         }"
-                        class="text-xs h-8 w-full rounded-lg transition-colors"
+                        class="text-sm h-10 w-full rounded-lg transition-colors"
                         x-text="day"></button>
             </template>
         </div>
