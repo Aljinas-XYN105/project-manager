@@ -255,6 +255,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
 
+    // Chat
+    Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ConversationController::class, 'index'])->name('index');
+        Route::get('{conversation}', [\App\Http\Controllers\ConversationController::class, 'show'])->name('show');
+        Route::get('direct/{user}', [\App\Http\Controllers\ConversationController::class, 'direct'])->name('direct');
+        Route::post('{conversation}/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+        Route::delete('messages/{message}', [\App\Http\Controllers\MessageController::class, 'destroy'])->name('messages.destroy');
+    });
+
     // Help / Documentation
     Route::get('help', fn() => view('help.index'))->name('help');
 

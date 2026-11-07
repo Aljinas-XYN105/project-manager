@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @auth
+    <meta name="user-name"   content="{{ auth()->user()->name }}">
+    <meta name="user-avatar" content="{{ auth()->user()->avatar_url }}">
+    @endauth
     <title>@yield('title', config('app.name')) — Workzen</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -125,6 +129,7 @@
                     ['route'=>'reports.index',        'icon'=>'bi-bar-chart-line','label'=>'Reports',      'match'=>'reports.*'],
                 ]),
                 'PEOPLE' => [
+                    ['route'=>'chat.index',           'icon'=>'bi-chat-dots',      'label'=>'Chat',         'match'=>'chat.*'],
                     ['route'=>'people.index',        'icon'=>'bi-people',         'label'=>'Directory',    'match'=>'people.*'],
                     ['route'=>'teams.index',          'icon'=>'bi-diagram-3',      'label'=>'Teams',        'match'=>'teams.*'],
                     ['route'=>'expenses.index',        'icon'=>'bi-receipt',        'label'=>'Expenses',     'match'=>'expenses.*', 'badge'=>'expenses'],
