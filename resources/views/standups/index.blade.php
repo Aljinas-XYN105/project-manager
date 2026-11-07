@@ -43,6 +43,17 @@ $avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d
                 </a>
                 @endif
 
+                @if(auth()->user()->hasAnyRole(['admin','manager']))
+                <a href="{{ route('standups.export-excel', ['date' => $date->toDateString()]) }}"
+                   class="btn-secondary flex items-center gap-2">
+                    <i class="bi bi-file-earmark-excel"></i> Excel
+                </a>
+                <a href="{{ route('standups.export-pdf', ['date' => $date->toDateString()]) }}"
+                   class="btn-secondary flex items-center gap-2">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                </a>
+                @endif
+
                 <a href="{{ route('standups.show', today()->toDateString()) }}" class="btn-primary">
                     <i class="bi bi-pencil-square text-sm"></i> My Standup
                 </a>

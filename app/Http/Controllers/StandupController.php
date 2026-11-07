@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\StandupDayExport;
 use App\Models\Project;
 use App\Models\Standup;
 use App\Models\StandupItem;
 use App\Models\Task;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StandupController extends Controller
 {
@@ -204,5 +207,44 @@ class StandupController extends Controller
             'status'      => $t->status,
             'label'       => ($t->ticket_key ? "[{$t->ticket_key}] " : '') . $t->title,
         ]));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $this->authorizeManagerOrAdmin();
+
+        $date     = $request->input('date', today()->toDateString());
+        $standups = Standup::whereDate('standup_date', $date)
+            ->with(['user', 'items'])
+            ->orderBy('user_id')
+            ->get();
+
+        return Excel::download(new StandupDayExport($standups, $date), 'standups-'.$date.'.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $this->authorizeManagerOrAdmin();
+
+        $date = $request->input('date', today()->toDateString());
+
+        $users = User::where('is_active', true)->orderBy('name')->get();
+
+        $standups = Standup::whereDate('standup_date', $date)
+            ->with(['user', 'items'])
+            ->get()
+            ->keyBy('user_id');
+
+        $pdf = Pdf::loadView('standups.pdf', compact('date', 'users', 'standups'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('standups-'.$date.'.pdf');
+    }
+
+    private function authorizeManagerOrAdmin(): void
+    {
+        if (!auth()->user()->hasAnyRole(['admin', 'manager'])) {
+            abort(403);
+        }
     }
 }
