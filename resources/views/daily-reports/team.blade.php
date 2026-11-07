@@ -23,7 +23,7 @@
     <div class="flex flex-wrap items-end gap-3">
         <div class="flex-1 min-w-[180px]">
             <label class="form-label">Date</label>
-            <input type="date" name="date" value="{{ $date }}" class="form-input">
+            <x-ui.datepicker name="date" :value="$date" placeholder="Select date" />
         </div>
         <div class="flex-1 min-w-[180px]">
             <label class="form-label">Team Member</label>
