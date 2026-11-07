@@ -16,7 +16,7 @@ class SecurityHeaders
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
         "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
         "img-src 'self' data: blob: https://ui-avatars.com",
-        "connect-src 'self'",
+        "connect-src 'self' ws://localhost:8081 wss://localhost:8081",
         "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'",

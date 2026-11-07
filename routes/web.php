@@ -258,11 +258,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Chat
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ConversationController::class, 'index'])->name('index');
-        Route::get('{conversation}', [\App\Http\Controllers\ConversationController::class, 'show'])->name('show');
         Route::get('direct/{user}', [\App\Http\Controllers\ConversationController::class, 'direct'])->name('direct');
+        Route::post('groups', [\App\Http\Controllers\ConversationController::class, 'createGroup'])->name('groups.store');
+        Route::get('{conversation}', [\App\Http\Controllers\ConversationController::class, 'show'])->name('show');
         Route::post('{conversation}/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
         Route::delete('messages/{message}', [\App\Http\Controllers\MessageController::class, 'destroy'])->name('messages.destroy');
     });
+
+    // Tasks brief for chat @ mention autocomplete
+    Route::get('api/tasks/brief', [\App\Http\Controllers\ConversationController::class, 'tasksBrief'])->name('api.tasks.brief');
 
     // Help / Documentation
     Route::get('help', fn() => view('help.index'))->name('help');

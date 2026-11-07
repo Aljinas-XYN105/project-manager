@@ -129,7 +129,6 @@
                     ['route'=>'reports.index',        'icon'=>'bi-bar-chart-line','label'=>'Reports',      'match'=>'reports.*'],
                 ]),
                 'PEOPLE' => [
-                    ['route'=>'chat.index',           'icon'=>'bi-chat-dots',      'label'=>'Chat',         'match'=>'chat.*'],
                     ['route'=>'people.index',        'icon'=>'bi-people',         'label'=>'Directory',    'match'=>'people.*'],
                     ['route'=>'teams.index',          'icon'=>'bi-diagram-3',      'label'=>'Teams',        'match'=>'teams.*'],
                     ['route'=>'expenses.index',        'icon'=>'bi-receipt',        'label'=>'Expenses',     'match'=>'expenses.*', 'badge'=>'expenses'],
@@ -151,6 +150,9 @@
                         fn ($q) => $q->whereIn('user_id', $authUser->directReports()->pluck('id')))
                     ->count(),
             ];
+            $unreadChatCount = \App\Models\Conversation::whereHas('participants', fn ($q) => $q->where('user_id', $authUser->id))
+                ->get()
+                ->sum(fn ($c) => $c->unreadCountFor($authUser));
             $isAdmin = auth()->user()?->hasRole('admin');
             $me = auth()->user();
             $adminLinks = collect([
@@ -560,6 +562,21 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Chat icon with unread badge -->
+                <a href="{{ route('chat.index') }}"
+                   class="btn-icon btn-ghost relative"
+                   title="Chat"
+                   :class="'{{ request()->routeIs('chat.*') ? 'bg-slate-100 dark:bg-slate-800' : '' }}'">
+                    <i class="bi bi-chat-dots text-[15px] text-slate-500 dark:text-slate-400"></i>
+                    @if(($unreadChatCount ?? 0) > 0)
+                    <span class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-violet-600 text-white
+                                 text-[9px] font-bold rounded-full flex items-center justify-center px-1
+                                 ring-2 ring-white dark:ring-slate-950">
+                        {{ $unreadChatCount > 9 ? '9+' : $unreadChatCount }}
+                    </span>
+                    @endif
+                </a>
 
                 <!-- Notifications -->
                 <div x-data="notificationsDropdown()" x-init="init()" class="relative" @hd:close.window="open = false">
