@@ -32,19 +32,22 @@ class StandupDaySummarySheet implements FromCollection, WithHeadings, WithStyles
             $s->user->name,
             $s->user->job_title ?? '',
             $s->items->count(),
-            $s->items->where('status', 'done')->count(),
-            $s->items->whereIn('status', ['in_progress', 'in_review'])->count(),
+            $s->items->where('status', 'done')->pluck('description')->implode("\n"),
+            $s->items->whereIn('status', ['in_progress', 'in_review'])->pluck('description')->implode("\n"),
             $s->blockers ?? '',
         ]);
     }
 
     public function columnWidths(): array
     {
-        return ['A' => 14, 'B' => 24, 'C' => 24, 'D' => 10, 'E' => 10, 'F' => 14, 'G' => 50];
+        return ['A' => 14, 'B' => 24, 'C' => 24, 'D' => 8, 'E' => 60, 'F' => 60, 'G' => 50];
     }
 
     public function styles(Worksheet $sheet): array
     {
+        $sheet->getStyle('E2:F' . ($sheet->getHighestRow() ?: 2))
+            ->getAlignment()->setWrapText(true);
+
         return [
             1 => [
                 'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
