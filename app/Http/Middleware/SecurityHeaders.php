@@ -17,7 +17,7 @@ class SecurityHeaders
         "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
         "img-src 'self' data: blob: https://ui-avatars.com",
         "connect-src 'self' ws://localhost:8081 wss://localhost:8081",
-        "frame-ancestors 'none'",
+        "frame-ancestors 'self'",
         "base-uri 'self'",
         "form-action 'self'",
         "object-src 'none'",
@@ -35,7 +35,7 @@ class SecurityHeaders
         }
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN'); // frame-ancestors 'self' in CSP allows same-origin iframes
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), camera=(), microphone=(), payment=()');

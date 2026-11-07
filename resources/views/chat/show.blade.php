@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends(($popup ?? false) ? 'layouts.chat-popup' : 'layouts.app')
 @section('title', $conversation->type === 'direct'
     ? ($conversation->participants->firstWhere('id', '!=', auth()->id())?->name ?? 'Chat')
     : ($conversation->name ?? 'Group chat'))
@@ -79,7 +79,6 @@
 .ct-thread {
     display: flex; flex-direction: column; overflow: hidden;
     background: var(--ct-bg);
-    height: calc(100vh - 7rem);
 }
 
 /* Header */
@@ -167,7 +166,7 @@
     flex-shrink: 0;
 }
 .ct-input-wrap {
-    display: flex; align-items: flex-end; gap: 8px;
+    display: flex; align-items: center; gap: 8px;
     background: var(--ct-input-bg);
     border: 1.5px solid var(--ct-input-border);
     border-radius: 16px; padding: 6px 6px 6px 14px;
@@ -175,13 +174,17 @@
 }
 .ct-input-wrap:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
 .ct-textarea {
-    flex: 1; background: none; border: none; outline: none; resize: none;
+    flex: 1; background: none; border: none; outline: none;
     font-size: 14px; line-height: 1.5; min-height: 24px; max-height: 120px;
     overflow-y: auto; color: var(--ct-name);
-    font-family: inherit;
-    field-sizing: content;
+    font-family: inherit; word-break: break-word; white-space: pre-wrap;
 }
-.ct-textarea::placeholder { color: var(--ct-time); }
+/* contenteditable placeholder */
+.ct-textarea:empty::before {
+    content: attr(data-placeholder);
+    color: var(--ct-time); pointer-events: none;
+}
+.ct-textarea:focus { outline: none; }
 .ct-btn-icon {
     width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -208,19 +211,18 @@
 }
 .ct-attach-pill.out { background: rgba(255,255,255,.18); color: white; border-color: rgba(255,255,255,.3); }
 
-/* Task mention chip */
-.ct-task-chip {
+/* Mention chips */
+.ct-chip {
     display: inline-flex; align-items: center; gap: 4px;
-    background: var(--ct-task-chip-bg); color: var(--ct-task-chip-fg);
-    border: 1px solid var(--ct-task-chip-border);
     border-radius: 6px; padding: 1px 7px; font-size: 12px; font-weight: 500;
-    text-decoration: none; cursor: pointer;
-    transition: opacity .12s;
+    text-decoration: none; cursor: pointer; transition: opacity .12s;
 }
-.ct-task-chip:hover { opacity: .8; }
-.ct-bubble.out .ct-task-chip {
-    background: rgba(255,255,255,.2); color: white; border-color: rgba(255,255,255,.35);
-}
+.ct-chip:hover { opacity: .8; }
+.ct-chip.task { background: var(--ct-task-chip-bg); color: var(--ct-task-chip-fg); border: 1px solid var(--ct-task-chip-border); }
+.ct-chip.subtask { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.dark .ct-chip.subtask { background: #052e16; color: #86efac; border-color: #14532d; }
+.ct-chip.member { background: var(--ct-chip-bg); color: var(--ct-chip-fg); border: 1px solid var(--ct-chip-border); }
+.ct-bubble.out .ct-chip { background: rgba(255,255,255,.2); color: white; border-color: rgba(255,255,255,.35); }
 
 /* Mention popup */
 .ct-mention-popup {
@@ -292,15 +294,18 @@
     }
 @endphp
 
-<div class="ct-thread -mt-6 -mx-4 lg:-mx-5"
+<div class="ct-thread {{ ($popup ?? false) ? '' : '-mt-6 -mx-4 lg:-mx-5' }}"
+     style="height:calc(100vh - {{ ($popup ?? false) ? '0px' : '7rem' }})"
      x-data="chatThread({{ $conversation->id }}, {{ $authUser->id }}, @js($messages->items()))">
 
     {{-- Header --}}
     <div class="ct-header">
+        @if(!($popup ?? false))
         <a href="{{ route('chat.index') }}"
            class="ct-btn-icon flex-shrink-0" title="Back" style="margin-right:-4px">
             <i class="bi bi-arrow-left"></i>
         </a>
+        @endif
 
         <div class="relative flex-shrink-0">
             @if($other)
@@ -315,8 +320,9 @@
             @endif
         </div>
 
-        <div class="flex-1 min-w-0">
-            <p class="ct-header-title truncate">{{ $title }}</p>
+        <div class="flex-1 min-w-0 {{ $conversation->type === 'group' ? 'cursor-pointer select-none' : '' }}"
+             @if($conversation->type === 'group') @click="$dispatch('open-group-info')" @endif>
+            <p class="ct-header-title truncate {{ $conversation->type === 'group' ? 'hover:underline' : '' }}">{{ $title }}</p>
             <p class="ct-header-sub {{ ($other?->is_online) ? 'online' : '' }}"
                id="ct-status-label">
                 @if($other)
@@ -330,35 +336,14 @@
             </p>
         </div>
 
-        @if($conversation->type === 'group')
-        <button @click="showInfo = !showInfo" class="ct-btn-icon flex-shrink-0" title="Group info">
-            <i class="bi bi-info-circle"></i>
+        @if(!($popup ?? false) && $conversation->type === 'direct')
+        <button type="button"
+                onclick="window.open('{{ route('chat.popup') }}?open={{ $conversation->id }}', 'chatpopup', 'width=820,height=680,resizable=yes,menubar=no,toolbar=no,location=no,status=no')"
+                class="ct-btn-icon flex-shrink-0" title="Open in window">
+            <i class="bi bi-box-arrow-up-right" style="font-size:13px"></i>
         </button>
         @endif
     </div>
-
-    {{-- Group info flyout --}}
-    @if($conversation->type === 'group')
-    <div x-show="showInfo" x-cloak
-         class="flex-shrink-0 px-4 py-3 text-sm"
-         style="background:var(--ct-header-bg); border-bottom:1px solid var(--ct-header-border)">
-        <div class="font-semibold mb-1" style="color:var(--ct-name)">Members</div>
-        <div class="flex flex-wrap gap-2">
-            @foreach($conversation->participants as $p)
-            <div class="flex items-center gap-1.5">
-                <div class="relative">
-                    <img src="{{ $p->avatar_url }}" class="w-6 h-6 rounded-full object-cover" alt="">
-                    <span class="ct-dot {{ $p->is_online ? 'online' : 'offline' }}" style="width:7px;height:7px"></span>
-                </div>
-                <span style="color:var(--ct-preview)">{{ $p->name }}</span>
-                @if($p->id === $authUser->id)
-                <span class="text-xs px-1.5 py-0.5 rounded-full" style="background:var(--ct-chip-bg);color:var(--ct-chip-fg)">You</span>
-                @endif
-            </div>
-            @endforeach
-        </div>
-    </div>
-    @endif
 
     {{-- Messages --}}
     <div class="ct-messages" x-ref="thread">
@@ -493,18 +478,46 @@
             <div x-show="mentionOpen && mentionResults.length > 0" x-cloak class="ct-mention-popup">
                 <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
                      style="color:var(--ct-time);border-bottom:1px solid var(--ct-mention-border)">
-                    Tasks
+                    Mention
                 </div>
-                <template x-for="(t, i) in mentionResults" :key="t.id">
+                <template x-for="(item, i) in mentionResults" :key="item.kind + '_' + item.id">
                     <div class="ct-mention-item" :class="i === mentionIndex ? 'active' : ''"
-                         @click="insertMention(t)">
-                        <span class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style="background:var(--ct-task-chip-bg)">
-                            <i class="bi bi-check-square-fill text-xs" style="color:var(--ct-task-chip-fg)"></i>
-                        </span>
-                        <div class="min-w-0">
-                            <div class="font-medium truncate" style="color:var(--ct-name)" x-text="t.title"></div>
-                            <div class="text-xs opacity-60" style="color:var(--ct-preview)" x-text="t.project_name"></div>
+                         @mousedown.prevent="insertMention(item)">
+
+                        {{-- Avatar/icon per kind --}}
+                        <template x-if="item.kind === 'member' && item.avatar_url">
+                            <img :src="item.avatar_url" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="">
+                        </template>
+                        <template x-if="item.kind === 'member' && !item.avatar_url">
+                            <span class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                                  style="background:var(--ct-chip-bg)">
+                                <i class="bi bi-person-fill text-xs" style="color:var(--ct-chip-fg)"></i>
+                            </span>
+                        </template>
+                        <template x-if="item.kind === 'task'">
+                            <span class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                                  style="background:var(--ct-task-chip-bg)">
+                                <i class="bi bi-check-square-fill text-xs" style="color:var(--ct-task-chip-fg)"></i>
+                            </span>
+                        </template>
+                        <template x-if="item.kind === 'subtask'">
+                            <span class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                                  style="background:#f0fdf4">
+                                <i class="bi bi-diagram-3-fill text-xs" style="color:#166534"></i>
+                            </span>
+                        </template>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-medium truncate" style="color:var(--ct-name)" x-text="item.title"></span>
+                                <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 capitalize"
+                                      :style="item.kind === 'member'  ? 'background:var(--ct-chip-bg);color:var(--ct-chip-fg)' :
+                                              item.kind === 'subtask' ? 'background:#f0fdf4;color:#166534' :
+                                                                        'background:var(--ct-task-chip-bg);color:var(--ct-task-chip-fg)'"
+                                      x-text="item.kind"></span>
+                            </div>
+                            <div class="text-xs opacity-60 truncate" style="color:var(--ct-preview)"
+                                 x-text="item.subtitle || item.project_name || item.parent_name || ''"></div>
                         </div>
                     </div>
                 </template>
@@ -517,25 +530,28 @@
                         <input type="file" class="hidden" multiple @change="pickFiles($event)">
                     </label>
 
-                    <textarea
-                        x-model="draft"
+                    <div
+                        contenteditable="true"
+                        x-ref="compose"
+                        x-init="$nextTick(() => $el.focus())"
                         @keydown.enter.exact.prevent="sendMessage"
-                        @keydown.shift.enter="null"
                         @keydown.arrow-up.prevent="if (mentionOpen) mentionIndex = Math.max(0, mentionIndex-1)"
                         @keydown.arrow-down.prevent="if (mentionOpen) mentionIndex = Math.min(mentionResults.length-1, mentionIndex+1)"
                         @keydown.escape="mentionOpen = false"
                         @keydown.tab.prevent="if (mentionOpen && mentionResults[mentionIndex]) insertMention(mentionResults[mentionIndex])"
                         @input="onInput"
                         @keydown="onKeydown"
-                        x-ref="compose"
-                        x-init="$nextTick(() => $el.focus())"
-                        rows="1"
-                        placeholder="Type a message… (@ to mention a task)"
+                        @paste.prevent="onPaste($event)"
+                        @blur="$nextTick(() => { mentionOpen = false })"
+                        data-placeholder="Type a message… (@ to mention task, subtask or member)"
                         class="ct-textarea"
-                    ></textarea>
+                        role="textbox"
+                        aria-multiline="true"
+                        spellcheck="true"
+                    ></div>
 
                     <button type="submit"
-                            :disabled="!draft.trim() && pendingFiles.length === 0"
+                            :disabled="!draft && pendingFiles.length === 0"
                             class="ct-send-btn">
                         <i class="bi bi-send-fill" style="font-size:13px;margin-left:1px"></i>
                     </button>
@@ -544,6 +560,131 @@
         </div>
     </div>
 </div>
+
+@if($conversation->type === 'group')
+{{-- Group info modal --}}
+<div x-data="groupInfoModal({{ $conversation->id }}, @js($conversation->participants->map(fn($p) => ['id'=>$p->id,'name'=>$p->name,'avatar_url'=>$p->avatar_url,'is_online'=>$p->is_online,'job_title'=>$p->job_title??''])->values()), @js($users->map(fn($u)=>['id'=>$u->id,'name'=>$u->name,'avatar_url'=>$u->avatar_url,'job_title'=>$u->job_title??''])->values()))"
+     x-init="groupName = {{ json_encode($conversation->name ?? 'Group chat') }}"
+     @open-group-info.document="open = true">
+    <template x-teleport="body">
+        <div x-show="open" x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style="background:rgba(15,23,42,.6);backdrop-filter:blur(4px)"
+             @click.self="open = false">
+            <div class="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
+                 style="background:var(--ct-header-bg);border:1px solid var(--ct-header-border);box-shadow:0 25px 60px rgba(0,0,0,.3);max-height:85vh"
+                 @click.stop>
+
+                {{-- Modal header --}}
+                <div class="flex items-center justify-between px-5 py-4 flex-shrink-0"
+                     style="border-bottom:1px solid var(--ct-header-border)">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center"
+                             style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">
+                            <i class="bi bi-people-fill text-white text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5" x-show="!editingName" @click="startEditName()">
+                                <h2 class="font-bold text-sm truncate" style="color:var(--ct-name)" x-text="groupName"></h2>
+                                <i class="bi bi-pencil flex-shrink-0" style="font-size:10px;color:var(--ct-preview)"></i>
+                            </div>
+                            <form x-show="editingName" @submit.prevent="saveName()" class="flex items-center gap-1.5">
+                                <input type="text" x-model="groupNameDraft" x-ref="nameInput"
+                                       maxlength="100"
+                                       class="text-sm font-bold rounded-lg px-2 py-0.5 outline-none"
+                                       style="background:var(--ct-input-bg);border:1.5px solid #7c3aed;color:var(--ct-name);min-width:0;width:160px"
+                                       @keydown.escape="editingName = false">
+                                <button type="submit" class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                                        style="background:#7c3aed;color:white">
+                                    <i class="bi bi-check" style="font-size:12px"></i>
+                                </button>
+                                <button type="button" @click="editingName = false"
+                                        class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                                        style="background:var(--ct-bubble-in-bg);color:var(--ct-preview)">
+                                    <i class="bi bi-x" style="font-size:12px"></i>
+                                </button>
+                            </form>
+                            <p class="text-xs" style="color:var(--ct-preview)" x-text="`${members.length} members`"></p>
+                        </div>
+                    </div>
+                    <button @click="open = false"
+                            class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                            style="color:var(--ct-preview)"
+                            onmouseover="this.style.background='var(--ct-bubble-in-bg)'"
+                            onmouseout="this.style.background=''">
+                        <i class="bi bi-x text-xl"></i>
+                    </button>
+                </div>
+
+                {{-- Add member search --}}
+                <div class="px-4 py-3 flex-shrink-0" style="border-bottom:1px solid var(--ct-header-border)">
+                    <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color:var(--ct-preview)">Add member</p>
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ct-preview)"></i>
+                            <input type="text" x-model="addSearch" placeholder="Search people to add…"
+                                   class="w-full text-sm rounded-lg px-3 py-2 outline-none"
+                                   style="background:var(--ct-input-bg);border:1.5px solid var(--ct-input-border);color:var(--ct-name);padding-left:28px"
+                                   @focus="addOpen=true" @blur="$nextTick(()=>{ addOpen=false })">
+                            <div x-show="addOpen && addResults.length > 0" x-cloak
+                                 class="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden z-10"
+                                 style="background:var(--ct-header-bg);border:1px solid var(--ct-header-border);box-shadow:0 8px 24px rgba(0,0,0,.18)">
+                                <template x-for="u in addResults" :key="u.id">
+                                    <div class="flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors"
+                                         style="border-bottom:1px solid var(--ct-header-border)"
+                                         onmouseover="this.style.background='var(--ct-bubble-in-bg)'"
+                                         onmouseout="this.style.background=''"
+                                         @mousedown.prevent="addMember(u)">
+                                        <img :src="u.avatar_url" class="w-7 h-7 rounded-full object-cover flex-shrink-0">
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-medium truncate" style="color:var(--ct-name)" x-text="u.name"></div>
+                                            <div class="text-xs truncate" style="color:var(--ct-preview)" x-text="u.job_title"></div>
+                                        </div>
+                                        <i class="bi bi-plus-circle text-sm flex-shrink-0" style="color:#7c3aed"></i>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Members list --}}
+                <div class="overflow-y-auto flex-1 py-1">
+                    <p class="text-xs font-semibold uppercase tracking-wide px-4 pt-2 pb-1" style="color:var(--ct-preview)">Members</p>
+                    <template x-for="m in members" :key="m.id">
+                        <div class="flex items-center gap-3 px-4 py-2.5">
+                            <div class="relative flex-shrink-0">
+                                <img :src="m.avatar_url" class="w-9 h-9 rounded-full object-cover">
+                                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2"
+                                      :style="`background:${m.is_online ? '#22c55e' : 'var(--ct-preview)'};border-color:var(--ct-header-bg)`"></span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-medium truncate" style="color:var(--ct-name)" x-text="m.name"></div>
+                                <div class="text-xs truncate" style="color:var(--ct-preview)" x-text="m.job_title || (m.is_online ? 'Online' : 'Offline')"></div>
+                            </div>
+                            <template x-if="m.id === {{ $authUser->id }}">
+                                <span class="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                                      style="background:var(--ct-chip-bg);color:var(--ct-chip-fg)">You</span>
+                            </template>
+                            <template x-if="m.id !== {{ $authUser->id }}">
+                                <button @click="removeMember(m)"
+                                        class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                                        style="color:var(--ct-preview)"
+                                        title="Remove from group"
+                                        onmouseover="this.style.color='#ef4444';this.style.background='#fee2e2'"
+                                        onmouseout="this.style.color='var(--ct-preview)';this.style.background=''">
+                                    <i class="bi bi-person-dash text-sm"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+@endif
+
 @endsection
 
 @push('scripts')
@@ -583,13 +724,13 @@ function chatThread(conversationId, authUserId, initialMessages) {
         _whisperTimer: null,
         showInfo: false,
 
-        // Task mention
+        // @ mention
         mentionOpen: false,
         mentionQuery: '',
         mentionResults: [],
         mentionIndex: 0,
         mentionStart: -1,
-        allTasks: [],
+        allMentions: [],
 
         // Sender colours
         _colorMap: {},
@@ -607,10 +748,16 @@ function chatThread(conversationId, authUserId, initialMessages) {
                 this.$refs.compose?.focus();
             });
 
-            // Load tasks for @ mention
+            // Load all mention targets (members + tasks + subtasks)
             fetch('/api/tasks/brief', {
                 headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-            }).then(r => r.ok ? r.json() : []).then(d => { this.allTasks = d; }).catch(() => {});
+            }).then(r => r.ok ? r.json() : {}).then(d => {
+                this.allMentions = [
+                    ...(d.members  || []),
+                    ...(d.tasks    || []),
+                    ...(d.subtasks || []),
+                ];
+            }).catch(() => {});
 
             // Echo
             window.Echo.private(`conversation.${this.conversationId}`)
@@ -647,18 +794,51 @@ function chatThread(conversationId, authUserId, initialMessages) {
             }, 500);
         },
 
-        onInput(e) {
-            const val = e.target.value;
-            const pos = e.target.selectionStart;
-            const before = val.slice(0, pos);
-            const match = before.match(/@(\w*)$/);
+        // Extract markdown token string from contenteditable DOM
+        extractText() {
+            const el = this.$refs.compose;
+            if (!el) return '';
+            function walk(node) {
+                let s = '';
+                for (const child of node.childNodes) {
+                    if (child.nodeType === Node.TEXT_NODE) {
+                        s += child.textContent.replace(/ /g, ' ');
+                    } else if (child.nodeName === 'BR') {
+                        s += '\n';
+                    } else if (child.nodeName === 'SPAN' && child.dataset.mention) {
+                        const [kind, id] = child.dataset.mention.split(':');
+                        s += `@[${child.dataset.mentionName}](${kind}:${id})`;
+                    } else if (child.nodeName === 'DIV') {
+                        s += '\n' + walk(child);
+                    } else {
+                        s += walk(child);
+                    }
+                }
+                return s;
+            }
+            return walk(el).replace(/\n+$/, '');
+        },
+
+        onInput() {
+            this.draft = this.extractText();
+
+            const sel = window.getSelection();
+            if (!sel || !sel.rangeCount) { this.mentionOpen = false; return; }
+            const focusNode = sel.focusNode;
+            if (!focusNode || focusNode.nodeType !== Node.TEXT_NODE) { this.mentionOpen = false; return; }
+
+            const textInNode = focusNode.textContent.slice(0, sel.focusOffset);
+            const match = textInNode.match(/@([\w ]*)$/);
             if (match) {
-                this.mentionQuery = match[1].toLowerCase();
-                this.mentionStart = before.lastIndexOf('@');
-                this.mentionResults = this.allTasks.filter(t =>
-                    t.title.toLowerCase().includes(this.mentionQuery) ||
-                    (t.project_name || '').toLowerCase().includes(this.mentionQuery)
-                ).slice(0, 7);
+                this.mentionQuery = match[1].toLowerCase().trim();
+                this.mentionResults = this.allMentions.filter(item => {
+                    const q = this.mentionQuery;
+                    if (!q) return true;
+                    return item.title.toLowerCase().includes(q) ||
+                        (item.project_name || '').toLowerCase().includes(q) ||
+                        (item.parent_name  || '').toLowerCase().includes(q) ||
+                        (item.subtitle     || '').toLowerCase().includes(q);
+                }).slice(0, 8);
                 this.mentionOpen = this.mentionResults.length > 0;
                 this.mentionIndex = 0;
             } else {
@@ -666,18 +846,66 @@ function chatThread(conversationId, authUserId, initialMessages) {
             }
         },
 
-        insertMention(task) {
-            const ta = this.$refs.compose;
-            const pos = ta.selectionStart;
-            this.draft = this.draft.slice(0, this.mentionStart) +
-                `@[${task.title}](task:${task.id}) ` +
-                this.draft.slice(pos);
+        insertMention(item) {
+            const el = this.$refs.compose;
+            el.focus();
+            const sel = window.getSelection();
+            if (!sel || !sel.rangeCount) { this.mentionOpen = false; return; }
+
+            const focusNode = sel.focusNode;
+            if (!focusNode || focusNode.nodeType !== Node.TEXT_NODE) { this.mentionOpen = false; return; }
+
+            const nodeText = focusNode.textContent;
+            const focusOffset = sel.focusOffset;
+            const atIdx = nodeText.lastIndexOf('@', focusOffset - 1);
+            if (atIdx === -1) { this.mentionOpen = false; return; }
+
+            const before = nodeText.slice(0, atIdx);
+            const after  = nodeText.slice(focusOffset);
+
+            // Build inline chip
+            const chip = document.createElement('span');
+            chip.className = `ct-chip ${item.kind}`;
+            chip.contentEditable = 'false';
+            chip.dataset.mention = `${item.kind}:${item.id}`;
+            chip.dataset.mentionName = item.title;
+            chip.style.userSelect = 'none';
+            const icon = document.createElement('i');
+            icon.className = item.kind === 'member'  ? 'bi bi-person-fill' :
+                             item.kind === 'subtask' ? 'bi bi-diagram-3-fill' :
+                                                       'bi bi-check-square-fill';
+            icon.style.cssText = 'font-size:10px;margin-right:3px';
+            chip.appendChild(icon);
+            chip.appendChild(document.createTextNode(item.title));
+
+            // Replace text node: before + chip + space+after
+            const parent = focusNode.parentNode;
+            focusNode.textContent = before;
+            parent.insertBefore(chip, focusNode.nextSibling);
+            const spaceNode = document.createTextNode(' ' + after);
+            parent.insertBefore(spaceNode, chip.nextSibling);
+
+            // Position cursor after the space
+            const range = document.createRange();
+            range.setStart(spaceNode, 1);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+
             this.mentionOpen = false;
-            this.$nextTick(() => {
-                ta.focus();
-                const np = this.mentionStart + task.title.length + 10;
-                ta.setSelectionRange(np, np);
-            });
+            this.draft = this.extractText();
+        },
+
+        onPaste(e) {
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, text);
+            this.draft = this.extractText();
+        },
+
+        mentionIcon(item) {
+            if (item.kind === 'member')  return '<i class="bi bi-person-fill" style="font-size:10px"></i>';
+            if (item.kind === 'subtask') return '<i class="bi bi-diagram-3-fill" style="font-size:10px"></i>';
+            return '<i class="bi bi-check-square-fill" style="font-size:10px"></i>';
         },
 
         renderBody(body) {
@@ -685,9 +913,19 @@ function chatThread(conversationId, authUserId, initialMessages) {
             const esc = body
                 .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                 .replace(/\n/g, '<br>');
-            return esc.replace(/@\[([^\]]+)\]\(task:(\d+)\)/g,
-                (_, title, id) => `<a href="/tasks/${id}" target="_blank" class="ct-task-chip"><i class="bi bi-check-square-fill" style="font-size:10px"></i>${title}</a>`
+            // task chips (amber)
+            let out = esc.replace(/@\[([^\]]+)\]\(task:(\d+)\)/g,
+                (_, title, id) => `<a href="/tasks/${id}" target="_blank" class="ct-chip task"><i class="bi bi-check-square-fill" style="font-size:10px"></i>${title}</a>`
             );
+            // subtask chips (green)
+            out = out.replace(/@\[([^\]]+)\]\(subtask:(\d+)\)/g,
+                (_, title, id) => `<a href="/tasks/${id}" target="_blank" class="ct-chip subtask"><i class="bi bi-diagram-3-fill" style="font-size:10px"></i>${title}</a>`
+            );
+            // member chips (violet)
+            out = out.replace(/@\[([^\]]+)\]\(member:(\d+)\)/g,
+                (_, name) => `<span class="ct-chip member"><i class="bi bi-person-fill" style="font-size:10px"></i>${name}</span>`
+            );
+            return out;
         },
 
         pickFiles(e) {
@@ -696,18 +934,19 @@ function chatThread(conversationId, authUserId, initialMessages) {
         },
 
         async sendMessage() {
-            if (!this.draft.trim() && this.pendingFiles.length === 0) return;
+            const bodyText = this.extractText().trim();
+            if (!bodyText && this.pendingFiles.length === 0) return;
             if (this.sending) return;
             this.sending = true;
             this.mentionOpen = false;
 
             const form = new FormData();
-            if (this.draft.trim()) form.append('body', this.draft.trim());
+            if (bodyText) form.append('body', bodyText);
             this.pendingFiles.forEach(f => form.append('attachments[]', f));
 
             const optimistic = {
                 id: `opt_${Date.now()}`,
-                body: this.draft.trim(),
+                body: bodyText,
                 created_at: new Date().toISOString(),
                 user: {
                     id: this.authUserId,
@@ -719,6 +958,8 @@ function chatThread(conversationId, authUserId, initialMessages) {
                 optimistic: true,
             };
             this.messages.push(optimistic);
+            // Clear contenteditable
+            if (this.$refs.compose) this.$refs.compose.innerHTML = '';
             this.draft = '';
             this.pendingFiles = [];
             this.$nextTick(() => this.scrollToBottom(true));
@@ -774,6 +1015,90 @@ function chatThread(conversationId, authUserId, initialMessages) {
         formatTime(iso) {
             if (!iso) return '';
             return new Date(iso).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        },
+    };
+}
+
+function groupInfoModal(conversationId, initialMembers, allUsers) {
+    return {
+        open: false,
+        members: initialMembers,
+        allUsers: allUsers,
+        addSearch: '',
+        addOpen: false,
+        groupName: document.querySelector('[data-group-name]')?.dataset.groupName || '',
+        groupNameDraft: '',
+        editingName: false,
+
+        startEditName() {
+            this.groupNameDraft = this.groupName;
+            this.editingName = true;
+            this.$nextTick(() => this.$refs.nameInput?.focus());
+        },
+
+        async saveName() {
+            const name = this.groupNameDraft.trim();
+            if (!name || name === this.groupName) { this.editingName = false; return; }
+            const resp = await fetch(`/chat/${conversationId}/name`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ name }),
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                this.groupName = data.name;
+                // Update the page header title too
+                const headerTitle = document.querySelector('.ct-header-title');
+                if (headerTitle) headerTitle.textContent = data.name;
+            }
+            this.editingName = false;
+        },
+
+        get addResults() {
+            const q = this.addSearch.toLowerCase().trim();
+            const memberIds = new Set(this.members.map(m => m.id));
+            return this.allUsers
+                .filter(u => !memberIds.has(u.id) && (!q || u.name.toLowerCase().includes(q) || (u.job_title||'').toLowerCase().includes(q)))
+                .slice(0, 6);
+        },
+
+        async addMember(user) {
+            this.addSearch = '';
+            this.addOpen = false;
+            const resp = await fetch(`/chat/${conversationId}/members`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ user_id: user.id }),
+            });
+            if (resp.ok) {
+                const conv = await resp.json();
+                this.members = conv.participants.map(p => ({
+                    id: p.id, name: p.name, avatar_url: p.avatar_url,
+                    is_online: p.is_online ?? false, job_title: p.job_title ?? '',
+                }));
+            }
+        },
+
+        async removeMember(user) {
+            if (!confirm(`Remove ${user.name} from the group?`)) return;
+            const resp = await fetch(`/chat/${conversationId}/members/${user.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                },
+            });
+            if (resp.ok) {
+                this.members = this.members.filter(m => m.id !== user.id);
+            }
         },
     };
 }

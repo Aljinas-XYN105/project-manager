@@ -148,10 +148,8 @@
 
 @section('content')
 @php
-    $authUser   = auth()->user();
-    $dmConvs    = $conversations->where('type', 'direct');
-    $groupConvs = $conversations->where('type', 'group');
-    $curId      = request()->route('conversation')?->id;
+    $authUser = auth()->user();
+    $curId    = request()->route('conversation')?->id;
 @endphp
 
 <div class="ci-wrap -mt-6 -mx-4 lg:-mx-5 flex flex-col"
@@ -160,7 +158,18 @@
     {{-- Header --}}
     <div class="flex-shrink-0 px-4 py-3 flex items-center justify-between gap-3"
          style="background:var(--ci-header-bg); border-bottom:1px solid var(--ci-header-border);">
-        <h1 class="text-base font-bold" style="color:var(--ci-name)">Messages</h1>
+        <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold" style="color:var(--ci-name)">Messages</h1>
+            <button type="button"
+                    onclick="window.open('{{ route('chat.popup') }}', 'chatpopup', 'width=820,height=680,resizable=yes,menubar=no,toolbar=no,location=no,status=no')"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                    style="color:var(--ci-time)"
+                    title="Open in popup window"
+                    onmouseover="this.style.color='#7c3aed';this.style.background='var(--ci-row-hover)'"
+                    onmouseout="this.style.color='var(--ci-time)';this.style.background=''">
+                <i class="bi bi-box-arrow-up-right" style="font-size:12px"></i>
+            </button>
+        </div>
         <div class="flex items-center gap-1.5">
             <button @click="$dispatch('open-group-modal')"
                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all"
@@ -219,19 +228,6 @@
         </div>
     </div>
 
-    {{-- Tabs --}}
-    <div class="flex-shrink-0 flex" style="border-bottom:1px solid var(--ci-sep); background:var(--ci-header-bg)">
-        <button class="ci-tab" :class="tab==='all'?'active':''" @click="tab='all'">
-            All @if($conversations->count()) <span style="opacity:.6">({{ $conversations->count() }})</span> @endif
-        </button>
-        <button class="ci-tab" :class="tab==='direct'?'active':''" @click="tab='direct'">
-            Direct @if($dmConvs->count()) <span style="opacity:.6">({{ $dmConvs->count() }})</span> @endif
-        </button>
-        <button class="ci-tab" :class="tab==='group'?'active':''" @click="tab='group'">
-            Groups @if($groupConvs->count()) <span style="opacity:.6">({{ $groupConvs->count() }})</span> @endif
-        </button>
-    </div>
-
     {{-- Conversation list --}}
     <div class="flex-1 overflow-y-auto" style="background:var(--ci-bg)">
         @if($conversations->isEmpty())
@@ -250,7 +246,6 @@
                 ? $conv->participants->firstWhere('id', '!=', $authUser->id)
                 : null;
             $convTitle = $other?->name ?? $conv->name ?? 'Group chat';
-            $convType  = $conv->type;
             $lastMsg   = $conv->latestMessage;
             $preview   = $lastMsg
                 ? (($lastMsg->user_id === $authUser->id ? 'You: ' : '') . \Str::limit(strip_tags($lastMsg->body ?? 'Attachment'), 50))
@@ -261,8 +256,7 @@
         @endphp
         <a href="{{ route('chat.show', $conv) }}"
            class="conv-row {{ $curId === $conv->id ? 'active' : '' }}"
-           x-show="(tab==='all' || tab==='{{ $convType }}') &&
-                   (!search || '{{ strtolower($convTitle) }}'.includes(search.toLowerCase()))">
+           x-show="!search || '{{ strtolower($convTitle) }}'.includes(search.toLowerCase())">
 
             <div class="relative flex-shrink-0">
                 @if($other)
@@ -411,7 +405,6 @@
 <script>
 function chatIndex(currentConvId) {
     return {
-        tab: 'all',
         search: '',
         dmSearch: '',
         currentConvId,
