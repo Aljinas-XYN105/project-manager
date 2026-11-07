@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\StandupExport;
 use App\Models\DailyReport;
 use App\Models\Project;
 use App\Models\Task;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DailyReportController extends Controller
 {
@@ -202,6 +204,30 @@ class DailyReportController extends Controller
 
         return redirect()->route('daily-reports.show', $dailyReport)
             ->with('success', 'Report updated.');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user->hasAnyRole(['admin', 'manager'])) {
+            abort(403);
+        }
+
+        $date   = $request->input('date', today()->toDateString());
+        $userId = $request->input('user_id');
+
+        $query = DailyReport::with(['user', 'reportTasks.task.project'])
+            ->where('report_date', $date)
+            ->orderBy('user_id');
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        $reports  = $query->get();
+        $filename = 'standups-'.$date.'.xlsx';
+
+        return Excel::download(new StandupExport($reports, $date), $filename);
     }
 
     public function exportPdf(DailyReport $dailyReport)

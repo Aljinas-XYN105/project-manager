@@ -12,6 +12,10 @@
         </h1>
         <p class="text-sm text-slate-500 mt-1">Daily reports across the team</p>
     </div>
+    <a href="{{ route('daily-reports.export-excel', array_filter(['date' => $date, 'user_id' => $userId])) }}"
+       class="btn-secondary flex items-center gap-2">
+        <i class="bi bi-file-earmark-excel"></i> Export Excel
+    </a>
 </div>
 
 {{-- Filters --}}

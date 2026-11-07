@@ -148,6 +148,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('daily-reports')->name('daily-reports.')->group(function () {
         Route::get('/', [DailyReportController::class, 'index'])->name('index');
         Route::get('/team', [DailyReportController::class, 'team'])->name('team');
+        Route::get('/export-excel', [DailyReportController::class, 'exportExcel'])->name('export-excel');
         Route::get('/create', [DailyReportController::class, 'create'])->name('create');
         Route::post('/', [DailyReportController::class, 'store'])->name('store');
         Route::get('/{dailyReport}', [DailyReportController::class, 'show'])->name('show');
