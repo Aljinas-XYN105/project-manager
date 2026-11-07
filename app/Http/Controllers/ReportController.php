@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Expense;
+use App\Models\LeaveRequest;
+use App\Models\LeaveType;
 use App\Models\Project;
 use App\Models\ReportSnapshot;
 use App\Models\Team;
@@ -113,5 +116,76 @@ class ReportController extends Controller
         $teams = Team::orderBy('name')->get();
 
         return view('reports.team-report', compact('members', 'teams', 'from', 'to'));
+    }
+
+    public function leaveReport(Request $request)
+    {
+        $from = Carbon::parse($request->input('from', now()->startOfYear()->format('Y-m-d')));
+        $to   = Carbon::parse($request->input('to',   now()->format('Y-m-d')));
+
+        $query = LeaveRequest::with(['user', 'type', 'reviewer'])
+            ->whereBetween('start_date', [$from, $to]);
+
+        if ($request->filled('user_id'))    $query->where('user_id', $request->user_id);
+        if ($request->filled('status'))     $query->where('status',  $request->status);
+        if ($request->filled('type_id'))    $query->where('leave_type_id', $request->type_id);
+
+        $summary = [
+            'total'    => (clone $query)->count(),
+            'approved' => (clone $query)->where('status', 'approved')->count(),
+            'pending'  => (clone $query)->where('status', 'pending')->count(),
+            'rejected' => (clone $query)->where('status', 'rejected')->count(),
+            'days'     => (clone $query)->where('status', 'approved')->sum('days'),
+        ];
+
+        if ($request->filled('export')) {
+            $leaves = (clone $query)->orderByDesc('start_date')->get();
+            $data   = compact('leaves', 'summary', 'from', 'to');
+            $path   = $this->reportService->exportToPdf('reports.pdf.leave', $data);
+            return response()->download($path, 'leave-report-'.$from->format('Y-m-d').'.pdf')->deleteFileAfterSend();
+        }
+
+        $leaves    = $query->orderByDesc('start_date')->paginate(25)->withQueryString();
+        $users     = User::where('is_active', true)->orderBy('name')->get();
+        $leaveTypes = LeaveType::orderBy('name')->get();
+
+        return view('reports.leave-report', compact('leaves', 'summary', 'from', 'to', 'users', 'leaveTypes'));
+    }
+
+    public function expenseReport(Request $request)
+    {
+        $from = Carbon::parse($request->input('from', now()->startOfYear()->format('Y-m-d')));
+        $to   = Carbon::parse($request->input('to',   now()->format('Y-m-d')));
+
+        $query = Expense::with(['user', 'reviewer'])
+            ->whereBetween('expense_date', [$from, $to]);
+
+        if ($request->filled('user_id'))  $query->where('user_id',  $request->user_id);
+        if ($request->filled('status'))   $query->where('status',   $request->status);
+        if ($request->filled('category')) $query->where('category', $request->category);
+
+        $summary = [
+            'total_count' => (clone $query)->count(),
+            'approved'    => (clone $query)->where('status', 'approved')->count(),
+            'pending'     => (clone $query)->where('status', 'pending')->count(),
+            'rejected'    => (clone $query)->where('status', 'rejected')->count(),
+            'total_amount'=> (clone $query)->where('status', 'approved')->sum('amount'),
+            'by_category' => (clone $query)->where('status', 'approved')
+                ->selectRaw('category, sum(amount) as total')
+                ->groupBy('category')->orderByDesc('total')->get(),
+        ];
+
+        if ($request->filled('export')) {
+            $expenses = (clone $query)->orderByDesc('expense_date')->get();
+            $data     = compact('expenses', 'summary', 'from', 'to');
+            $path     = $this->reportService->exportToPdf('reports.pdf.expense', $data);
+            return response()->download($path, 'expense-report-'.$from->format('Y-m-d').'.pdf')->deleteFileAfterSend();
+        }
+
+        $expenses   = $query->orderByDesc('expense_date')->paginate(25)->withQueryString();
+        $users      = User::where('is_active', true)->orderBy('name')->get();
+        $categories = Expense::CATEGORIES;
+
+        return view('reports.expense-report', compact('expenses', 'summary', 'from', 'to', 'users', 'categories'));
     }
 }

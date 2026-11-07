@@ -89,6 +89,28 @@
                 View report <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </div>
         </a>
+
+        <a href="{{ route('reports.leave') }}" class="card-hover p-6 group">
+            <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <i class="bi bi-calendar-check text-amber-600 dark:text-amber-400 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Leave Report</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Track leave requests by employee, type, and status. Export to PDF.</p>
+            <div class="mt-4 flex items-center text-amber-600 dark:text-amber-400 text-sm font-medium">
+                View report <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </div>
+        </a>
+
+        <a href="{{ route('reports.expenses') }}" class="card-hover p-6 group">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <i class="bi bi-receipt text-emerald-600 dark:text-emerald-400 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Expense Report</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Review submitted expenses by category, employee, and approval status. Export to PDF.</p>
+            <div class="mt-4 flex items-center text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+                View report <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </div>
+        </a>
     </div>
 
     {{-- Recent Snapshots --}}

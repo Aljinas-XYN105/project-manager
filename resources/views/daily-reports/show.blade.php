@@ -14,6 +14,9 @@
             <p class="text-sm text-slate-500 mt-1">{{ $dailyReport->report_date->format('l, F j, Y') }}</p>
         </div>
         <div class="flex items-center gap-2">
+            <a href="{{ route('daily-reports.pdf', $dailyReport) }}" class="btn-secondary btn-sm" target="_blank">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </a>
             @if($dailyReport->report_date->isToday() || auth()->user()->hasAnyRole(['admin', 'manager']))
             <a href="{{ route('daily-reports.edit', $dailyReport) }}" class="btn-secondary btn-sm">
                 <i class="bi bi-pencil"></i> Edit

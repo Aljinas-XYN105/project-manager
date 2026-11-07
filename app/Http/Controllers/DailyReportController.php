@@ -6,6 +6,7 @@ use App\Models\DailyReport;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\ReportService;
 use App\Services\TaskService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class DailyReportController extends Controller
 {
-    public function __construct(private readonly TaskService $taskService) {}
+    public function __construct(
+        private readonly TaskService $taskService,
+        private readonly ReportService $reportService,
+    ) {}
 
     public function index(Request $request)
     {
@@ -198,6 +202,15 @@ class DailyReportController extends Controller
 
         return redirect()->route('daily-reports.show', $dailyReport)
             ->with('success', 'Report updated.');
+    }
+
+    public function exportPdf(DailyReport $dailyReport)
+    {
+        $this->authorizeReport($dailyReport);
+        $dailyReport->load(['user', 'reportTasks.task.project']);
+        $path = $this->reportService->exportToPdf('daily-reports.pdf', compact('dailyReport'), 'portrait');
+        $filename = 'standup-'.$dailyReport->report_date->format('Y-m-d').'-'.$dailyReport->user->name.'.pdf';
+        return response()->download($path, $filename)->deleteFileAfterSend();
     }
 
     public function destroy(DailyReport $dailyReport)

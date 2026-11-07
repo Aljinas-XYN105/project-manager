@@ -116,6 +116,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('time', [ReportController::class, 'timeReport'])->name('time');
         Route::get('projects', [ReportController::class, 'projectReport'])->name('projects');
         Route::get('teams', [ReportController::class, 'teamReport'])->name('teams');
+        Route::get('leave', [ReportController::class, 'leaveReport'])->name('leave');
+        Route::get('expenses', [ReportController::class, 'expenseReport'])->name('expenses');
     });
 
     // Notifications
@@ -150,6 +152,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [DailyReportController::class, 'store'])->name('store');
         Route::get('/{dailyReport}', [DailyReportController::class, 'show'])->name('show');
         Route::get('/{dailyReport}/edit', [DailyReportController::class, 'edit'])->name('edit');
+        Route::get('/{dailyReport}/pdf', [DailyReportController::class, 'exportPdf'])->name('pdf');
         Route::put('/{dailyReport}', [DailyReportController::class, 'update'])->name('update');
         Route::delete('/{dailyReport}', [DailyReportController::class, 'destroy'])->name('destroy');
     });
