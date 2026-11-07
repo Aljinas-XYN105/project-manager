@@ -30,10 +30,12 @@
             <button type="button"
                     @click="toggle(user)"
                     :disabled="user.id === ownerId"
-                    :class="isSelected(user.id)
-                        ? 'ring-2 ring-violet-500 bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'"
-                    class="flex items-center gap-2.5 p-2.5 rounded-lg border text-left transition-all disabled:cursor-not-allowed">
+                    :class="user.id === ownerId
+                        ? 'ring-2 ring-slate-300 dark:ring-slate-600 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 cursor-default'
+                        : (isSelected(user.id)
+                            ? 'ring-2 ring-violet-500 bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600')"
+                    class="flex items-center gap-2.5 p-2.5 rounded-lg border text-left transition-all">
                 <div class="relative flex-shrink-0">
                     <template x-if="user.avatar">
                         <img :src="user.avatar" :alt="user.name" class="w-8 h-8 rounded-full object-cover">
@@ -42,7 +44,12 @@
                         <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-xs font-semibold text-violet-600 dark:text-violet-400"
                              x-text="user.name.charAt(0).toUpperCase()"></div>
                     </template>
-                    <span x-show="isSelected(user.id)"
+                    {{-- Lock badge for owner, checkmark for other selected --}}
+                    <span x-show="user.id === ownerId"
+                          class="absolute -top-1 -right-1 w-4 h-4 bg-slate-400 dark:bg-slate-500 rounded-full flex items-center justify-center">
+                        <i class="bi bi-lock-fill text-white" style="font-size:7px"></i>
+                    </span>
+                    <span x-show="user.id !== ownerId && isSelected(user.id)"
                           class="absolute -top-1 -right-1 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center">
                         <i class="bi bi-check text-white" style="font-size:9px"></i>
                     </span>
@@ -52,7 +59,9 @@
                     <p class="text-xs text-slate-400 truncate" x-text="user.job_title || 'Team Member'"></p>
                 </div>
                 <span x-show="user.id === ownerId"
-                      class="text-xs text-violet-500 font-medium flex-shrink-0">Owner</span>
+                      class="text-xs text-slate-500 dark:text-slate-400 font-medium flex-shrink-0 flex items-center gap-1">
+                    Owner
+                </span>
             </button>
         </template>
         <p x-show="filteredUsers.length === 0" class="text-sm text-slate-400 py-4 text-center sm:col-span-2">No members found</p>
