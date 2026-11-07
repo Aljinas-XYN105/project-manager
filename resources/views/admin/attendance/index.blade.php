@@ -106,11 +106,11 @@
     </div>
     <div>
         <label class="form-label">From</label>
-        <input type="date" name="from" value="{{ $from->toDateString() }}" class="form-input">
+        <x-ui.datepicker name="from" :value="$from->toDateString()" />
     </div>
     <div>
         <label class="form-label">To</label>
-        <input type="date" name="to" value="{{ $to->toDateString() }}" class="form-input">
+        <x-ui.datepicker name="to" :value="$to->toDateString()" />
     </div>
     <button class="btn-primary"><i class="bi bi-funnel"></i> Filter</button>
 </form>
@@ -219,7 +219,7 @@
                 </div>
                 <div>
                     <label class="form-label">Date</label>
-                    <input type="date" name="work_date" x-model="form.work_date" required class="form-input">
+                    <x-ui.datepicker name="work_date" x-model="form.work_date" />
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>

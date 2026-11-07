@@ -109,7 +109,7 @@
         @endforelse
         <form method="POST" action="{{ route('admin.holidays.store') }}" class="px-5 py-4 bg-slate-50/60 dark:bg-slate-800/30 flex flex-wrap gap-2 items-end">
             @csrf
-            <div><label class="form-label text-xs">Date</label><input type="date" name="date" required class="form-input text-sm"></div>
+            <div><label class="form-label text-xs">Date</label><x-ui.datepicker name="date" /></div>
             <div class="flex-1 min-w-[10rem]"><label class="form-label text-xs">Name</label><input name="name" required placeholder="e.g. Thanksgiving" class="form-input text-sm"></div>
             <button class="btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add holiday</button>
         </form>

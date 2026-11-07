@@ -28,11 +28,11 @@
         <form method="GET" action="{{ route('reports.time') }}" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="form-label">From</label>
-                <input type="date" name="from" value="{{ request('from', $from->format('Y-m-d')) }}" class="form-input">
+                <x-ui.datepicker name="from" :value="request('from', $from->format('Y-m-d'))" />
             </div>
             <div>
                 <label class="form-label">To</label>
-                <input type="date" name="to" value="{{ request('to', $to->format('Y-m-d')) }}" class="form-input">
+                <x-ui.datepicker name="to" :value="request('to', $to->format('Y-m-d'))" />
             </div>
             <div>
                 <label class="form-label">Project</label>

@@ -175,7 +175,7 @@
                 </div>
                 <div>
                     <label class="form-label">Due Date</label>
-                    <input type="date" name="due_date" value="{{ old('due_date',$task->due_date?->format('Y-m-d')) }}" class="form-input">
+                    <x-ui.datepicker name="due_date" :value="old('due_date',$task->due_date?->format('Y-m-d'))" />
                 </div>
                 <div>
                     <label class="form-label">Estimated Hours <span class="text-slate-400 font-normal text-xs">(optional)</span></label>

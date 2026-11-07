@@ -455,9 +455,7 @@ $columns = [
                             </div>
                             <div>
                                 <label class="form-label">Due Date</label>
-                                <input type="date" :value="panel.task.due_date || ''"
-                                       @change="patchPanel('due_date', $event.target.value || null)"
-                                       class="form-input">
+                                <x-ui.datepicker name="due_date" x-model="panel.task.due_date" @change="patchPanel('due_date', panel.task.due_date || null)" />
                             </div>
                         </div>
 

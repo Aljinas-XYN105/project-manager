@@ -26,8 +26,8 @@
 
 {{-- Filter --}}
 <form method="GET" class="flex gap-3 mb-5">
-    <input type="date" name="from" value="{{ $from }}" class="form-input w-auto">
-    <input type="date" name="to" value="{{ $to }}" class="form-input w-auto">
+    <x-ui.datepicker name="from" :value="$from" />
+    <x-ui.datepicker name="to" :value="$to" />
     <button type="submit" class="btn-primary btn-sm">Filter</button>
 </form>
 

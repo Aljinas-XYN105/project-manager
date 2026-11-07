@@ -47,16 +47,12 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="form-label">Start Date <span class="text-rose-500">*</span></label>
-                    <input type="date" name="start_date"
-                           value="{{ old('start_date', today()->toDateString()) }}"
-                           required class="form-input">
+                    <x-ui.datepicker name="start_date" :value="old('start_date', today()->toDateString())" />
                     @error('start_date')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="form-label">End Date <span class="text-rose-500">*</span></label>
-                    <input type="date" name="end_date"
-                           value="{{ old('end_date', today()->addDays(13)->toDateString()) }}"
-                           required class="form-input">
+                    <x-ui.datepicker name="end_date" :value="old('end_date', today()->addDays(13)->toDateString())" />
                     @error('end_date')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
             </div>

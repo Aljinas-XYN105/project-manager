@@ -361,7 +361,7 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="form-label">Due date</label>
-                    <input x-model="form.due_date" type="date" class="form-input">
+                    <x-ui.datepicker name="due_date" x-model="form.due_date" />
                 </div>
                 <div>
                     <label class="form-label">Estimate (hrs)</label>

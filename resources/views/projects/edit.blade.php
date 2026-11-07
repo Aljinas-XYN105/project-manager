@@ -48,11 +48,11 @@
                 </div>
                 <div>
                     <label class="form-label">Start Date</label>
-                    <input type="date" name="start_date" value="{{ old('start_date', $project->start_date?->format('Y-m-d')) }}" class="form-input">
+                    <x-ui.datepicker name="start_date" :value="old('start_date', $project->start_date?->format('Y-m-d'))" />
                 </div>
                 <div>
                     <label class="form-label">Due Date</label>
-                    <input type="date" name="due_date" value="{{ old('due_date', $project->due_date?->format('Y-m-d')) }}" class="form-input">
+                    <x-ui.datepicker name="due_date" :value="old('due_date', $project->due_date?->format('Y-m-d'))" />
                 </div>
                 <div class="sm:col-span-2">
                     <label class="flex items-center gap-3 cursor-pointer">

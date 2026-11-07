@@ -103,11 +103,11 @@
                 </div>
                 <div>
                     <label class="form-label">Joining date</label>
-                    <input type="date" name="joined_on" value="{{ old('joined_on', $user->joined_on?->toDateString()) }}" class="form-input">
+                    <x-ui.datepicker name="joined_on" :value="old('joined_on', $user->joined_on?->toDateString())" />
                 </div>
                 <div>
                     <label class="form-label">Date of birth</label>
-                    <input type="date" name="date_of_birth" value="{{ old('date_of_birth', $user->date_of_birth?->toDateString()) }}" class="form-input">
+                    <x-ui.datepicker name="date_of_birth" :value="old('date_of_birth', $user->date_of_birth?->toDateString())" />
                     @error('date_of_birth')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
                 <div>

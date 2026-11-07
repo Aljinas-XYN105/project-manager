@@ -206,10 +206,7 @@
                         </div>
                         <div>
                             <label class="form-label">Due Date</label>
-                            <input type="date" x-model="task.due_date"
-                                   @change="patch({ due_date: task.due_date })"
-                                   class="form-input"
-                                   :class="task.is_overdue ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/10' : ''">
+                            <x-ui.datepicker name="due_date" x-model="task.due_date" @change="patch({ due_date: task.due_date })" />
                         </div>
                     </div>
 

@@ -107,7 +107,7 @@
                     </div>
                     <div>
                         <label class="form-label">Show until <span class="text-slate-400 font-normal">(optional)</span></label>
-                        <input type="date" name="expires_on" x-model="form.expires_on" min="{{ today()->toDateString() }}" class="form-input">
+                        <x-ui.datepicker name="expires_on" x-model="form.expires_on" :min="today()->toDateString()" />
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-4 text-sm text-slate-700 dark:text-slate-300">

@@ -3,15 +3,19 @@
     'value'       => '',
     'placeholder' => 'Select date',
     'id'          => null,
+    'min'         => null,
+    'max'         => null,
 ])
 
 @php
     $inputId = $id ?? ('dp-' . $name . '-' . uniqid());
 @endphp
 
-<div x-data="datepicker(@js($value))"
+<div x-data="datepicker(@js($value), @js($min), @js($max))"
+     x-modelable="selected"
      x-init="init()"
      @click.outside="open = false"
+     {{ $attributes->except(['name','value','placeholder','id','min','max','class']) }}
      class="relative">
 
     {{-- Hidden real input for form submission --}}
@@ -71,10 +75,12 @@
             <template x-for="day in daysInMonth()" :key="day">
                 <button type="button"
                         @click="selectDay(day)"
+                        :disabled="isDisabled(day)"
                         :class="{
                             'bg-violet-600 text-white font-semibold hover:bg-violet-700': isSelected(day),
-                            'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 font-medium': isToday(day) && !isSelected(day),
-                            'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800': !isSelected(day) && !isToday(day),
+                            'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 font-medium': isToday(day) && !isSelected(day) && !isDisabled(day),
+                            'text-slate-300 dark:text-slate-600 cursor-not-allowed': isDisabled(day),
+                            'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800': !isSelected(day) && !isToday(day) && !isDisabled(day),
                         }"
                         class="text-sm h-10 w-full rounded-lg transition-colors"
                         x-text="day"></button>
@@ -85,7 +91,7 @@
         <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
             <button type="button" @click="goToday()"
                     class="text-xs text-violet-500 hover:text-violet-700 font-medium">Today</button>
-            <button type="button" @click="selected = ''; open = false"
+            <button type="button" @click="selected = ''; open = false; dispatch()"
                     class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
         </div>
     </div>
@@ -93,17 +99,23 @@
 
 <script>
 if (typeof datepicker === 'undefined') {
-function datepicker(initial) {
+function datepicker(initial, minDate, maxDate) {
     return {
-        open:    false,
+        open:     false,
         selected: initial || '',
         viewYear:  0,
         viewMonth: 0,
+        minDate:  minDate || '',
+        maxDate:  maxDate || '',
 
         init() {
             const base = this.selected ? new Date(this.selected + 'T00:00:00') : new Date();
             this.viewYear  = base.getFullYear();
             this.viewMonth = base.getMonth();
+        },
+
+        dispatch() {
+            this.$nextTick(() => this.$el.dispatchEvent(new Event('change', { bubbles: true })));
         },
 
         formatDisplay(iso) {
@@ -143,9 +155,18 @@ function datepicker(initial) {
             return this.viewYear + '-' + this.padded(this.viewMonth + 1) + '-' + this.padded(day);
         },
 
+        isDisabled(day) {
+            const d = this.iso(day);
+            if (this.minDate && d < this.minDate) return true;
+            if (this.maxDate && d > this.maxDate) return true;
+            return false;
+        },
+
         selectDay(day) {
+            if (this.isDisabled(day)) return;
             this.selected = this.iso(day);
             this.open = false;
+            this.dispatch();
         },
 
         isSelected(day) { return this.selected === this.iso(day); },
@@ -163,6 +184,7 @@ function datepicker(initial) {
             this.viewMonth = t.getMonth();
             this.selected  = t.getFullYear() + '-' + this.padded(t.getMonth() + 1) + '-' + this.padded(t.getDate());
             this.open = false;
+            this.dispatch();
         },
     };
 }

@@ -141,11 +141,11 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="form-label">From <span class="text-rose-500">*</span></label>
-                    <input type="date" name="start_date" x-model="start" @change="if (end < start) end = start" required class="form-input">
+                    <x-ui.datepicker name="start_date" x-model="start" @change="if (end < start) end = start" />
                 </div>
                 <div>
                     <label class="form-label">To <span class="text-rose-500">*</span></label>
-                    <input type="date" name="end_date" x-model="end" :min="start" required class="form-input">
+                    <x-ui.datepicker name="end_date" x-model="end" />
                 </div>
             </div>
             <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300" :class="start !== end && 'opacity-50'">

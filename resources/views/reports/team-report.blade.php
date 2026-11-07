@@ -26,11 +26,11 @@
             </div>
             <div>
                 <label class="form-label">From</label>
-                <input type="date" name="from" value="{{ request('from', now()->startOfMonth()->format('Y-m-d')) }}" class="form-input">
+                <x-ui.datepicker name="from" :value="request('from', now()->startOfMonth()->format('Y-m-d'))" />
             </div>
             <div>
                 <label class="form-label">To</label>
-                <input type="date" name="to" value="{{ request('to', now()->format('Y-m-d')) }}" class="form-input">
+                <x-ui.datepicker name="to" :value="request('to', now()->format('Y-m-d'))" />
             </div>
             <button type="submit" class="btn-primary">Apply</button>
             <a href="{{ route('reports.teams') }}" class="btn-secondary">Reset</a>

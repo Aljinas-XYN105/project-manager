@@ -192,9 +192,7 @@
             {{-- Date --}}
             <div>
                 <label class="form-label">Expense Date <span class="text-rose-500">*</span></label>
-                <input type="date" name="expense_date" value="{{ old('expense_date', today()->toDateString()) }}"
-                       max="{{ today()->toDateString() }}"
-                       class="form-input @error('expense_date') border-rose-400 @enderror" required>
+                <x-ui.datepicker name="expense_date" :value="old('expense_date', today()->toDateString())" :max="today()->toDateString()" />
                 @error('expense_date')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
             </div>
 

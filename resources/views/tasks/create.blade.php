@@ -132,7 +132,7 @@
                 </div>
                 <div>
                     <label class="form-label">Due Date</label>
-                    <input type="date" name="due_date" value="{{ old('due_date') }}" class="form-input">
+                    <x-ui.datepicker name="due_date" :value="old('due_date')" />
                 </div>
                 <div>
                     <label class="form-label flex items-center gap-1">

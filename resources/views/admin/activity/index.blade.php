@@ -54,11 +54,11 @@
     </div>
     <div>
         <label class="form-label">From</label>
-        <input type="date" name="from" value="{{ request('from') }}" class="form-input">
+        <x-ui.datepicker name="from" :value="request('from')" />
     </div>
     <div>
         <label class="form-label">To</label>
-        <input type="date" name="to" value="{{ request('to') }}" class="form-input">
+        <x-ui.datepicker name="to" :value="request('to')" />
     </div>
     <div class="sm:col-span-2 lg:col-span-6 flex justify-end gap-2">
         @if(request()->hasAny(['q','user_id','category','from','to']))

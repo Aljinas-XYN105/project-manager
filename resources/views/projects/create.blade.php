@@ -50,11 +50,11 @@
                 </div>
                 <div>
                     <label class="form-label">Start Date</label>
-                    <input type="date" name="start_date" value="{{ old('start_date') }}" class="form-input">
+                    <x-ui.datepicker name="start_date" :value="old('start_date')" />
                 </div>
                 <div>
                     <label class="form-label">Due Date</label>
-                    <input type="date" name="due_date" value="{{ old('due_date') }}" class="form-input">
+                    <x-ui.datepicker name="due_date" :value="old('due_date')" />
                 </div>
                 <div>
                     <label class="form-label">Budget ($)</label>
