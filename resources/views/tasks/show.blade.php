@@ -649,25 +649,23 @@ $typeOptions = [
                 <div class="flex-1">
                     <div x-show="!editing">
                         <template x-if="display">
-                            <button @click="{{ $canUpdate ? 'editing=true; $nextTick(()=>$refs.dateInput.showPicker?.())' : '' }}"
+                            <button @click="{{ $canUpdate ? 'editing=true' : '' }}"
                                     class="inline-flex items-center gap-1.5 text-xs font-medium {{ $task->is_overdue ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200' }} {{ $canUpdate ? 'hover:text-violet-600 cursor-pointer' : 'cursor-default' }} transition-colors">
                                 <span x-text="display"></span>
                                 @if($task->is_overdue)<span class="text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 px-1.5 py-0.5 rounded">Overdue</span>@endif
                             </button>
                         </template>
                         <template x-if="!display">
-                            <button @click="{{ $canUpdate ? 'editing=true; $nextTick(()=>$refs.dateInput.showPicker?.())' : '' }}"
+                            <button @click="{{ $canUpdate ? 'editing=true' : '' }}"
                                     class="text-xs text-slate-400 {{ $canUpdate ? 'hover:text-violet-500 cursor-pointer' : 'cursor-default' }} italic">
                                 @if($canUpdate) Set date @else — @endif
                             </button>
                         </template>
                     </div>
-                    <div x-show="editing" x-cloak class="flex items-center gap-1.5">
-                        <input type="date" x-ref="dateInput" x-model="val"
-                               class="form-input text-xs py-0.5 w-32"
-                               @change="save()" @blur="save()" @keydown.escape="editing=false">
+                    <div x-show="editing" x-cloak class="flex items-center gap-1.5" @keydown.escape.window="editing=false" @click.outside="editing=false">
+                        <x-ui.datepicker name="due_date" x-model="val" @change="save()" />
                         <button @click="val=''; save()" x-show="val"
-                                class="text-slate-400 hover:text-rose-500 transition-colors">
+                                class="text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0">
                             <i class="bi bi-x-circle text-xs"></i>
                         </button>
                     </div>
