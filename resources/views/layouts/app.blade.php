@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @auth
+    <meta name="user-name"   content="{{ auth()->user()->name }}">
+    <meta name="user-avatar" content="{{ auth()->user()->avatar_url }}">
+    @endauth
     <title>@yield('title', config('app.name')) — Workzen</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -146,6 +150,9 @@
                         fn ($q) => $q->whereIn('user_id', $authUser->directReports()->pluck('id')))
                     ->count(),
             ];
+            $unreadChatCount = \App\Models\Conversation::whereHas('participants', fn ($q) => $q->where('user_id', $authUser->id))
+                ->get()
+                ->sum(fn ($c) => $c->unreadCountFor($authUser));
             $isAdmin = auth()->user()?->hasRole('admin');
             $me = auth()->user();
             $adminLinks = collect([
@@ -555,6 +562,21 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Chat icon with unread badge -->
+                <a href="{{ route('chat.index') }}"
+                   class="btn-icon btn-ghost relative"
+                   title="Chat"
+                   :class="'{{ request()->routeIs('chat.*') ? 'bg-slate-100 dark:bg-slate-800' : '' }}'">
+                    <i class="bi bi-chat-dots text-[15px] text-slate-500 dark:text-slate-400"></i>
+                    @if(($unreadChatCount ?? 0) > 0)
+                    <span class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-violet-600 text-white
+                                 text-[9px] font-bold rounded-full flex items-center justify-center px-1
+                                 ring-2 ring-white dark:ring-slate-950">
+                        {{ $unreadChatCount > 9 ? '9+' : $unreadChatCount }}
+                    </span>
+                    @endif
+                </a>
 
                 <!-- Notifications -->
                 <div x-data="notificationsDropdown()" x-init="init()" class="relative" @hd:close.window="open = false">

@@ -255,6 +255,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
 
+    // Chat
+    Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ConversationController::class, 'index'])->name('index');
+        Route::get('popup', [\App\Http\Controllers\ConversationController::class, 'popupHub'])->name('popup');
+        Route::get('direct/{user}', [\App\Http\Controllers\ConversationController::class, 'direct'])->name('direct');
+        Route::post('groups', [\App\Http\Controllers\ConversationController::class, 'createGroup'])->name('groups.store');
+        Route::get('{conversation}', [\App\Http\Controllers\ConversationController::class, 'show'])->name('show');
+        Route::get('{conversation}/window', [\App\Http\Controllers\ConversationController::class, 'window'])->name('window');
+        Route::post('{conversation}/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+        Route::delete('messages/{message}', [\App\Http\Controllers\MessageController::class, 'destroy'])->name('messages.destroy');
+        Route::post('{conversation}/members', [\App\Http\Controllers\ConversationController::class, 'addMember'])->name('members.add');
+        Route::delete('{conversation}/members/{user}', [\App\Http\Controllers\ConversationController::class, 'removeMember'])->name('members.remove');
+        Route::patch('{conversation}/name', [\App\Http\Controllers\ConversationController::class, 'rename'])->name('rename');
+    });
+
+    // Tasks brief for chat @ mention autocomplete
+    Route::get('api/tasks/brief', [\App\Http\Controllers\ConversationController::class, 'tasksBrief'])->name('api.tasks.brief');
+
     // Help / Documentation
     Route::get('help', fn() => view('help.index'))->name('help');
 
