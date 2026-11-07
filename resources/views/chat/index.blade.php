@@ -3,142 +3,205 @@
 
 @push('styles')
 <style>
-/* WhatsApp-inspired chat list */
-.chat-list-wrap {
-    background: #fff;
+/* ── Chat index ─────────────────────────────────────────── */
+.ci-wrap { background: var(--ci-bg); height: calc(100vh - 7rem); overflow: hidden; }
+
+/* Light tokens */
+:root {
+    --ci-bg: #f8fafc;
+    --ci-header-bg: #ffffff;
+    --ci-header-border: #e2e8f0;
+    --ci-row-hover: #f1f5f9;
+    --ci-row-active: #ede9fe;
+    --ci-row-active-border: #7c3aed;
+    --ci-name: #1e293b;
+    --ci-preview: #64748b;
+    --ci-time: #94a3b8;
+    --ci-avatar-bg: #ede9fe;
+    --ci-avatar-fg: #7c3aed;
+    --ci-badge-bg: #7c3aed;
+    --ci-badge-fg: #ffffff;
+    --ci-search-bg: #f1f5f9;
+    --ci-search-border: #e2e8f0;
+    --ci-sep: #f1f5f9;
+    --ci-tab-active: #7c3aed;
+    --ci-tab-inactive: #94a3b8;
+    --ci-modal-bg: #ffffff;
+    --ci-chip-bg: #ede9fe;
+    --ci-chip-fg: #5b21b6;
+    --ci-online: #22c55e;
+    --ci-offline: #94a3b8;
 }
-.dark .chat-list-wrap { background: #111b21; }
+/* Dark tokens */
+.dark {
+    --ci-bg: #0f172a;
+    --ci-header-bg: #1e293b;
+    --ci-header-border: #334155;
+    --ci-row-hover: #1e293b;
+    --ci-row-active: #2e1065;
+    --ci-row-active-border: #7c3aed;
+    --ci-name: #f1f5f9;
+    --ci-preview: #94a3b8;
+    --ci-time: #64748b;
+    --ci-avatar-bg: #2e1065;
+    --ci-avatar-fg: #a78bfa;
+    --ci-badge-bg: #7c3aed;
+    --ci-badge-fg: #ffffff;
+    --ci-search-bg: #1e293b;
+    --ci-search-border: #334155;
+    --ci-sep: #1e293b;
+    --ci-modal-bg: #1e293b;
+    --ci-chip-bg: #2e1065;
+    --ci-chip-fg: #c4b5fd;
+    --ci-online: #22c55e;
+    --ci-offline: #475569;
+}
 
 .conv-row {
     display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px;
-    cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+    padding: 11px 16px; cursor: pointer;
     text-decoration: none; color: inherit;
-    transition: background .1s;
-    border-bottom: 1px solid #f0f2f5;
+    transition: background .12s;
+    border-left: 3px solid transparent;
+    position: relative;
 }
-.dark .conv-row { border-bottom-color: #1f2c33; }
-.conv-row:hover, .conv-row.active { background: #f0f2f5; }
-.dark .conv-row:hover, .dark .conv-row.active { background: #2a3942; }
+.conv-row:hover { background: var(--ci-row-hover); }
+.conv-row.active {
+    background: var(--ci-row-active);
+    border-left-color: var(--ci-row-active-border);
+}
 
+.conv-sep {
+    height: 1px;
+    background: var(--ci-sep);
+    margin: 0 16px;
+}
 .conv-name {
-    font-weight: 600; font-size: 15px; color: #111827; line-height: 1.2;
+    font-weight: 600; font-size: 14px;
+    color: var(--ci-name); line-height: 1.2;
 }
-.dark .conv-name { color: #e9edef; }
 .conv-preview {
-    font-size: 13px; color: #667781; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 12.5px; color: var(--ci-preview);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.dark .conv-preview { color: #8696a0; }
-.conv-time {
-    font-size: 11px; color: #667781; white-space: nowrap;
-}
-.dark .conv-time { color: #8696a0; }
+.conv-time { font-size: 11px; color: var(--ci-time); white-space: nowrap; }
+
 .conv-badge {
-    min-width: 20px; height: 20px; background: #00a884; color: white;
-    border-radius: 10px; font-size: 11px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center; padding: 0 5px;
+    min-width: 18px; height: 18px;
+    background: var(--ci-badge-bg); color: var(--ci-badge-fg);
+    border-radius: 9px; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; padding: 0 4px;
+    flex-shrink: 0;
 }
 
-/* Search bar */
-.search-bar-wa {
-    background: #f0f2f5;
-    border: none; border-radius: 8px;
-    padding: 8px 12px 8px 36px;
-    font-size: 14px; color: #111827; outline: none; width: 100%;
+.ci-search {
+    background: var(--ci-search-bg);
+    border: 1px solid var(--ci-search-border);
+    border-radius: 10px;
+    padding: 7px 12px 7px 34px;
+    font-size: 13.5px;
+    color: var(--ci-name); outline: none; width: 100%;
+    transition: border-color .15s;
 }
-.dark .search-bar-wa {
-    background: #2a3942; color: #d1d7db;
-}
-.search-bar-wa::placeholder { color: #8696a0; }
+.ci-search:focus { border-color: #7c3aed; }
+.ci-search::placeholder { color: var(--ci-time); }
 
-/* New group modal */
-.modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 200;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(2px);
-}
-.modal-card {
-    background: white; border-radius: 16px; padding: 28px 24px;
-    width: min(480px, calc(100vw - 32px)); max-height: 80vh; overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,.2);
-}
-.dark .modal-card { background: #1e2d35; }
-
-/* Member chips */
-.member-chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: #e0f2fe; color: #0369a1;
-    border-radius: 20px; padding: 3px 10px;
-    font-size: 12px; font-weight: 500;
-}
-.dark .member-chip { background: #1a3a4a; color: #7dd3fc; }
-.member-chip button { line-height: 1; color: inherit; opacity: .7; }
-.member-chip button:hover { opacity: 1; }
-
-/* Tabs */
-.tab-btn {
-    flex: 1; padding: 10px 0; font-size: 13px; font-weight: 600;
-    text-align: center; border-bottom: 2px solid transparent;
-    color: #667781; background: none; border-top: none; border-left: none; border-right: none;
+.ci-tab {
+    flex: 1; padding: 9px 0; font-size: 12.5px; font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid transparent;
+    color: var(--ci-tab-inactive);
+    background: none; border-top: none; border-left: none; border-right: none;
     cursor: pointer; transition: color .15s, border-color .15s;
 }
-.dark .tab-btn { color: #8696a0; }
-.tab-btn.active { color: #008069; border-bottom-color: #008069; }
-.dark .tab-btn.active { color: #00a884; border-bottom-color: #00a884; }
+.ci-tab.active { color: var(--ci-tab-active); border-bottom-color: var(--ci-tab-active); }
 
-/* Empty state */
-.empty-chat {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 300px; text-align: center; padding: 32px;
+.status-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    border: 2px solid var(--ci-header-bg);
+    position: absolute; bottom: 0; right: 0;
+}
+.status-dot.online { background: var(--ci-online); }
+.status-dot.offline { background: var(--ci-offline); }
+.status-dot.busy { background: #f59e0b; }
+
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,.6);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.modal-card {
+    background: var(--ci-modal-bg);
+    border-radius: 20px; padding: 28px 24px;
+    width: min(500px, calc(100vw - 32px));
+    max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0,0,0,.25);
+    border: 1px solid rgba(124,58,237,.2);
+}
+.member-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--ci-chip-bg); color: var(--ci-chip-fg);
+    border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 500;
 }
 </style>
 @endpush
 
 @section('content')
 @php
-    $authUser = auth()->user();
+    $authUser   = auth()->user();
     $dmConvs    = $conversations->where('type', 'direct');
     $groupConvs = $conversations->where('type', 'group');
+    $curId      = request()->route('conversation')?->id;
 @endphp
 
-<div class="-mt-6 -mx-4 lg:-mx-5 flex flex-col chat-list-wrap"
-     style="min-height: calc(100vh - 7rem);"
-     x-data="chatIndex()">
+<div class="ci-wrap -mt-6 -mx-4 lg:-mx-5 flex flex-col"
+     x-data="chatIndex({{ $curId ?? 'null' }})">
 
-    {{-- Header bar --}}
-    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 bg-white dark:bg-[#111b21]">
-        <h1 class="text-lg font-bold text-slate-800 dark:text-white">Chats</h1>
-        <div class="flex items-center gap-2">
-            <button @click="showGroupModal = true"
-                    class="flex items-center gap-1.5 px-3 py-1.5 bg-[#008069] hover:bg-[#017261] text-white text-xs font-semibold rounded-full transition-colors">
-                <i class="bi bi-people-fill text-xs"></i>
-                New Group
+    {{-- Header --}}
+    <div class="flex-shrink-0 px-4 py-3 flex items-center justify-between gap-3"
+         style="background:var(--ci-header-bg); border-bottom:1px solid var(--ci-header-border);">
+        <h1 class="text-base font-bold" style="color:var(--ci-name)">Messages</h1>
+        <div class="flex items-center gap-1.5">
+            <button @click="$dispatch('open-group-modal')"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all"
+                    style="background: linear-gradient(135deg,#7c3aed,#6d28d9); box-shadow:0 2px 8px rgba(124,58,237,.35);">
+                <i class="bi bi-people-fill text-xs"></i> New Group
             </button>
-            <div x-data="{ open: false }" class="relative">
+            <div x-data="{ open:false }" class="relative">
                 <button @click="open = !open"
-                        class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">
+                        class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                        style="color:var(--ci-preview);"
+                        :style="open ? 'background:var(--ci-row-hover)' : ''"
+                        title="New direct message">
                     <i class="bi bi-pencil-square text-sm"></i>
                 </button>
                 <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 w-60 bg-white dark:bg-[#1e2d35] rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-50">
-                    <div class="px-3 pt-3 pb-2 border-b border-slate-100 dark:border-slate-700/50">
+                     class="absolute right-0 mt-1 w-64 rounded-2xl overflow-hidden z-50"
+                     style="background:var(--ci-modal-bg); border:1px solid var(--ci-header-border); box-shadow:0 8px 32px rgba(0,0,0,.18);">
+                    <div class="px-3 pt-3 pb-2" style="border-bottom:1px solid var(--ci-sep)">
                         <div class="relative">
-                            <i class="bi bi-search absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input type="text" placeholder="Search people…" x-model="dmSearch"
-                                   class="search-bar-wa text-xs py-2">
+                            <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ci-time)"></i>
+                            <input type="text" x-model="dmSearch" placeholder="Search people…"
+                                   class="ci-search text-xs py-2" style="padding-left:28px">
                         </div>
                     </div>
                     <div class="max-h-52 overflow-y-auto py-1">
                         @foreach($users as $u)
                         <a href="{{ route('chat.direct', $u) }}"
-                           class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                           x-show="!dmSearch || '{{ strtolower($u->name) }}'.includes(dmSearch.toLowerCase())">
-                            <img src="{{ $u->avatar_url }}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover" alt="">
-                            <div>
-                                <div class="text-sm font-medium text-slate-800 dark:text-slate-200">{{ $u->name }}</div>
-                                @if($u->job_title)
-                                <div class="text-xs text-slate-500">{{ $u->job_title }}</div>
-                                @endif
+                           class="flex items-center gap-2.5 px-3 py-2 transition-colors"
+                           style="text-decoration:none;"
+                           x-show="!dmSearch || '{{ strtolower($u->name) }}'.includes(dmSearch.toLowerCase())"
+                           onmouseover="this.style.background='var(--ci-row-hover)'"
+                           onmouseout="this.style.background=''">
+                            <div class="relative flex-shrink-0">
+                                <img src="{{ $u->avatar_url }}" class="w-8 h-8 rounded-full object-cover" alt="">
+                                <span class="status-dot {{ $u->is_online ? 'online' : 'offline' }}"></span>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-sm font-medium truncate" style="color:var(--ci-name)">{{ $u->name }}</div>
+                                <div class="text-xs" style="color:var(--ci-time)">
+                                    {{ $u->is_online ? ucfirst($u->availability ?? 'online') : 'Offline' }}
+                                </div>
                             </div>
                         </a>
                         @endforeach
@@ -149,39 +212,36 @@
     </div>
 
     {{-- Search --}}
-    <div class="px-4 py-2 bg-white dark:bg-[#111b21]">
+    <div class="flex-shrink-0 px-3 py-2.5" style="background:var(--ci-header-bg); border-bottom:1px solid var(--ci-sep)">
         <div class="relative">
-            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" x-model="search" placeholder="Search or start new chat"
-                   class="search-bar-wa">
+            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ci-time)"></i>
+            <input type="text" x-model="search" placeholder="Search conversations…" class="ci-search">
         </div>
     </div>
 
     {{-- Tabs --}}
-    <div class="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111b21]">
-        <button class="tab-btn" :class="tab === 'all' ? 'active' : ''" @click="tab = 'all'">
-            All
-            @if($conversations->count() > 0)
-            <span class="ml-1 text-xs opacity-70">({{ $conversations->count() }})</span>
-            @endif
+    <div class="flex-shrink-0 flex" style="border-bottom:1px solid var(--ci-sep); background:var(--ci-header-bg)">
+        <button class="ci-tab" :class="tab==='all'?'active':''" @click="tab='all'">
+            All @if($conversations->count()) <span style="opacity:.6">({{ $conversations->count() }})</span> @endif
         </button>
-        <button class="tab-btn" :class="tab === 'direct' ? 'active' : ''" @click="tab = 'direct'">
-            Direct <span class="ml-1 text-xs opacity-70">({{ $dmConvs->count() }})</span>
+        <button class="ci-tab" :class="tab==='direct'?'active':''" @click="tab='direct'">
+            Direct @if($dmConvs->count()) <span style="opacity:.6">({{ $dmConvs->count() }})</span> @endif
         </button>
-        <button class="tab-btn" :class="tab === 'groups' ? 'active' : ''" @click="tab = 'groups'">
-            Groups <span class="ml-1 text-xs opacity-70">({{ $groupConvs->count() }})</span>
+        <button class="ci-tab" :class="tab==='group'?'active':''" @click="tab='group'">
+            Groups @if($groupConvs->count()) <span style="opacity:.6">({{ $groupConvs->count() }})</span> @endif
         </button>
     </div>
 
     {{-- Conversation list --}}
-    <div class="flex-1">
+    <div class="flex-1 overflow-y-auto" style="background:var(--ci-bg)">
         @if($conversations->isEmpty())
-        <div class="empty-chat">
-            <div class="w-16 h-16 rounded-2xl bg-[#008069]/10 flex items-center justify-center mb-4">
-                <i class="bi bi-chat-dots text-3xl text-[#008069]"></i>
+        <div class="flex flex-col items-center justify-center py-20 px-6 text-center">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+                 style="background:var(--ci-avatar-bg)">
+                <i class="bi bi-chat-dots text-3xl" style="color:var(--ci-avatar-fg)"></i>
             </div>
-            <h3 class="font-semibold text-slate-800 dark:text-white mb-1">No conversations yet</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">Start a new message or create a group chat.</p>
+            <p class="font-semibold mb-1" style="color:var(--ci-name)">No conversations yet</p>
+            <p class="text-sm" style="color:var(--ci-preview)">Start a DM or create a group above.</p>
         </div>
         @else
         @foreach($conversations as $conv)
@@ -192,204 +252,198 @@
             $convTitle = $other?->name ?? $conv->name ?? 'Group chat';
             $convType  = $conv->type;
             $lastMsg   = $conv->latestMessage;
-            $preview   = $lastMsg ? (($lastMsg->user_id === $authUser->id ? 'You: ' : '') . \Illuminate\Support\Str::limit(strip_tags($lastMsg->body ?? ''), 48)) : 'No messages yet';
-            $time      = $lastMsg?->created_at?->diffForHumans(null, true, true) ?? '';
+            $preview   = $lastMsg
+                ? (($lastMsg->user_id === $authUser->id ? 'You: ' : '') . \Str::limit(strip_tags($lastMsg->body ?? 'Attachment'), 50))
+                : 'No messages yet';
+            $timeLabel = $lastMsg?->created_at?->diffForHumans(null, true, true) ?? '';
             $unread    = $conv->unread_count ?? 0;
             $memberCount = $conv->participants->count();
         @endphp
         <a href="{{ route('chat.show', $conv) }}"
-           class="conv-row {{ request()->route('conversation')?->id === $conv->id ? 'active' : '' }}"
-           x-show="(tab === 'all' || tab === '{{ $convType }}') &&
+           class="conv-row {{ $curId === $conv->id ? 'active' : '' }}"
+           x-show="(tab==='all' || tab==='{{ $convType }}') &&
                    (!search || '{{ strtolower($convTitle) }}'.includes(search.toLowerCase()))">
 
-            {{-- Avatar --}}
-            <div class="flex-shrink-0 relative">
+            <div class="relative flex-shrink-0">
                 @if($other)
-                <img src="{{ $other->avatar_url }}" class="w-12 h-12 rounded-full object-cover" alt="">
+                <img src="{{ $other->avatar_url }}" class="w-11 h-11 rounded-full object-cover" alt="">
+                <span class="status-dot {{ $other->is_online ? 'online' : 'offline' }}"></span>
                 @else
-                <div class="w-12 h-12 rounded-full bg-[#008069]/20 flex items-center justify-center">
-                    <i class="bi bi-people-fill text-[#008069] text-lg"></i>
+                <div class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                     style="background:var(--ci-avatar-bg)">
+                    <i class="bi bi-people-fill text-base" style="color:var(--ci-avatar-fg)"></i>
                 </div>
                 @endif
             </div>
 
-            {{-- Info --}}
             <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center justify-between gap-1 mb-0.5">
                     <span class="conv-name truncate">{{ $convTitle }}</span>
-                    <span class="conv-time flex-shrink-0">{{ $time }}</span>
-                </div>
-                <div class="flex items-center justify-between gap-2 mt-0.5">
-                    <span class="conv-preview flex-1 min-w-0">
-                        @if($conv->type === 'group')
-                        <i class="bi bi-people-fill text-[10px] mr-0.5 text-slate-400"></i>
-                        {{ $memberCount }} members ·
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        @if($unread > 0)
+                        <span class="conv-badge">{{ $unread > 9 ? '9+' : $unread }}</span>
                         @endif
-                        {{ $preview }}
-                    </span>
-                    @if($unread > 0)
-                    <span class="conv-badge flex-shrink-0">{{ $unread > 9 ? '9+' : $unread }}</span>
+                        <span class="conv-time">{{ $timeLabel }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                    @if($conv->type === 'group')
+                    <i class="bi bi-people text-xs flex-shrink-0" style="color:var(--ci-time)"></i>
                     @endif
+                    <span class="conv-preview {{ $unread > 0 ? 'font-semibold' : '' }}" style="{{ $unread > 0 ? 'color:var(--ci-name)' : '' }}">{{ $preview }}</span>
                 </div>
             </div>
         </a>
+        <div class="conv-sep"></div>
         @endforeach
         @endif
     </div>
 </div>
 
 {{-- New Group Modal --}}
-<div x-data="groupModal()" @open-group-modal.window="open = true">
-    <div x-show="showGroupModal || open" x-cloak class="modal-overlay"
-         @click.self="showGroupModal = false; open = false"
-         x-bind:class="{'hidden': !showGroupModal && !open}">
-        <div class="modal-card" @click.stop>
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="text-lg font-bold text-slate-800 dark:text-white">New Group</h2>
-                <button @click="showGroupModal = false; open = false"
-                        class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl">
-                    <i class="bi bi-x"></i>
-                </button>
-            </div>
-
-            <form @submit.prevent="createGroup">
-                {{-- Group name --}}
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Group name</label>
-                    <input type="text" x-model="groupName" required maxlength="100"
-                           placeholder="e.g. Frontend team, Sprint #12…"
-                           class="form-input w-full">
-                </div>
-
-                {{-- Member search --}}
-                <div class="mb-3">
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                        Add members
-                        <span x-show="selected.length > 0" class="font-normal text-slate-500 ml-1" x-text="`(${selected.length} selected)`"></span>
-                    </label>
-                    <div class="relative">
-                        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" x-model="memberSearch" placeholder="Search members…"
-                               class="search-bar-wa pl-9 !rounded-lg border border-slate-200 dark:border-slate-700 py-2">
+<div x-data="groupModal()" @open-group-modal.window="showGroupModal = true">
+    <template x-teleport="body">
+        <div x-show="showGroupModal" x-cloak class="modal-overlay" @click.self="showGroupModal = false">
+            <div class="modal-card" @click.stop>
+                <div class="flex items-center justify-between mb-5">
+                    <div>
+                        <h2 class="text-lg font-bold" style="color:var(--ci-name)">New Group</h2>
+                        <p class="text-xs mt-0.5" style="color:var(--ci-preview)">Create a group with 2 or more members</p>
                     </div>
-                </div>
-
-                {{-- Selected chips --}}
-                <div x-show="selected.length > 0" class="flex flex-wrap gap-1.5 mb-3">
-                    <template x-for="m in selected" :key="m.id">
-                        <span class="member-chip">
-                            <img :src="m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&size=24`"
-                                 class="w-4 h-4 rounded-full object-cover">
-                            <span x-text="m.name.split(' ')[0]"></span>
-                            <button type="button" @click="deselect(m)">
-                                <i class="bi bi-x text-xs"></i>
-                            </button>
-                        </span>
-                    </template>
-                </div>
-
-                {{-- Member list --}}
-                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden mb-5 max-h-52 overflow-y-auto">
-                    @foreach($users as $u)
-                    <label class="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0"
-                           x-show="!memberSearch || '{{ strtolower($u->name) }}'.includes(memberSearch.toLowerCase())"
-                           @click.prevent="toggle({{ json_encode(['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]) }})">
-                        <img src="{{ $u->avatar_url }}" class="w-9 h-9 rounded-full flex-shrink-0 object-cover" alt="">
-                        <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-slate-800 dark:text-slate-200">{{ $u->name }}</div>
-                            @if($u->job_title)
-                            <div class="text-xs text-slate-500 dark:text-slate-400">{{ $u->job_title }}</div>
-                            @endif
-                        </div>
-                        <div class="flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
-                             :class="isSelected({{ $u->id }}) ? 'bg-[#00a884] border-[#00a884]' : 'border-slate-300 dark:border-slate-600'">
-                            <i x-show="isSelected({{ $u->id }})" class="bi bi-check text-white text-xs font-bold"></i>
-                        </div>
-                    </label>
-                    @endforeach
-                </div>
-
-                {{-- Submit --}}
-                <div class="flex gap-3">
-                    <button type="button"
-                            @click="showGroupModal = false; open = false"
-                            class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            :disabled="!groupName.trim() || selected.length < 2 || loading"
-                            class="flex-1 px-4 py-2.5 rounded-xl bg-[#008069] text-white text-sm font-semibold hover:bg-[#017261] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                        <span x-show="!loading">Create group</span>
-                        <span x-show="loading">Creating…</span>
+                    <button @click="showGroupModal = false"
+                            class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                            style="color:var(--ci-preview)"
+                            onmouseover="this.style.background='var(--ci-row-hover)'"
+                            onmouseout="this.style.background=''">
+                        <i class="bi bi-x text-xl"></i>
                     </button>
                 </div>
-                <p x-show="selected.length < 2 && selected.length > 0" class="text-xs text-amber-600 mt-2 text-center">
-                    Add at least 2 members to create a group.
-                </p>
-            </form>
+
+                <form @submit.prevent="createGroup">
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold uppercase tracking-wide mb-1.5"
+                               style="color:var(--ci-preview)">Group name</label>
+                        <input type="text" x-model="groupName" required maxlength="100"
+                               placeholder="e.g. Frontend team, Sprint #12…"
+                               class="form-input w-full text-sm">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold uppercase tracking-wide mb-1.5"
+                               style="color:var(--ci-preview)">
+                            Add members
+                            <span x-show="selected.length > 0" class="normal-case font-normal ml-1"
+                                  x-text="`— ${selected.length} selected`"></span>
+                        </label>
+                        <div class="relative">
+                            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ci-time)"></i>
+                            <input type="text" x-model="memberSearch" placeholder="Search members…" class="ci-search">
+                        </div>
+                    </div>
+
+                    <div x-show="selected.length > 0" class="flex flex-wrap gap-1.5 mb-3">
+                        <template x-for="m in selected" :key="m.id">
+                            <span class="member-chip">
+                                <img :src="m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&size=24`"
+                                     class="w-4 h-4 rounded-full object-cover">
+                                <span x-text="m.name.split(' ')[0]" class="text-xs"></span>
+                                <button type="button" @click="deselect(m)" class="opacity-60 hover:opacity-100 ml-0.5">
+                                    <i class="bi bi-x text-xs"></i>
+                                </button>
+                            </span>
+                        </template>
+                    </div>
+
+                    <div class="rounded-xl overflow-hidden mb-5 max-h-52 overflow-y-auto"
+                         style="border:1px solid var(--ci-search-border)">
+                        @foreach($users as $u)
+                        <label class="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
+                               style="border-bottom:1px solid var(--ci-sep)"
+                               x-show="!memberSearch || '{{ strtolower($u->name) }}'.includes(memberSearch.toLowerCase())"
+                               @click.prevent="toggle({{ json_encode(['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]) }})"
+                               onmouseover="this.style.background='var(--ci-row-hover)'"
+                               onmouseout="this.style.background=''">
+                            <div class="relative flex-shrink-0">
+                                <img src="{{ $u->avatar_url }}" class="w-9 h-9 rounded-full object-cover" alt="">
+                                <span class="status-dot {{ $u->is_online ? 'online' : 'offline' }}"></span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-medium truncate" style="color:var(--ci-name)">{{ $u->name }}</div>
+                                <div class="text-xs" style="color:var(--ci-time)">
+                                    {{ $u->is_online ? ucfirst($u->availability ?? 'online') : 'Offline' }}
+                                </div>
+                            </div>
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
+                                 :style="isSelected({{ $u->id }}) ? 'background:#7c3aed;border-color:#7c3aed' : 'border-color:var(--ci-search-border)'">
+                                <i x-show="isSelected({{ $u->id }})" class="bi bi-check text-white text-xs font-bold"></i>
+                            </div>
+                        </label>
+                        @endforeach
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" @click="showGroupModal = false"
+                                class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                                style="border:1px solid var(--ci-search-border); color:var(--ci-preview)"
+                                onmouseover="this.style.background='var(--ci-row-hover)'"
+                                onmouseout="this.style.background=''">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                :disabled="!groupName.trim() || selected.length < 2 || loading"
+                                class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40"
+                                style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">
+                            <span x-show="!loading"><i class="bi bi-people-fill mr-1.5"></i>Create group</span>
+                            <span x-show="loading">Creating…</span>
+                        </button>
+                    </div>
+                    <p x-show="selected.length === 1" class="text-xs text-amber-500 mt-2 text-center">
+                        Add at least one more member.
+                    </p>
+                </form>
+            </div>
         </div>
-    </div>
+    </template>
 </div>
-
 @endsection
 
 @push('scripts')
 <script>
-function chatIndex() {
+function chatIndex(currentConvId) {
     return {
         tab: 'all',
         search: '',
         dmSearch: '',
-        showGroupModal: false,
+        currentConvId,
     };
 }
-
 function groupModal() {
     return {
-        open: false,
+        showGroupModal: false,
         groupName: '',
         memberSearch: '',
         selected: [],
         loading: false,
-
-        toggle(member) {
-            const idx = this.selected.findIndex(m => m.id === member.id);
-            if (idx === -1) this.selected.push(member);
-            else this.selected.splice(idx, 1);
+        toggle(m) {
+            const i = this.selected.findIndex(x => x.id === m.id);
+            i === -1 ? this.selected.push(m) : this.selected.splice(i, 1);
         },
-        deselect(member) {
-            this.selected = this.selected.filter(m => m.id !== member.id);
-        },
-        isSelected(id) {
-            return this.selected.some(m => m.id === id);
-        },
+        deselect(m) { this.selected = this.selected.filter(x => x.id !== m.id); },
+        isSelected(id) { return this.selected.some(x => x.id === id); },
         async createGroup() {
             if (!this.groupName.trim() || this.selected.length < 2) return;
             this.loading = true;
             try {
-                const resp = await fetch('/chat/groups', {
+                const r = await fetch('/chat/groups', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: this.groupName.trim(),
-                        member_ids: this.selected.map(m => m.id),
-                    }),
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+                    body: JSON.stringify({ name: this.groupName.trim(), member_ids: this.selected.map(m => m.id) }),
                 });
-                const data = await resp.json();
-                if (data.id) {
-                    window.location.href = `/chat/${data.id}`;
-                } else {
-                    alert(data.message || 'Failed to create group.');
-                }
-            } catch (e) {
-                alert('Something went wrong. Please try again.');
-            } finally {
-                this.loading = false;
-            }
+                const d = await r.json();
+                if (d.id) window.location.href = `/chat/${d.id}`;
+                else alert(d.message || 'Failed.');
+            } catch { alert('Something went wrong.'); }
+            finally { this.loading = false; }
         },
     };
 }

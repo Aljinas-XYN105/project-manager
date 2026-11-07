@@ -16,7 +16,7 @@ class ConversationController extends Controller
 
         $conversations = Conversation::whereHas('participants', fn ($q) => $q->where('users.id', $user->id))
             ->with([
-                'participants:id,name,avatar',
+                'participants:id,name,avatar,last_seen_at,availability',
                 'latestMessage.user:id,name',
             ])
             ->latest('updated_at')
@@ -26,7 +26,7 @@ class ConversationController extends Controller
         $users = User::where('id', '!=', $user->id)
             ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'avatar', 'job_title']);
+            ->get(['id', 'name', 'avatar', 'job_title', 'last_seen_at', 'availability']);
 
         return view('chat.index', compact('conversations', 'users'));
     }
@@ -42,7 +42,7 @@ class ConversationController extends Controller
         );
 
         $messages = $conversation->messages()
-            ->with(['user:id,name,avatar', 'attachments', 'replies.user:id,name,avatar'])
+            ->with(['user:id,name,avatar,last_seen_at,availability', 'attachments', 'replies.user:id,name,avatar'])
             ->whereNull('parent_id')       // top-level only; replies nested under their parent
             ->withTrashed()
             ->latest('created_at')
@@ -52,12 +52,10 @@ class ConversationController extends Controller
         $conversation->participants()
             ->updateExistingPivot($user->id, ['last_read_at' => now()]);
 
-        $conversations = Conversation::whereHas('participants', fn ($q) => $q->where('users.id', $user->id))
-            ->with(['participants:id,name,avatar', 'latestMessage.user:id,name'])
-            ->latest('updated_at')
-            ->get();
+        // Also load participants with status for header
+        $conversation->load('participants:id,name,avatar,last_seen_at,availability');
 
-        return view('chat.show', compact('conversation', 'messages', 'conversations'));
+        return view('chat.show', compact('conversation', 'messages'));
     }
 
     // Start or open a DM with another user
