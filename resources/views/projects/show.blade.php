@@ -369,4 +369,44 @@ function attachmentManager(uploadUrl, destroyUrlTemplate) {
 }
 </script>
 @endpush
+
+@can('manageMember', $project)
+<x-modal name="add-member" max-width="sm">
+    <form method="POST" action="{{ route('projects.members.add', $project) }}" class="p-6 space-y-4">
+        @csrf
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Add Member</h2>
+
+        <div>
+            <label class="form-label">Member</label>
+            @if($availableUsers->isEmpty())
+                <p class="text-sm text-slate-400">All active users are already members of this project.</p>
+            @else
+                <x-ui.select name="user_id"
+                    placeholder="Select a user…"
+                    :value="''"
+                    :options="$availableUsers->pluck('name','id')->toArray()" />
+            @endif
+        </div>
+
+        @if($availableUsers->isNotEmpty())
+        <div>
+            <label class="form-label">Role</label>
+            <x-ui.select name="role"
+                :value="'developer'"
+                :options="['developer'=>'Developer','manager'=>'Manager','viewer'=>'Viewer']" />
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+            <button type="button" x-on:click="$dispatch('close-modal', 'add-member')" class="btn-secondary">Cancel</button>
+            <button type="submit" class="btn-primary">Add Member</button>
+        </div>
+        @else
+        <div class="flex justify-end">
+            <button type="button" x-on:click="$dispatch('close-modal', 'add-member')" class="btn-secondary">Close</button>
+        </div>
+        @endif
+    </form>
+</x-modal>
+@endcan
+
 @endsection

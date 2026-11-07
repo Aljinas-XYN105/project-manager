@@ -55,7 +55,12 @@ class ProjectController extends Controller
         $project->load(['columns.tasks.assignees', 'members', 'owner', 'labels', 'attachments.user']);
         $stats = $this->projectService->getProjectStats($project);
 
-        return view('projects.show', compact('project', 'stats'));
+        $memberIds = $project->members->pluck('id');
+        $availableUsers = User::active()->orderBy('name')
+            ->whereNotIn('id', $memberIds)
+            ->get(['id', 'name', 'job_title', 'avatar']);
+
+        return view('projects.show', compact('project', 'stats', 'availableUsers'));
     }
 
     public function edit(Project $project)
