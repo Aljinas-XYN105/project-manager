@@ -25,7 +25,7 @@
     </div>
 
     {{-- User grid --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1 mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto px-1 mb-4">
         <template x-for="user in filteredUsers" :key="user.id">
             <button type="button"
                     @click="toggle(user)"
