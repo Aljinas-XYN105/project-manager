@@ -44,43 +44,101 @@
                 </template>
                 <div class="flex items-start gap-3">
                     <div class="flex-1 min-w-0 space-y-3">
-                        {{-- Task selector --}}
+                        {{-- Task selector (type-and-search combobox) --}}
                         <div>
                             <label class="form-label">Task</label>
-                            <div x-data="{open:false}" @click.outside="open=false" class="relative">
+                            <div x-data="{
+                                    open: false,
+                                    q: '',
+                                    get filtered() {
+                                        const opts = optionsFor(task);
+                                        if (!this.q) return opts;
+                                        const lq = this.q.toLowerCase();
+                                        return opts.filter(o => o.label.toLowerCase().includes(lq));
+                                    },
+                                    get selectedLabel() {
+                                        if (task.task_id === '__new__') return '＋ Create a new task…';
+                                        if (!task.task_id) return '';
+                                        return optionsFor(task).find(o => String(o.id) === String(task.task_id))?.label ?? '';
+                                    },
+                                    pick(id) {
+                                        task.task_id = String(id);
+                                        onTaskPicked(task);
+                                        this.q = '';
+                                        this.open = false;
+                                    },
+                                    clear() {
+                                        task.task_id = '';
+                                        onTaskPicked(task);
+                                        this.q = '';
+                                        this.open = false;
+                                    }
+                                 }"
+                                 @click.outside="open = false; q = ''"
+                                 class="relative">
                                 <input type="hidden" :name="'tasks['+idx+'][task_id]'" :value="task.task_id==='__new__'?'':task.task_id">
-                                <button type="button" @click="open=!open"
-                                        :class="open?'ring-2 ring-violet-500/30 border-violet-500':''"
-                                        class="form-input text-left flex items-center justify-between gap-2 w-full text-sm">
-                                    <span :class="!task.task_id&&'text-slate-400 dark:text-slate-500'"
-                                          x-text="task.task_id==='__new__'?'＋ Create a new task…':(optionsFor(task).find(o=>String(o.id)===String(task.task_id))?.label||'— Not linked to a task —')"></span>
-                                    <i class="bi bi-chevron-down flex-shrink-0 text-slate-400 transition-transform duration-150" :class="open?'rotate-180':''" style="font-size:0.65rem"></i>
-                                </button>
+                                <div class="relative">
+                                    <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                                    <input type="text"
+                                           x-model="q"
+                                           @focus="open = true; q = ''"
+                                           @input="open = true"
+                                           @keydown.escape="open = false; q = ''"
+                                           @keydown.enter.prevent="filtered[0] && pick(filtered[0].id)"
+                                           :placeholder="selectedLabel || 'Search tasks…'"
+                                           :class="open ? 'ring-2 ring-violet-500/30 border-violet-500' : (task.task_id ? 'border-slate-300 dark:border-slate-600' : '')"
+                                           class="form-input text-sm pl-8 pr-7 w-full"
+                                           autocomplete="off">
+                                    <button x-show="task.task_id" type="button" @click="clear()"
+                                            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                                        <i class="bi bi-x text-sm"></i>
+                                    </button>
+                                </div>
+                                {{-- Selected badge --}}
+                                <template x-if="task.task_id && task.task_id !== '__new__' && !open">
+                                    <p class="mt-1 text-xs text-slate-400 truncate" x-text="selectedLabel"></p>
+                                </template>
                                 <div x-show="open" x-cloak style="z-index:200"
                                      class="absolute mt-1 w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden max-h-56 overflow-y-auto">
-                                    <button type="button" @click="task.task_id=''; onTaskPicked(task); open=false"
-                                            :class="!task.task_id?'text-violet-600 bg-violet-50/50 font-medium':'text-slate-400 dark:text-slate-500'"
-                                            class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
-                                        <span>— Not linked to a task —</span>
-                                        <i x-show="!task.task_id" class="bi bi-check2 text-violet-500 text-xs"></i>
-                                    </button>
-                                    <button type="button" @click="task.task_id='__new__'; onTaskPicked(task); open=false"
-                                            :class="task.task_id==='__new__'?'text-violet-600 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
-                                            class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
-                                        <span>＋ Create a new task…</span>
-                                        <i x-show="task.task_id==='__new__'" class="bi bi-check2 text-violet-500 text-xs"></i>
-                                    </button>
-                                    <template x-for="opt in optionsFor(task)" :key="opt.id">
-                                        <button type="button" @click="task.task_id=String(opt.id); onTaskPicked(task); open=false"
-                                                :class="String(opt.id)===String(task.task_id)?'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium':'text-slate-700 dark:text-slate-200'"
+                                    {{-- Not linked --}}
+                                    <template x-if="!q">
+                                        <button type="button" @click="clear()"
+                                                :class="!task.task_id ? 'text-violet-600 bg-violet-50/50 font-medium' : 'text-slate-400 dark:text-slate-500'"
                                                 class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
-                                            <span x-text="opt.label"></span>
-                                            <i x-show="String(opt.id)===String(task.task_id)" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                            <span>— Not linked to a task —</span>
+                                            <i x-show="!task.task_id" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                        </button>
+                                    </template>
+                                    {{-- Create new --}}
+                                    <template x-if="!q || 'create new task'.includes(q.toLowerCase())">
+                                        <button type="button" @click="pick('__new__')"
+                                                :class="task.task_id==='__new__' ? 'text-violet-600 bg-violet-50/50 font-medium' : 'text-slate-700 dark:text-slate-200'"
+                                                class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                            <span>＋ Create a new task…</span>
+                                            <i x-show="task.task_id==='__new__'" class="bi bi-check2 text-violet-500 text-xs"></i>
+                                        </button>
+                                    </template>
+                                    {{-- No results --}}
+                                    <template x-if="filtered.length === 0 && q">
+                                        <div class="px-3.5 py-4 text-center">
+                                            <p class="text-sm text-slate-400">No tasks match "<span x-text="q"></span>"</p>
+                                            <button type="button" @click="pick('__new__')"
+                                                    class="mt-1.5 text-xs text-violet-600 dark:text-violet-400 hover:underline">
+                                                Create a new task instead →
+                                            </button>
+                                        </div>
+                                    </template>
+                                    {{-- Filtered list --}}
+                                    <template x-for="opt in filtered" :key="opt.id">
+                                        <button type="button" @click="pick(opt.id)"
+                                                :class="String(opt.id)===String(task.task_id) ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 font-medium' : 'text-slate-700 dark:text-slate-200'"
+                                                class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
+                                            <span x-text="opt.label" class="truncate pr-2"></span>
+                                            <i x-show="String(opt.id)===String(task.task_id)" class="bi bi-check2 text-violet-500 text-xs flex-shrink-0"></i>
                                         </button>
                                     </template>
                                 </div>
                             </div>
-                            <input type="hidden" :name="'tasks['+idx+'][task_id]'" :value="task.task_id === '__new__' ? '' : task.task_id">
                         </div>
 
                         {{-- Inline new task --}}
