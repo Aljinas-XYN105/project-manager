@@ -30,6 +30,8 @@ class ConversationController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'avatar', 'job_title', 'last_seen_at', 'availability']);
 
+        $authId = $user->id;
+
         return Inertia::render('Chat/Index', [
             'conversations' => $conversations->map(fn ($c) => [
                 'id'            => $c->id,
@@ -41,11 +43,13 @@ class ConversationController extends Controller
                     'name'         => $p->name,
                     'avatar_url'   => $p->avatar_url,
                     'availability' => $p->effective_availability,
+                    'is_online'    => $p->effective_availability !== 'offline',
                 ]),
                 'latest_message'=> $c->latestMessage ? [
-                    'body'    => $c->latestMessage->body,
-                    'user'    => $c->latestMessage->user ? ['name' => $c->latestMessage->user->name] : null,
-                    'sent_at' => $c->latestMessage->created_at->diffForHumans(),
+                    'body'      => $c->latestMessage->body,
+                    'is_mine'   => $c->latestMessage->user_id === $authId,
+                    'user'      => $c->latestMessage->user ? ['name' => $c->latestMessage->user->name] : null,
+                    'time_label'=> $c->latestMessage->created_at->diffForHumans(null, true, true),
                 ] : null,
                 'show_url' => route('chat.show', $c),
             ]),
@@ -55,7 +59,11 @@ class ConversationController extends Controller
                 'avatar_url'   => $u->avatar_url,
                 'job_title'    => $u->job_title,
                 'availability' => $u->effective_availability,
+                'is_online'    => $u->effective_availability !== 'offline',
+                'direct_url'   => route('chat.direct', $u),
             ]),
+            'popup_url'       => route('chat.popup'),
+            'group_store_url' => route('chat.groups.store'),
         ]);
     }
 
@@ -86,6 +94,22 @@ class ConversationController extends Controller
         $users = User::where('id', '!=', $user->id)->where('is_active', true)->orderBy('name')
             ->get(['id', 'name', 'avatar', 'job_title']);
 
+        $authId = $user->id;
+        $other  = $conversation->type === 'direct'
+            ? $conversation->participants->firstWhere('id', '!=', $authId)
+            : null;
+
+        $statusLabel = '';
+        if ($other) {
+            if ($other->effective_availability !== 'offline') {
+                $statusLabel = ucfirst($other->availability ?? 'Online');
+            } elseif ($other->last_seen_at) {
+                $statusLabel = 'Last seen ' . $other->last_seen_at->diffForHumans();
+            } else {
+                $statusLabel = 'Offline';
+            }
+        }
+
         return Inertia::render('Chat/Show', [
             'conversation' => [
                 'id'           => $conversation->id,
@@ -96,16 +120,28 @@ class ConversationController extends Controller
                     'name'         => $p->name,
                     'avatar_url'   => $p->avatar_url,
                     'availability' => $p->effective_availability,
+                    'is_online'    => $p->effective_availability !== 'offline',
                 ]),
+                'other'        => $other ? [
+                    'id'           => $other->id,
+                    'name'         => $other->name,
+                    'avatar_url'   => $other->avatar_url,
+                    'is_online'    => $other->effective_availability !== 'offline',
+                    'status_label' => $statusLabel,
+                ] : null,
+                'member_count' => $conversation->participants->count(),
                 'store_url'    => route('chat.messages.store', $conversation),
+                'popup_url'    => route('chat.popup'),
             ],
             'messages' => $messages->through(fn ($m) => [
-                'id'         => $m->id,
-                'body'       => $m->body,
-                'deleted_at' => $m->deleted_at?->diffForHumans(),
-                'user'       => $m->user ? ['id' => $m->user->id, 'name' => $m->user->name, 'avatar_url' => $m->user->avatar_url] : null,
-                'created_at' => $m->created_at->format('M j, g:i A'),
-                'destroy_url'=> route('chat.messages.destroy', $m),
+                'id'          => $m->id,
+                'body'        => $m->body,
+                'is_deleted'  => (bool) $m->deleted_at,
+                'is_mine'     => $m->user_id === $authId,
+                'user'        => $m->user ? ['id' => $m->user->id, 'name' => $m->user->name, 'avatar_url' => $m->user->avatar_url] : null,
+                'created_at'  => $m->created_at->format('g:i A'),
+                'created_date'=> $m->created_at->toDateString(),
+                'destroy_url' => route('chat.messages.destroy', $m),
             ]),
             'users' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]),
             'back_url' => route('chat.index'),

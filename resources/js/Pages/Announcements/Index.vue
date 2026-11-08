@@ -25,7 +25,7 @@ const showModal = ref(false)
 const modalAction = ref('')
 const modalMethod = ref('POST')
 const modalForm = useForm({
-    title: '', body: '', category: 'general', expires_on: '', is_pinned: false,
+    title: '', body: '', category: 'general', expires_on: '', is_pinned: false, notify: true,
 })
 
 function openNew() {
@@ -145,28 +145,42 @@ function toggleExpired() {
                     <form @submit.prevent="submitModal" class="px-6 py-5 space-y-4 overflow-y-auto">
                         <div>
                             <label class="form-label">Title <span class="text-rose-500">*</span></label>
-                            <input v-model="modalForm.title" type="text" class="form-input" required maxlength="200">
+                            <input v-model="modalForm.title" type="text" class="form-input" required maxlength="160"
+                                   placeholder="e.g. Office closed on Monday">
+                            <p v-if="modalForm.errors.title" class="form-error">{{ modalForm.errors.title }}</p>
                         </div>
                         <div>
-                            <label class="form-label">Category</label>
-                            <select v-model="modalForm.category" class="form-input">
-                                <option v-for="(style, key) in { general: 'General', policy: 'Policy', event: 'Event', update: 'Update', alert: 'Alert' }" :key="key" :value="key">
-                                    {{ style }}
-                                </option>
-                            </select>
+                            <label class="form-label">Message <span class="text-rose-500">*</span></label>
+                            <textarea v-model="modalForm.body" rows="6" class="form-input resize-y" required maxlength="5000"
+                                      placeholder="Write the full announcement here…"></textarea>
+                            <p v-if="modalForm.errors.body" class="form-error">{{ modalForm.errors.body }}</p>
                         </div>
-                        <div>
-                            <label class="form-label">Body <span class="text-rose-500">*</span></label>
-                            <textarea v-model="modalForm.body" rows="5" class="form-input resize-none" required maxlength="5000"></textarea>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="form-label">Category</label>
+                                <select v-model="modalForm.category" class="form-input">
+                                    <option value="general">General</option>
+                                    <option value="policy">Policy</option>
+                                    <option value="event">Event</option>
+                                    <option value="update">Update</option>
+                                    <option value="alert">Alert</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Show until <span class="text-slate-400 font-normal">(optional)</span></label>
+                                <input v-model="modalForm.expires_on" type="date" class="form-input">
+                            </div>
                         </div>
-                        <div>
-                            <label class="form-label">Expires on <span class="text-slate-400 font-normal">(leave blank = never)</span></label>
-                            <input v-model="modalForm.expires_on" type="date" class="form-input">
+                        <div class="flex flex-wrap gap-4 text-sm text-slate-700 dark:text-slate-300">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" v-model="modalForm.is_pinned" class="rounded text-violet-600">
+                                Pin to top
+                            </label>
+                            <label v-if="modalMethod === 'POST'" class="flex items-center gap-2">
+                                <input type="checkbox" v-model="modalForm.notify" class="rounded text-violet-600">
+                                Notify everyone
+                            </label>
                         </div>
-                        <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                            <input type="checkbox" v-model="modalForm.is_pinned" class="rounded text-violet-600 border-slate-300">
-                            Pin to top
-                        </label>
                     </form>
                     <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex justify-end gap-2 flex-shrink-0">
                         <button type="button" @click="showModal = false" class="btn-ghost">Cancel</button>

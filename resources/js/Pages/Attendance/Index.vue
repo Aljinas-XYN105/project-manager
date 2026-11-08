@@ -89,6 +89,7 @@ const days = Object.entries(props.byDay ?? {}).map(([date, sessions]) => ({ date
             <div v-if="days.length === 0" class="py-14 text-center">
                 <i class="bi bi-calendar-x text-4xl text-slate-300 dark:text-slate-600 block mb-3"></i>
                 <p class="text-sm text-slate-500">No attendance recorded in {{ month_label }}.</p>
+                <p class="text-xs text-slate-400 mt-1">Signing in records your start time automatically; signing out records your end time.</p>
             </div>
             <div v-for="{ date, sessions } in days" :key="date"
                  class="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3.5 border-b border-slate-50 dark:border-slate-800 last:border-b-0">
