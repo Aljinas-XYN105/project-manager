@@ -8,21 +8,35 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SecurityHeaders
 {
-    private const CSP = [
-        "default-src 'self'",
-        // Alpine.js uses new AsyncFunction() to evaluate x-data expressions (requires unsafe-eval).
-        // It also uses inline event handlers for x-on:* directives (requires unsafe-inline).
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
-        "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
-        "img-src 'self' data: blob: https://ui-avatars.com",
-        "connect-src 'self' ws://localhost:8081 wss://localhost:8081",
-        "frame-ancestors 'self'",
-        "base-uri 'self'",
-        "form-action 'self'",
-        "object-src 'none'",
-        "upgrade-insecure-requests",
-    ];
+    private function buildCsp(): array
+    {
+        // Build dynamic WebSocket connect-src from env so it works both locally and in production.
+        $reverbScheme = env('REVERB_SCHEME', 'http');
+        $reverbHost   = env('REVERB_HOST', 'localhost');
+        $reverbPort   = env('REVERB_PORT', 8081);
+        $wsScheme     = ($reverbScheme === 'https') ? 'wss' : 'ws';
+        $wsOrigin     = $wsScheme . '://' . $reverbHost . ':' . $reverbPort;
+
+        // Also allow the plain-wss variant when on HTTPS (some reverse-proxy setups strip the port).
+        $wsOrigins = [$wsOrigin];
+        if ($wsScheme === 'wss') {
+            $wsOrigins[] = 'wss://' . $reverbHost;
+        }
+
+        return [
+            "default-src 'self'",
+            // Alpine.js uses new AsyncFunction() (unsafe-eval) and inline handlers (unsafe-inline).
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+            "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
+            "img-src 'self' data: blob: https://ui-avatars.com",
+            "connect-src 'self' " . implode(' ', $wsOrigins),
+            "frame-ancestors 'self'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "object-src 'none'",
+        ];
+    }
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -39,7 +53,7 @@ class SecurityHeaders
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), camera=(), microphone=(), payment=()');
-        $response->headers->set('Content-Security-Policy', implode('; ', self::CSP));
+        $response->headers->set('Content-Security-Policy', implode('; ', $this->buildCsp()));
 
         if ($request->isSecure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');

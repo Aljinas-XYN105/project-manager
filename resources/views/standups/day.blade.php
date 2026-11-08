@@ -82,11 +82,11 @@
             {{-- Member info --}}
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0 font-bold text-violet-600 dark:text-violet-400 text-sm">
-                    {{ strtoupper(substr($standup->user->name, 0, 2)) }}
+                    {{ strtoupper(substr($standup->user?->name ?? '?', 0, 2)) }}
                 </div>
                 <div class="min-w-0">
-                    <p class="font-semibold text-slate-900 dark:text-white text-sm truncate">{{ $standup->user->name }}</p>
-                    <p class="text-xs text-slate-400 truncate">{{ $standup->user->email }}</p>
+                    <p class="font-semibold text-slate-900 dark:text-white text-sm truncate">{{ $standup->user?->name ?? '—' }}</p>
+                    <p class="text-xs text-slate-400 truncate">{{ $standup->user?->email ?? '' }}</p>
                 </div>
                 <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 ml-auto group-hover:text-violet-500 transition-colors flex-shrink-0"></i>
             </div>

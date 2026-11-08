@@ -159,9 +159,9 @@ $statsConfig = [
                         @endif
                     </td>
                     <td class="hidden md:table-cell">
-                        <a href="{{ route('projects.show', $bug->project) }}"
+                        <a href="{{ $bug->project ? route('projects.show', $bug->project) : '#' }}"
                            class="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                            {{ $bug->project->name }}
+                            {{ $bug->project?->name ?? '—' }}
                         </a>
                     </td>
                     <td class="hidden lg:table-cell">

@@ -38,7 +38,7 @@
                 <i class="bi {{ $task->type_icon }} {{ $task->type_color }}"></i>
                 <span class="font-mono text-xs text-slate-400 w-20 flex-shrink-0">{{ $task->ticket_key }}</span>
                 <span class="flex-1 min-w-0 truncate text-sm {{ in_array($task->status, ['done','cancelled']) ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white' }}">{{ $task->title }}</span>
-                <span class="text-xs text-slate-400 hidden sm:inline">{{ $task->project->name }}</span>
+                <span class="text-xs text-slate-400 hidden sm:inline">{{ $task->project?->name ?? '—' }}</span>
                 <span class="badge-{{ $task->status }} text-[10px]">{{ ucfirst(str_replace('_', ' ', $task->status)) }}</span>
             </a>
             @endforeach

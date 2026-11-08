@@ -153,7 +153,7 @@
 @endphp
 
 <div class="ci-wrap -mt-6 -mx-4 lg:-mx-5 flex flex-col"
-     x-data="chatIndex({{ $curId ?? 'null' }})">
+     x-data="chatIndex({{ $curId ?? 'null' }}, @js($users->map(fn($u)=>['id'=>$u->id,'name'=>$u->name,'avatar_url'=>$u->avatar_url,'job_title'=>$u->job_title??'','is_online'=>$u->is_online,'availability'=>$u->availability??''])->values()))">
 
     {{-- Header --}}
     <div class="flex-shrink-0 px-4 py-3 flex items-center justify-between gap-3"
@@ -167,64 +167,22 @@
                     title="Open in popup window"
                     onmouseover="this.style.color='#7c3aed';this.style.background='var(--ci-row-hover)'"
                     onmouseout="this.style.color='var(--ci-time)';this.style.background=''">
-                <i class="bi bi-box-arrow-up-right" style="font-size:12px"></i>
+                <i class="bi bi-arrows-angle-expand" style="font-size:11px"></i>
             </button>
         </div>
-        <div class="flex items-center gap-1.5">
-            <button @click="$dispatch('open-group-modal')"
-                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all"
-                    style="background: linear-gradient(135deg,#7c3aed,#6d28d9); box-shadow:0 2px 8px rgba(124,58,237,.35);">
-                <i class="bi bi-people-fill text-xs"></i> New Group
-            </button>
-            <div x-data="{ open:false }" class="relative">
-                <button @click="open = !open"
-                        class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                        style="color:var(--ci-preview);"
-                        :style="open ? 'background:var(--ci-row-hover)' : ''"
-                        title="New direct message">
-                    <i class="bi bi-pencil-square text-sm"></i>
-                </button>
-                <div x-show="open" x-cloak @click.outside="open = false"
-                     class="absolute right-0 mt-1 w-64 rounded-2xl overflow-hidden z-50"
-                     style="background:var(--ci-modal-bg); border:1px solid var(--ci-header-border); box-shadow:0 8px 32px rgba(0,0,0,.18);">
-                    <div class="px-3 pt-3 pb-2" style="border-bottom:1px solid var(--ci-sep)">
-                        <div class="relative">
-                            <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ci-time)"></i>
-                            <input type="text" x-model="dmSearch" placeholder="Search people…"
-                                   class="ci-search text-xs py-2" style="padding-left:28px">
-                        </div>
-                    </div>
-                    <div class="max-h-52 overflow-y-auto py-1">
-                        @foreach($users as $u)
-                        <a href="{{ route('chat.direct', $u) }}"
-                           class="flex items-center gap-2.5 px-3 py-2 transition-colors"
-                           style="text-decoration:none;"
-                           x-show="!dmSearch || '{{ strtolower($u->name) }}'.includes(dmSearch.toLowerCase())"
-                           onmouseover="this.style.background='var(--ci-row-hover)'"
-                           onmouseout="this.style.background=''">
-                            <div class="relative flex-shrink-0">
-                                <img src="{{ $u->avatar_url }}" class="w-8 h-8 rounded-full object-cover" alt="">
-                                <span class="status-dot {{ $u->is_online ? 'online' : 'offline' }}"></span>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="text-sm font-medium truncate" style="color:var(--ci-name)">{{ $u->name }}</div>
-                                <div class="text-xs" style="color:var(--ci-time)">
-                                    {{ $u->is_online ? ucfirst($u->availability ?? 'online') : 'Offline' }}
-                                </div>
-                            </div>
-                        </a>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
+        <button @click="$dispatch('open-group-modal')"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all"
+                style="background: linear-gradient(135deg,#7c3aed,#6d28d9); box-shadow:0 2px 8px rgba(124,58,237,.35);">
+            <i class="bi bi-people-fill text-xs"></i> New Group
+        </button>
     </div>
 
     {{-- Search --}}
     <div class="flex-shrink-0 px-3 py-2.5" style="background:var(--ci-header-bg); border-bottom:1px solid var(--ci-sep)">
         <div class="relative">
             <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ci-time)"></i>
-            <input type="text" x-model="search" placeholder="Search conversations…" class="ci-search">
+            <input type="text" x-model="search" placeholder="Search chats or people…" class="ci-search"
+                   @input="searchPeople">
         </div>
     </div>
 
@@ -291,6 +249,31 @@
         <div class="conv-sep"></div>
         @endforeach
         @endif
+
+        {{-- People results (shown when searching) --}}
+        <template x-if="search.trim() && peopleResults.length > 0">
+            <div>
+                <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide" style="color:var(--ci-time)">
+                    People
+                </div>
+                <template x-for="u in peopleResults" :key="u.id">
+                    <a :href="`/chat/direct/${u.id}`" class="conv-row" style="text-decoration:none">
+                        <div class="relative flex-shrink-0">
+                            <img :src="u.avatar_url" class="w-11 h-11 rounded-full object-cover" alt="">
+                            <span class="status-dot" :class="u.is_online ? 'online' : 'offline'"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-1 mb-0.5">
+                                <span class="conv-name truncate" x-text="u.name"></span>
+                                <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                      style="background:var(--ci-chip-bg);color:var(--ci-chip-fg)">Message</span>
+                            </div>
+                            <span class="conv-preview" x-text="u.job_title || (u.is_online ? ucFirst(u.availability) : 'Offline')"></span>
+                        </div>
+                    </a>
+                </template>
+            </div>
+        </template>
     </div>
 </div>
 
@@ -403,11 +386,22 @@
 
 @push('scripts')
 <script>
-function chatIndex(currentConvId) {
+function chatIndex(currentConvId, allUsers) {
     return {
         search: '',
-        dmSearch: '',
         currentConvId,
+        allUsers: allUsers || [],
+        peopleResults: [],
+
+        searchPeople() {
+            const q = this.search.toLowerCase().trim();
+            if (!q) { this.peopleResults = []; return; }
+            this.peopleResults = this.allUsers
+                .filter(u => u.name.toLowerCase().includes(q) || (u.job_title||'').toLowerCase().includes(q))
+                .slice(0, 6);
+        },
+
+        ucFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; },
     };
 }
 function groupModal() {

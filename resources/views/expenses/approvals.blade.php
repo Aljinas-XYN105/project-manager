@@ -43,7 +43,7 @@
 
             {{-- Avatar --}}
             <div class="w-9 h-9 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center font-bold text-sm text-violet-700 dark:text-violet-300 flex-shrink-0">
-                {{ strtoupper(substr($e->user->name, 0, 2)) }}
+                {{ strtoupper(substr($e->user?->name ?? '?', 0, 2)) }}
             </div>
 
             {{-- Main details --}}
@@ -55,7 +55,7 @@
                             <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">{{ $e->category }}</span>
                         </div>
                         <p class="text-xs text-slate-500 mt-0.5">
-                            by <span class="font-medium text-slate-700 dark:text-slate-200">{{ $e->user->name }}</span>
+                            by <span class="font-medium text-slate-700 dark:text-slate-200">{{ $e->user?->name ?? '—' }}</span>
                             · {{ $e->expense_date->format('D, M j, Y') }}
                             · submitted {{ $e->created_at->diffForHumans() }}
                         </p>

@@ -218,7 +218,7 @@ html, body { height: 100%; overflow: hidden; }
                 {{-- Pop-in: open main app chat --}}
                 <button onclick="(window.opener ? window.opener : window).location.href='{{ route('chat.index') }}'; if(window.opener) window.close();"
                         class="ph-btn" title="Open in main app">
-                    <i class="bi bi-box-arrow-in-down-left"></i>
+                    <i class="bi bi-arrows-angle-contract"></i>
                 </button>
                 {{-- New DM dropdown --}}
                 <div x-data="{ open: false }" class="relative">

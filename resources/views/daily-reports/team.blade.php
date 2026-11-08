@@ -78,11 +78,11 @@ $totalHours   = $reports->getCollection()->sum('total_hours');
         {{-- Report header --}}
         <div class="p-4 flex items-center gap-3 cursor-pointer"
              x-data="{ open: false }" @click="open = !open">
-            <img src="{{ $report->user->avatar_url }}" alt="{{ $report->user->name }}"
+            <img src="{{ $report->user?->avatar_url ?? asset('images/default-avatar.png') }}" alt="{{ $report->user?->name ?? '' }}"
                  class="w-10 h-10 rounded-full flex-shrink-0">
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-semibold text-slate-900 dark:text-white text-sm">{{ $report->user->name }}</span>
+                    <span class="font-semibold text-slate-900 dark:text-white text-sm">{{ $report->user?->name ?? '—' }}</span>
                     <span class="text-xs text-slate-400">{{ $report->report_date->format('M j') }}</span>
                     @if($hasBlockers)
                     <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">

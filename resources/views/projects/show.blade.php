@@ -155,7 +155,7 @@ $projectAttachmentsJson = $project->attachments->map(fn($a) => [
     'is_image'       => $a->is_image,
     'is_video'       => $a->is_video,
     'url'            => $a->url,
-    'uploader_name'  => $a->user->name,
+    'uploader_name'  => $a->user?->name ?? '—',
     'created_ago'    => $a->created_at->diffForHumans(),
 ]);
 @endphp
@@ -276,7 +276,7 @@ $projectAttachmentsJson = $project->attachments->map(fn($a) => [
     'is_image'       => $a->is_image,
     'is_video'       => $a->is_video,
     'url'            => $a->url,
-    'uploader_name'  => $a->user->name,
+    'uploader_name'  => $a->user?->name ?? '—',
     'created_ago'    => $a->created_at->diffForHumans(),
 ]);
 @endphp

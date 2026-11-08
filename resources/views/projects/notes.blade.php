@@ -28,7 +28,7 @@
         'is_converted' => $n->is_converted,
         'task_id'      => $n->task_id,
         'task_url'     => $n->task ? route('projects.tasks.show', $n->task) : null,
-        'user_name'    => $n->user->name,
+        'user_name'    => $n->user?->name ?? '—',
         'created_at'   => $n->created_at->diffForHumans(),
         'editing'      => false,
         'editBody'     => $n->body,

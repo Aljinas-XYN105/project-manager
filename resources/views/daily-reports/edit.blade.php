@@ -33,7 +33,7 @@
     $taskOptions = $myTasks->map(fn ($t) => [
         'id'    => $t->id,
         'title' => $t->title,
-        'label' => '['.($t->project->name ?? '?').'] '.($t->parent ? $t->parent->title.' › ' : '').$t->title.($t->ticket_key ? ' ('.$t->ticket_key.')' : '').($t->status === 'done' ? ' ✓' : ''),
+        'label' => '['.($t->project?->name ?? '?').'] '.($t->parent ? $t->parent->title.' › ' : '').$t->title.($t->ticket_key ? ' ('.$t->ticket_key.')' : '').($t->status === 'done' ? ' ✓' : ''),
     ])->values();
 @endphp
 

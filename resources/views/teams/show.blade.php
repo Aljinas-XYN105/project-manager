@@ -18,10 +18,10 @@
         <div class="divide-y divide-slate-50 dark:divide-slate-700">
             @foreach($team->teamMembers as $member)
             <div class="flex items-center gap-4 px-5 py-3.5">
-                <img src="{{ $member->user->avatar_url }}" class="w-9 h-9 rounded-full">
+                <img src="{{ $member->user?->avatar_url ?? asset('images/default-avatar.png') }}" class="w-9 h-9 rounded-full">
                 <div class="flex-1">
-                    <p class="font-medium text-sm text-slate-900 dark:text-white">{{ $member->user->name }}</p>
-                    <p class="text-xs text-slate-500">{{ $member->user->email }}</p>
+                    <p class="font-medium text-sm text-slate-900 dark:text-white">{{ $member->user?->name ?? '—' }}</p>
+                    <p class="text-xs text-slate-500">{{ $member->user?->email ?? '—' }}</p>
                 </div>
                 <span class="badge {{ $member->role === 'owner' ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-600' }}">{{ ucfirst($member->role) }}</span>
                 @can('manageMember', $team)

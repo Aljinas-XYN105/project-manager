@@ -180,10 +180,10 @@
                     <tr>
                         <td>
                             <div class="flex items-center gap-2.5">
-                                <img src="{{ $emp->user->avatar_url }}" class="w-7 h-7 rounded-full flex-shrink-0">
+                                <img src="{{ $emp->user?->avatar_url ?? asset('images/default-avatar.png') }}" class="w-7 h-7 rounded-full flex-shrink-0">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $emp->user->name }}</p>
-                                    <p class="text-xs text-slate-400 capitalize">{{ $emp->user->getRoleNames()->first() ?? 'member' }}</p>
+                                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $emp->user?->name ?? '—' }}</p>
+                                    <p class="text-xs text-slate-400 capitalize">{{ $emp->user?->getRoleNames()?->first() ?? 'member' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -250,13 +250,13 @@
                         <td>
                             <div class="flex items-center gap-2.5">
                                 <div class="w-6 h-6 rounded-md flex-shrink-0 flex items-center justify-center"
-                                     style="background-color: {{ $p->project->color }}25;">
-                                    <div class="w-2 h-2 rounded-full" style="background-color: {{ $p->project->color }};"></div>
+                                     style="background-color: {{ ($p->project?->color ?? '#6366f1') }}25;">
+                                    <div class="w-2 h-2 rounded-full" style="background-color: {{ $p->project?->color ?? '#6366f1' }};"></div>
                                 </div>
                                 <div class="min-w-0">
-                                    <a href="{{ route('projects.show', $p->project) }}"
+                                    <a href="{{ $p->project ? route('projects.show', $p->project) : '#' }}"
                                        class="text-sm font-medium text-slate-900 dark:text-white hover:text-violet-600 truncate block">
-                                        {{ $p->project->name }}
+                                        {{ $p->project?->name ?? '—' }}
                                     </a>
                                     <p class="text-xs text-slate-400">{{ $p->done_tasks }}/{{ $p->total_tasks }} tasks
                                         @if($p->overdue_tasks > 0)
@@ -311,10 +311,10 @@
     <div class="divide-y divide-slate-100 dark:divide-slate-800">
         @forelse($recentReports as $report)
         <div class="flex items-start gap-4 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <img src="{{ $report->user->avatar_url }}" class="w-8 h-8 rounded-full flex-shrink-0 mt-0.5">
+            <img src="{{ $report->user?->avatar_url ?? asset('images/default-avatar.png') }}" class="w-8 h-8 rounded-full flex-shrink-0 mt-0.5">
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ $report->user->name }}</span>
+                    <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ $report->user?->name ?? '—' }}</span>
                     <span class="text-xs text-slate-400">{{ $report->report_date->format('M j, Y') }}</span>
                     @if($report->blockers)
                     <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400">
