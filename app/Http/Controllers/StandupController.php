@@ -38,29 +38,42 @@ class StandupController extends Controller
             ->get()
             ->keyBy('user_id');
 
+        $users->load('roles');
+
         return Inertia::render('Standups/Index', [
-            'date'       => $date->toDateString(),
-            'date_label' => $date->isToday() ? 'Today, '.$date->format('F j') : $date->format('l, F j'),
-            'is_today'   => $date->isToday(),
-            'users'      => $users->map(fn ($u) => [
-                'id'         => $u->id,
-                'name'       => $u->name,
-                'avatar_url' => $u->avatar_url,
-                'has_standup'=> $standups->has($u->id),
-                'standup'    => $standups->has($u->id) ? [
+            'date'            => $date->toDateString(),
+            'date_label'      => $date->isToday() ? 'Today, '.$date->format('F j') : $date->format('l, F j'),
+            'full_date_label' => $date->format('l, F j, Y'),
+            'is_today'        => $date->isToday(),
+            'users'           => $users->map(fn ($u) => [
+                'id'              => $u->id,
+                'name'            => $u->name,
+                'avatar_url'      => $u->avatar_url,
+                'subtitle'        => $u->job_title ?? $u->department ?? $u->email,
+                'roles'           => $u->roles->where('name', '!=', 'member')->map(fn ($r) => $r->name)->values(),
+                'has_standup'     => $standups->has($u->id),
+                'has_blockers'    => $standups->has($u->id) && (bool) $standups[$u->id]->blockers,
+                'todo_count'      => $standups->has($u->id) ? $standups[$u->id]->items->where('status', 'todo')->count() : 0,
+                'in_prog_count'   => $standups->has($u->id) ? $standups[$u->id]->items->where('status', 'in_progress')->count() : 0,
+                'qa_count'        => $standups->has($u->id) ? $standups[$u->id]->items->where('status', 'qa_testing')->count() : 0,
+                'review_count'    => $standups->has($u->id) ? $standups[$u->id]->items->where('status', 'in_review')->count() : 0,
+                'done_count'      => $standups->has($u->id) ? $standups[$u->id]->items->where('status', 'done')->count() : 0,
+                'standup'         => $standups->has($u->id) ? [
                     'id'       => $standups[$u->id]->id,
                     'summary'  => $standups[$u->id]->summary,
                     'blockers' => $standups[$u->id]->blockers,
                     'items'    => $standups[$u->id]->items->map(fn ($item) => [
                         'id'          => $item->id,
                         'type'        => $item->type,
+                        'status'      => $item->status,
                         'description' => $item->description,
                         'hours'       => $item->hours,
                     ]),
                 ] : null,
-                'show_url' => route('standups.show', $date->toDateString()).'?user='.$u->id,
+                'member_day_url'  => route('standups.member-day', [$date->toDateString(), $u->id]),
+                'show_url'        => route('standups.show', $date->toDateString()).'?user='.$u->id,
             ]),
-            'can_export' => auth()->user()->hasAnyRole(['admin', 'manager']),
+            'can_export'       => auth()->user()->hasAnyRole(['admin', 'manager']),
             'export_excel_url' => route('standups.export-excel', ['date' => $date->toDateString()]),
             'export_pdf_url'   => route('standups.export-pdf', ['date' => $date->toDateString()]),
             'my_standup_url'   => route('standups.show', today()->toDateString()),
