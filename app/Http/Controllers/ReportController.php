@@ -85,7 +85,31 @@ class ReportController extends Controller
         $projects = Project::orderBy('name')->get();
         $users    = User::where('is_active', true)->orderBy('name')->get();
 
-        return view('reports.time-report', compact('from', 'to', 'entries', 'summary', 'byProject', 'projects', 'users'));
+        return Inertia::render('Reports/TimeReport', [
+            'from'     => $from->format('Y-m-d'),
+            'to'       => $to->format('Y-m-d'),
+            'summary'  => $summary,
+            'by_project' => $byProject->map(fn ($r) => [
+                'name'  => $r->project_name,
+                'color' => $r->color ?? '#6366f1',
+                'hours' => round($r->hours, 1),
+                'pct'   => $summary['total_hours'] > 0 ? round($r->hours / $summary['total_hours'] * 100) : 0,
+            ])->values(),
+            'entries'  => $entries->through(fn ($e) => [
+                'id'               => $e->id,
+                'date'             => $e->started_at->format('M j'),
+                'user_name'        => $e->user?->name ?? '—',
+                'user_avatar'      => $e->user?->avatar_url ?? '',
+                'project'          => $e->project?->name ?? '—',
+                'task'             => $e->task?->title ?? 'Manual entry',
+                'duration'         => $e->duration_formatted ?? '',
+                'is_billable'      => $e->is_billable,
+            ]),
+            'projects' => $projects->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values(),
+            'users'    => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])->values(),
+            'filters'  => $request->only('from', 'to', 'project_id', 'user_id'),
+            'export_url' => route('reports.time'),
+        ]);
     }
 
     public function projectReport(Request $request)
@@ -98,7 +122,33 @@ class ReportController extends Controller
         $projects = $query->orderBy('name')->paginate(20);
         $teams    = Team::orderBy('name')->get();
 
-        return view('reports.project-report', compact('projects', 'teams'));
+        $statusClasses = [
+            'planning'  => 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
+            'active'    => 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+            'on_hold'   => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+            'completed' => 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
+            'archived'  => 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500',
+        ];
+
+        return Inertia::render('Reports/ProjectReport', [
+            'projects' => $projects->through(fn ($p) => [
+                'id'          => $p->id,
+                'name'        => $p->name,
+                'color'       => $p->color ?? '#6366f1',
+                'initial'     => strtoupper(substr($p->name, 0, 1)),
+                'status'      => $p->status,
+                'status_label'=> ucfirst(str_replace('_', ' ', $p->status)),
+                'status_class'=> $statusClasses[$p->status] ?? $statusClasses['planning'],
+                'team'        => $p->team?->name ?? 'No team',
+                'progress'    => $p->progress_percentage ?? 0,
+                'tasks_count' => $p->tasks_count,
+                'hours_logged'=> 0,
+                'due_date'    => $p->due_date?->format('M j, Y'),
+                'show_url'    => route('projects.show', $p),
+            ]),
+            'teams'   => $teams->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'filters' => $request->only('status', 'team_id'),
+        ]);
     }
 
     public function teamReport(Request $request)
@@ -123,7 +173,24 @@ class ReportController extends Controller
 
         $teams = Team::orderBy('name')->get();
 
-        return view('reports.team-report', compact('members', 'teams', 'from', 'to'));
+        return Inertia::render('Reports/TeamReport', [
+            'from'    => $from->format('Y-m-d'),
+            'to'      => $to->format('Y-m-d'),
+            'members' => $members->map(fn ($m) => [
+                'id'              => $m->id,
+                'name'            => $m->name,
+                'avatar_url'      => $m->avatar_url,
+                'job_title'       => $m->job_title ?? $m->email,
+                'assigned_count'  => $m->assigned_count,
+                'completed_count' => $m->completed_count,
+                'overdue_count'   => $m->overdue_count,
+                'hours_logged'    => $m->hours_logged,
+                'completion_rate' => $m->assigned_count > 0 ? round($m->completed_count / $m->assigned_count * 100) : 0,
+                'show_url'        => route('users.show', $m),
+            ])->values(),
+            'teams'   => $teams->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'filters' => $request->only('from', 'to', 'team_id'),
+        ]);
     }
 
     public function leaveReport(Request $request)
@@ -157,7 +224,28 @@ class ReportController extends Controller
         $users     = User::where('is_active', true)->orderBy('name')->get();
         $leaveTypes = LeaveType::orderBy('name')->get();
 
-        return view('reports.leave-report', compact('leaves', 'summary', 'from', 'to', 'users', 'leaveTypes'));
+        return Inertia::render('Reports/LeaveReport', [
+            'from'    => $from->format('Y-m-d'),
+            'to'      => $to->format('Y-m-d'),
+            'summary' => $summary,
+            'leaves'  => $leaves->through(fn ($l) => [
+                'id'          => $l->id,
+                'user_name'   => $l->user?->name ?? '—',
+                'avatar_url'  => $l->user?->avatar_url ?? '',
+                'type'        => $l->type?->name ?? '—',
+                'type_color'  => $l->type?->color ?? 'slate',
+                'days'        => $l->days,
+                'date_range'  => $l->date_range,
+                'status'      => $l->status,
+                'status_label'=> ucfirst($l->status),
+                'reviewer'    => $l->reviewer?->name,
+                'reviewed_at' => $l->reviewed_at?->diffForHumans(),
+            ]),
+            'users'       => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])->values(),
+            'leave_types' => $leaveTypes->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'filters'     => $request->only('from', 'to', 'user_id', 'status', 'type_id'),
+            'export_url'  => route('reports.leave'),
+        ]);
     }
 
     public function expenseReport(Request $request)
@@ -194,6 +282,31 @@ class ReportController extends Controller
         $users      = User::where('is_active', true)->orderBy('name')->get();
         $categories = Expense::CATEGORIES;
 
-        return view('reports.expense-report', compact('expenses', 'summary', 'from', 'to', 'users', 'categories'));
+        return Inertia::render('Reports/ExpenseReport', [
+            'from'    => $from->format('Y-m-d'),
+            'to'      => $to->format('Y-m-d'),
+            'summary' => array_merge($summary, [
+                'by_category' => $summary['by_category']->map(fn ($r) => [
+                    'category' => $r->category,
+                    'total'    => number_format($r->total, 2),
+                ])->values(),
+            ]),
+            'expenses' => $expenses->through(fn ($e) => [
+                'id'          => $e->id,
+                'user_name'   => $e->user?->name ?? '—',
+                'avatar_url'  => $e->user?->avatar_url ?? '',
+                'category'    => $e->category,
+                'amount'      => number_format($e->amount, 2),
+                'expense_date'=> $e->expense_date->format('M j, Y'),
+                'description' => $e->description,
+                'status'      => $e->status,
+                'status_label'=> ucfirst($e->status),
+                'reviewer'    => $e->reviewer?->name,
+            ]),
+            'users'      => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])->values(),
+            'categories' => is_array($categories) ? array_keys($categories) : (is_object($categories) ? array_keys($categories->toArray()) : []),
+            'filters'    => $request->only('from', 'to', 'user_id', 'status', 'category'),
+            'export_url' => route('reports.expenses'),
+        ]);
     }
 }

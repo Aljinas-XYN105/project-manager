@@ -37,7 +37,10 @@ class TeamController extends Controller
     public function create()
     {
         $this->authorize('create', Team::class);
-        return view('teams.create');
+        return Inertia::render('Teams/Create', [
+            'store_url' => route('teams.store'),
+            'back_url'  => route('teams.index'),
+        ]);
     }
 
     public function store(StoreTeamRequest $request)
@@ -87,7 +90,17 @@ class TeamController extends Controller
     public function edit(Team $team)
     {
         $this->authorize('update', $team);
-        return view('teams.edit', compact('team'));
+        return Inertia::render('Teams/Edit', [
+            'team' => [
+                'id'          => $team->id,
+                'name'        => $team->name,
+                'description' => $team->description ?? $team->settings['description'] ?? '',
+                'can_delete'  => request()->user()->can('delete', $team),
+                'update_url'  => route('teams.update', $team),
+                'destroy_url' => route('teams.destroy', $team),
+                'show_url'    => route('teams.show', $team),
+            ],
+        ]);
     }
 
     public function update(Request $request, Team $team)

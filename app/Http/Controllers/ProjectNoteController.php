@@ -7,12 +7,14 @@ use App\Models\ProjectNote;
 use App\Models\Task;
 use App\Services\TaskService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ProjectNoteController extends Controller
 {
     public function __construct(private readonly TaskService $taskService) {}
 
-    public function index(Project $project)
+    public function index(Project $project): Response
     {
         $this->authorize('view', $project);
 
@@ -21,7 +23,31 @@ class ProjectNoteController extends Controller
             ->latest()
             ->get();
 
-        return view('projects.notes', compact('project', 'notes'));
+        return Inertia::render('Projects/Notes', [
+            'project' => [
+                'id'       => $project->id,
+                'name'     => $project->name,
+                'show_url' => route('projects.show', $project),
+                'kanban_url' => route('projects.tasks.kanban', $project),
+                'notes_url'  => route('project-notes.index', $project),
+            ],
+            'notes' => $notes->map(fn ($n) => [
+                'id'           => $n->id,
+                'body'         => $n->body,
+                'is_converted' => $n->is_converted,
+                'task_id'      => $n->task_id,
+                'task_url'     => $n->task ? route('projects.tasks.show', $n->task) : null,
+                'user_name'    => $n->user?->name ?? '—',
+                'user_avatar'  => $n->user?->avatar_url,
+                'created_at'   => $n->created_at->diffForHumans(),
+                'store_url'    => route('project-notes.store', $project),
+                'update_url'   => route('project-notes.update', $n),
+                'destroy_url'  => route('project-notes.destroy', $n),
+                'convert_url'  => route('project-notes.convert', $n),
+            ]),
+            'auth_avatar' => auth()->user()->avatar_url,
+            'store_url'   => route('project-notes.store', $project),
+        ]);
     }
 
     public function store(Request $request, Project $project)

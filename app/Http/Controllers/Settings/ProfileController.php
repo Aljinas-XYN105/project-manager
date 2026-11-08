@@ -7,12 +7,31 @@ use App\Http\Requests\Settings\UpdateProfileRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request)
+    public function edit(Request $request): Response
     {
-        return view('settings.profile', ['user' => $request->user()]);
+        $user = $request->user();
+        return Inertia::render('Settings/Profile', [
+            'user' => [
+                'name'       => $user->name,
+                'email'      => $user->email,
+                'job_title'  => $user->job_title ?? '',
+                'timezone'   => $user->timezone ?? 'UTC',
+                'avatar_url' => $user->avatar_url,
+                'role'       => ucfirst($user->roles->first()?->name ?? 'member'),
+                'member_since' => $user->created_at->format('M Y'),
+            ],
+            'success'     => session('success'),
+            'update_url'  => route('settings.profile.update'),
+            'my_tasks_url'  => route('my-tasks'),
+            'reports_url'   => route('daily-reports.index'),
+            'time_url'      => route('time-entries.index'),
+            'leave_url'     => route('leave.index'),
+        ]);
     }
 
     public function update(UpdateProfileRequest $request)

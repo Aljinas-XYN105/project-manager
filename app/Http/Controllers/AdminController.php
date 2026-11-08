@@ -9,6 +9,7 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class AdminController extends Controller
 {
@@ -137,11 +138,70 @@ class AdminController extends Controller
             ->groupBy('type')
             ->pluck('count', 'type');
 
-        return view('admin.dashboard', compact(
-            'totalUsers', 'activeUsers', 'totalProjects', 'activeProjects',
-            'totalTasks', 'doneTasks', 'overdueTasks', 'totalHours',
-            'employees', 'projects', 'dailyHours', 'recentReports', 'taskTypes', 'period'
-        ));
+        $typeConfig = [
+            'task'    => ['icon' => 'bi-check-square-fill', 'color' => 'bg-slate-400',   'label' => 'Task'],
+            'bug'     => ['icon' => 'bi-bug-fill',          'color' => 'bg-rose-500',    'label' => 'Bug'],
+            'feature' => ['icon' => 'bi-stars',             'color' => 'bg-violet-500',  'label' => 'Feature'],
+            'story'   => ['icon' => 'bi-bookmark-fill',     'color' => 'bg-blue-500',    'label' => 'Story'],
+            'epic'    => ['icon' => 'bi-lightning-fill',    'color' => 'bg-amber-500',   'label' => 'Epic'],
+        ];
+
+        return Inertia::render('Admin/Dashboard', [
+            'period'          => $period,
+            'total_users'     => $totalUsers,
+            'active_users'    => $activeUsers,
+            'total_projects'  => $totalProjects,
+            'active_projects' => $activeProjects,
+            'total_tasks'     => $totalTasks,
+            'done_tasks'      => $doneTasks,
+            'overdue_tasks'   => $overdueTasks,
+            'total_hours'     => number_format($totalHours, 1),
+            'daily_hours'     => $dailyHours->values(),
+            'task_types'      => collect($typeConfig)->map(fn ($tc, $key) => [
+                'key'   => $key,
+                'label' => $tc['label'],
+                'icon'  => $tc['icon'],
+                'color' => $tc['color'],
+                'count' => $taskTypes->get($key, 0),
+                'pct'   => $taskTypes->sum() > 0 ? round($taskTypes->get($key, 0) / $taskTypes->sum() * 100) : 0,
+            ])->values(),
+            'employees' => $employees->map(fn ($emp) => [
+                'name'             => $emp->user?->name ?? '—',
+                'avatar_url'       => $emp->user?->avatar_url ?? asset('images/default-avatar.png'),
+                'role'             => $emp->user?->getRoleNames()?->first() ?? 'member',
+                'hours_logged'     => $emp->hours_logged,
+                'completed_tasks'  => $emp->completed_tasks,
+                'open_tasks'       => $emp->open_tasks,
+                'overdue_tasks'    => $emp->overdue_tasks,
+                'daily_reports'    => $emp->daily_reports,
+                'performance_pct'  => $emp->performance_pct,
+                'employee_url'     => $emp->user ? route('admin.employee', $emp->user) : null,
+            ])->values(),
+            'projects' => $projects->map(fn ($p) => [
+                'name'          => $p->project?->name ?? '—',
+                'color'         => $p->project?->color ?? '#6366f1',
+                'show_url'      => $p->project ? route('projects.show', $p->project) : null,
+                'total_tasks'   => $p->total_tasks,
+                'done_tasks'    => $p->done_tasks,
+                'progress'      => $p->progress,
+                'estimated_hrs' => $p->estimated_hrs,
+                'logged_hrs'    => $p->logged_hrs,
+                'burn_rate'     => $p->burn_rate,
+                'overdue_tasks' => $p->overdue_tasks,
+            ])->values(),
+            'recent_reports' => $recentReports->map(fn ($r) => [
+                'id'          => $r->id,
+                'user_name'   => $r->user?->name ?? '—',
+                'avatar_url'  => $r->user?->avatar_url ?? asset('images/default-avatar.png'),
+                'report_date' => $r->report_date->format('M j, Y'),
+                'total_hours' => $r->total_hours,
+                'summary'     => \Illuminate\Support\Str::limit($r->summary, 120),
+                'has_blocker' => (bool) $r->blockers,
+                'show_url'    => route('daily-reports.show', $r),
+            ])->values(),
+            'users_url'   => route('users.index'),
+            'reports_url' => route('daily-reports.team'),
+        ]);
     }
 
     public function employee(Request $request, User $user)
@@ -171,10 +231,48 @@ class AdminController extends Controller
             ->map(fn ($entries) => round($entries->sum('duration_seconds') / 3600, 1))
             ->sortDesc();
 
-        return view('admin.employee', compact(
-            'user', 'period', 'totalHours', 'timeEntries',
-            'openTasks', 'completedTasks', 'dailyReports',
-            'dailyBreakdown', 'projectHours'
-        ));
+        $statusColors = ['todo' => 'bg-slate-300', 'in_progress' => 'bg-blue-500', 'qa_testing' => 'bg-violet-500', 'in_review' => 'bg-amber-500', 'done' => 'bg-emerald-500'];
+
+        return Inertia::render('Admin/Employee', [
+            'period'       => $period,
+            'total_hours'  => $totalHours,
+            'admin_url'    => route('admin.dashboard'),
+            'user' => [
+                'id'         => $user->id,
+                'name'       => $user->name,
+                'email'      => $user->email,
+                'avatar_url' => $user->avatar_url,
+                'role'       => $user->getRoleNames()->first() ?? 'member',
+                'show_url'   => route('users.show', $user),
+            ],
+            'kpi' => [
+                'completed' => $completedTasks->count(),
+                'open'      => $openTasks->count(),
+                'reports'   => $dailyReports->count(),
+            ],
+            'project_hours'    => $projectHours->map(fn ($hrs, $name) => ['name' => $name, 'hours' => $hrs])->values(),
+            'daily_breakdown'  => $dailyBreakdown->map(fn ($hrs, $date) => ['date' => $date, 'day' => (int) \Carbon\Carbon::parse($date)->format('j'), 'hours' => $hrs])->values(),
+            'open_tasks'       => $openTasks->map(fn ($t) => [
+                'id'          => $t->id,
+                'title'       => $t->title,
+                'project'     => $t->project?->name ?? '',
+                'priority'    => $t->priority ?? 'medium',
+                'status'      => $t->status,
+                'status_dot'  => $statusColors[$t->status] ?? 'bg-slate-300',
+                'due_label'   => $t->due_date ? ($t->due_date->isPast() ? 'Overdue ' . $t->due_date->diffForHumans() : 'Due ' . $t->due_date->format('M j')) : null,
+                'is_overdue'  => $t->due_date && $t->due_date->isPast(),
+                'show_url'    => route('projects.tasks.show', $t),
+            ])->values(),
+            'daily_reports'    => $dailyReports->map(fn ($r) => [
+                'id'          => $r->id,
+                'day'         => $r->report_date->format('j'),
+                'month'       => $r->report_date->format('M'),
+                'summary'     => \Illuminate\Support\Str::limit($r->summary, 80),
+                'task_count'  => $r->reportTasks->count(),
+                'total_hours' => $r->total_hours,
+                'has_blocker' => (bool) $r->blockers,
+                'show_url'    => route('daily-reports.show', $r),
+            ])->values(),
+        ]);
     }
 }

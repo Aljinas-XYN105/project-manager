@@ -6,6 +6,7 @@ use App\Models\Expense;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class ExpenseController extends Controller
 {
@@ -27,7 +28,34 @@ class ExpenseController extends Controller
             'count_approved' => $user->expenses()->where('status', 'approved')->count(),
         ];
 
-        return view('expenses.index', compact('expenses', 'pendingReview', 'summary'));
+        $categories = \App\Models\Expense::CATEGORIES;
+        $statuses   = \App\Models\Expense::STATUSES;
+
+        return Inertia::render('Expenses/Index', [
+            'expenses'      => $expenses->through(fn ($e) => [
+                'id'          => $e->id,
+                'title'       => $e->title,
+                'amount'      => $e->amount,
+                'currency'    => $e->currency,
+                'category'    => $e->category,
+                'status'      => $e->status,
+                'status_label'=> $statuses[$e->status]['label'] ?? $e->status,
+                'status_class'=> $statuses[$e->status]['class'] ?? '',
+                'expense_date'=> $e->expense_date->format('D, M j, Y'),
+                'description' => $e->description,
+                'review_note' => $e->review_note,
+                'reviewed_at' => $e->reviewed_at?->diffForHumans(),
+                'reviewer'    => $e->reviewer ? ['name' => $e->reviewer->name] : null,
+                'has_receipts'=> !empty($e->receipts) || !empty($e->receipt_path),
+                'receipt_count' => count($e->receipts ?? []),
+                'cancel_url'  => $e->status === 'pending' ? route('expenses.cancel', $e) : null,
+            ]),
+            'pending_review'=> $pendingReview,
+            'summary'       => $summary,
+            'categories'    => $categories,
+            'store_url'     => route('expenses.store'),
+            'approvals_url' => route('expenses.approvals'),
+        ]);
     }
 
     public function store(Request $request)
@@ -89,7 +117,35 @@ class ExpenseController extends Controller
             ->paginate(25)
             ->withQueryString();
 
-        return view('expenses.approvals', compact('expenses', 'status'));
+        $statuses = \App\Models\Expense::STATUSES;
+
+        return Inertia::render('Expenses/Approvals', [
+            'expenses' => $expenses->through(fn ($e) => [
+                'id'          => $e->id,
+                'title'       => $e->title,
+                'amount'      => $e->amount,
+                'currency'    => $e->currency,
+                'category'    => $e->category,
+                'status'      => $e->status,
+                'status_label'=> $statuses[$e->status]['label'] ?? $e->status,
+                'status_class'=> $statuses[$e->status]['class'] ?? '',
+                'expense_date'=> $e->expense_date->format('D, M j, Y'),
+                'description' => $e->description,
+                'review_note' => $e->review_note,
+                'reviewed_at' => $e->reviewed_at?->diffForHumans(),
+                'created_at'  => $e->created_at->diffForHumans(),
+                'reviewer'    => $e->reviewer ? ['name' => $e->reviewer->name] : null,
+                'user'        => $e->user ? ['name' => $e->user->name] : null,
+                'has_receipts'=> !empty($e->receipts) || !empty($e->receipt_path),
+                'receipt_urls'=> collect($e->receipts ?? [])->keys()->map(fn ($i) => [
+                    'url'  => route('expenses.receipt', [$e, $i]),
+                    'name' => ($e->receipts[$i]['name'] ?? 'Receipt '.($i+1)),
+                ])->values(),
+                'review_url'  => route('expenses.review', $e),
+            ]),
+            'status'       => $status,
+            'index_url'    => route('expenses.index'),
+        ]);
     }
 
     public function review(Request $request, Expense $expense)

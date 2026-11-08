@@ -163,7 +163,52 @@ class ConversationController extends Controller
         $openConvId = (int) $request->get('open', 0);
         $openConv   = $openConvId ? $conversations->firstWhere('id', $openConvId) : $conversations->first();
 
-        return view('chat.popup-hub', compact('conversations', 'users', 'openConv'));
+        $openConvSerialized = $openConv ? [
+            'id'           => $openConv->id,
+            'is_group'     => $openConv->is_group,
+            'name'         => $openConv->name,
+            'participants' => $openConv->participants->map(fn ($p) => [
+                'id'           => $p->id,
+                'name'         => $p->name,
+                'avatar_url'   => $p->avatar_url,
+                'availability' => $p->effective_availability,
+            ]),
+            'window_url' => route('chat.window', $openConv),
+        ] : null;
+
+        return Inertia::render('Chat/PopupHub', [
+            'conversations' => $conversations->map(fn ($c) => [
+                'id'           => $c->id,
+                'is_group'     => $c->is_group,
+                'name'         => $c->name,
+                'unread_count' => $c->unread_count,
+                'participants' => $c->participants->map(fn ($p) => [
+                    'id'           => $p->id,
+                    'name'         => $p->name,
+                    'avatar_url'   => $p->avatar_url,
+                    'availability' => $p->effective_availability,
+                    'is_online'    => $p->is_online ?? false,
+                ]),
+                'latest_message' => $c->latestMessage ? [
+                    'body'    => $c->latestMessage->body,
+                    'is_mine' => $c->latestMessage->user_id === $user->id,
+                    'sent_at' => $c->latestMessage->created_at->diffForHumans(null, true, true),
+                ] : null,
+                'window_url' => route('chat.window', $c),
+            ]),
+            'users' => $users->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'avatar_url' => $u->avatar_url,
+                'job_title'  => $u->job_title,
+                'is_online'  => $u->is_online ?? false,
+                'availability' => $u->effective_availability,
+                'direct_url' => route('chat.direct', $u),
+            ]),
+            'open_conv'   => $openConvSerialized,
+            'chat_index_url' => route('chat.index'),
+            'groups_store_url' => route('chat.groups.store'),
+        ]);
     }
 
     // Open chat in a standalone popup window (no app chrome)
@@ -191,8 +236,30 @@ class ConversationController extends Controller
         $users = User::where('id', '!=', $user->id)->where('is_active', true)->orderBy('name')
             ->get(['id', 'name', 'avatar', 'job_title']);
 
-        $popup = true;
-        return view('chat.show', compact('conversation', 'messages', 'popup', 'users'));
+        return Inertia::render('Chat/Window', [
+            'conversation' => [
+                'id'           => $conversation->id,
+                'is_group'     => $conversation->is_group,
+                'name'         => $conversation->name,
+                'participants' => $conversation->participants->map(fn ($p) => [
+                    'id'           => $p->id,
+                    'name'         => $p->name,
+                    'avatar_url'   => $p->avatar_url,
+                    'availability' => $p->effective_availability,
+                    'is_online'    => $p->is_online ?? false,
+                ]),
+                'store_url' => route('chat.messages.store', $conversation),
+            ],
+            'messages' => $messages->through(fn ($m) => [
+                'id'          => $m->id,
+                'body'        => $m->body,
+                'deleted_at'  => $m->deleted_at?->diffForHumans(),
+                'user'        => $m->user ? ['id' => $m->user->id, 'name' => $m->user->name, 'avatar_url' => $m->user->avatar_url] : null,
+                'created_at'  => $m->created_at->format('M j, g:i A'),
+                'destroy_url' => route('chat.messages.destroy', $m),
+            ]),
+            'users' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]),
+        ]);
     }
 
     // Rename a group conversation

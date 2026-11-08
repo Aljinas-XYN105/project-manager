@@ -8,16 +8,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Inertia\Inertia;
 
 class ProfileController extends Controller
 {
     /**
      * Display the user's profile form.
      */
-    public function edit(Request $request): View
+    public function edit(Request $request): \Inertia\Response
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
+        $user = $request->user();
+        return Inertia::render('Profile/Edit', [
+            'user'       => ['name' => $user->name, 'email' => $user->email, 'is_verified' => $user->hasVerifiedEmail()],
+            'status'     => session('status'),
+            'update_url' => route('profile.update'),
+            'delete_url' => route('profile.destroy'),
+            'resend_url' => route('verification.send'),
         ]);
     }
 

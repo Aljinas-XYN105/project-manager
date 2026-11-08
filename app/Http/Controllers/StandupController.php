@@ -88,7 +88,32 @@ class StandupController extends Controller
                 : Carbon::parse($s->standup_date)->toDateString()
             );
 
-        return view('standups.calendar', compact('firstDay', 'returnDate', 'standupsByDate'));
+        $calDays = [];
+        $cursor = $startWeek->copy();
+        while ($cursor->lte($endWeek)) {
+            $dateStr = $cursor->toDateString();
+            $calDays[] = [
+                'date'         => $dateStr,
+                'day'          => $cursor->day,
+                'is_today'     => $cursor->isToday(),
+                'is_current_month' => $cursor->month === $month,
+                'submitters'   => isset($standupsByDate[$dateStr])
+                    ? $standupsByDate[$dateStr]->map(fn ($s) => $s->user?->name)->filter()->values()
+                    : [],
+            ];
+            $cursor->addDay();
+        }
+
+        return Inertia::render('Standups/Calendar', [
+            'year'        => $year,
+            'month'       => $month,
+            'month_label' => $firstDay->format('F Y'),
+            'cal_days'    => $calDays,
+            'return_date' => $returnDate,
+            'index_url'   => route('standups.index'),
+            'prev_url'    => route('standups.calendar', ['year' => $firstDay->copy()->subMonth()->year, 'month' => $firstDay->copy()->subMonth()->month]),
+            'next_url'    => route('standups.calendar', ['year' => $firstDay->copy()->addMonth()->year, 'month' => $firstDay->copy()->addMonth()->month]),
+        ]);
     }
 
     // Legacy redirect — kept for backward compat
@@ -132,7 +157,26 @@ class StandupController extends Controller
 
         $members = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
-        return view('standups.show', compact('day', 'standup', 'user', 'defaultItems', 'seedItems', 'projects', 'members'));
+        return Inertia::render('Standups/Show', [
+            'date'       => $day->toDateString(),
+            'date_label' => $day->format('l, F j'),
+            'is_today'   => $day->isToday(),
+            'user'       => [
+                'id'        => $user->id,
+                'name'      => $user->name,
+                'initials'  => strtoupper(substr($user->name, 0, 2)),
+                'job_title' => $user->job_title ?? $user->department ?? '',
+            ],
+            'standup'    => $standup ? [
+                'id'       => $standup->id,
+                'blockers' => $standup->blockers,
+            ] : null,
+            'seed_items' => $seedItems->values(),
+            'projects'   => $projects->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values(),
+            'members'    => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name])->values(),
+            'store_url'  => route('standups.store'),
+            'index_url'  => route('standups.index'),
+        ]);
     }
 
     // Admin/manager: view and manage a member's standup items for a date
@@ -150,7 +194,21 @@ class StandupController extends Controller
             ? $standup->items->map(fn($i) => ['id' => $i->id, 'task_id' => $i->task_id, 'description' => $i->description, 'status' => $i->status])->values()
             : collect();
 
-        return view('standups.member-day', compact('day', 'standup', 'user', 'memberItems'));
+        return Inertia::render('Standups/MemberDay', [
+            'date'         => $day->toDateString(),
+            'date_label'   => $day->format('l, F j, Y'),
+            'user'         => [
+                'id'       => $user->id,
+                'name'     => $user->name,
+                'initials' => strtoupper(substr($user->name, 0, 2)),
+            ],
+            'standup'      => $standup ? [
+                'id'       => $standup->id,
+                'blockers' => $standup->blockers,
+            ] : null,
+            'member_items' => $memberItems->values(),
+            'index_url'    => route('standups.index'),
+        ]);
     }
 
     // Save/update standup; managers may pass user_id to save on a member's behalf

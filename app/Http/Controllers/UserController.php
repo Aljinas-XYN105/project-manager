@@ -117,11 +117,25 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('users.form', [
-            'user'  => new User(['is_active' => true, 'timezone' => auth()->user()->timezone ?: config('app.timezone')]),
-            'roles' => $this->roles(),
-            'teams' => Team::orderBy('name')->get(),
-        ] + $this->formLookups());
+        return Inertia::render('Users/Form', [
+            'user' => [
+                'id' => null, 'name' => '', 'email' => '', 'job_title' => '',
+                'team_id' => null, 'timezone' => auth()->user()->timezone ?: config('app.timezone'),
+                'is_active' => true, 'employee_code' => '', 'department' => '',
+                'employment_type' => 'full_time', 'manager_id' => null,
+                'joined_on' => '', 'date_of_birth' => '', 'phone' => '',
+                'emergency_contact_name' => '', 'emergency_contact_phone' => '',
+                'current_roles' => ['member'], 'is_self' => false,
+                'reset_password_url' => null, 'destroy_url' => null,
+            ],
+            'roles' => $this->roles()->map(fn ($r) => ['name' => $r->name, 'headline' => Str::headline($r->name), 'users_count' => $r->users_count]),
+            'teams' => Team::orderBy('name')->get()->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]),
+            'managers' => User::active()->orderBy('name')->get(['id', 'name', 'job_title'])->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'job_title' => $m->job_title]),
+            'departments' => User::whereNotNull('department')->distinct()->orderBy('department')->pluck('department'),
+            'employment_types' => User::EMPLOYMENT_TYPES,
+            'store_url' => route('users.store'),
+            'is_edit' => false,
+        ]);
     }
 
     public function store(Request $request)
@@ -155,11 +169,31 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('users.form', [
-            'user'  => $user->load('roles'),
-            'roles' => $this->roles(),
-            'teams' => Team::orderBy('name')->get(),
-        ] + $this->formLookups($user));
+        $user->load('roles');
+        $isSelf = $user->is(auth()->user());
+        return Inertia::render('Users/Form', [
+            'user' => [
+                'id' => $user->id, 'name' => $user->name, 'email' => $user->email,
+                'job_title' => $user->job_title ?? '', 'team_id' => $user->team_id,
+                'timezone' => $user->timezone ?? config('app.timezone'), 'is_active' => $user->is_active,
+                'employee_code' => $user->employee_code ?? '', 'department' => $user->department ?? '',
+                'employment_type' => $user->employment_type ?? 'full_time', 'manager_id' => $user->manager_id,
+                'joined_on' => $user->joined_on?->toDateString() ?? '',
+                'date_of_birth' => $user->date_of_birth?->toDateString() ?? '',
+                'phone' => $user->phone ?? '', 'emergency_contact_name' => $user->emergency_contact_name ?? '',
+                'emergency_contact_phone' => $user->emergency_contact_phone ?? '',
+                'current_roles' => $user->roles->pluck('name')->all(), 'is_self' => $isSelf,
+                'reset_password_url' => ! $isSelf ? route('users.reset-password', $user) : null,
+                'destroy_url' => ! $isSelf ? route('users.destroy', $user) : null,
+            ],
+            'roles' => $this->roles()->map(fn ($r) => ['name' => $r->name, 'headline' => Str::headline($r->name), 'users_count' => $r->users_count]),
+            'teams' => Team::orderBy('name')->get()->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]),
+            'managers' => User::active()->where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'job_title'])->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'job_title' => $m->job_title]),
+            'departments' => User::whereNotNull('department')->distinct()->orderBy('department')->pluck('department'),
+            'employment_types' => User::EMPLOYMENT_TYPES,
+            'update_url' => route('users.update', $user),
+            'is_edit' => true,
+        ]);
     }
 
     public function update(Request $request, User $user)

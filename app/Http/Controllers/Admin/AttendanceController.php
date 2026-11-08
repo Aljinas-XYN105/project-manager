@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class AttendanceController extends Controller
 {
@@ -47,7 +48,51 @@ class AttendanceController extends Controller
             'total'   => $users->count(),
         ];
 
-        return view('admin.attendance.index', compact('records', 'users', 'board', 'stats', 'from', 'to'));
+        $tz = $request->user()->timezone ?: config('app.timezone');
+        $fmt = fn ($m) => sprintf('%dh %02dm', intdiv($m, 60), $m % 60);
+        $statuses = User::AVAILABILITY;
+
+        return Inertia::render('Admin/Attendance/Index', [
+            'records' => $records->through(fn ($r) => [
+                'id'        => $r->id,
+                'user_id'   => $r->user_id,
+                'user_name' => $r->user?->name ?? '—',
+                'work_date' => $r->work_date,
+                'clock_in'  => $r->clock_in_at?->setTimezone($tz)->format('H:i'),
+                'clock_out' => $r->clock_out_at?->setTimezone($tz)->format('H:i'),
+                'duration'  => $fmt($r->duration_minutes ?? 0),
+                'source'    => $r->source,
+                'note'      => $r->note,
+                'edit_url'  => route('admin.attendance.update', $r),
+                'destroy_url' => route('admin.attendance.destroy', $r),
+            ]),
+            'users' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]),
+            'board' => $board->map(fn ($row) => [
+                'user_id'          => $row->user->id,
+                'user_name'        => $row->user->name,
+                'avatar_url'       => $row->user->avatar_url,
+                'show_url'         => route('users.show', $row->user),
+                'availability_note'=> $row->user->availability_note,
+                'last_seen_at'     => $row->user->last_seen_at?->diffForHumans(),
+                'status'           => $row->status,
+                'status_label'     => ($statuses[$row->status] ?? $statuses['offline'])['label'],
+                'status_dot'       => ($statuses[$row->status] ?? $statuses['offline'])['dot'],
+                'leave_type'       => $row->leave?->type?->name,
+                'clocked_in'       => $row->clocked_in,
+                'first_in'         => $row->first_in?->setTimezone($tz)->format('H:i'),
+                'last_out'         => $row->last_out?->setTimezone($tz)->format('H:i'),
+                'minutes'          => $row->minutes,
+                'duration'         => $fmt($row->minutes ?? 0),
+            ]),
+            'stats'          => $stats,
+            'from'           => $from->toDateString(),
+            'to'             => $to->toDateString(),
+            'can_manage'     => $request->user()->hasRole('admin') || $request->user()->can('attendance.manage'),
+            'timezone'       => $tz,
+            'today'          => now($tz)->toDateString(),
+            'store_url'      => route('admin.attendance.store'),
+            'clock_out_all_url' => route('admin.attendance.clock-out-all'),
+        ]);
     }
 
     public function store(Request $request)
