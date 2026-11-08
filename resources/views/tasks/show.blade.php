@@ -346,10 +346,10 @@ $typeOptions = [
             <div class="divide-y divide-slate-50 dark:divide-slate-800">
                 @forelse($task->comments as $comment)
                 <div class="p-5 flex gap-3">
-                    <img src="{{ $comment->user->avatar_url }}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover">
+                    <img src="{{ $comment->user?->avatar_url ?? asset('images/default-avatar.png') }}" class="w-8 h-8 rounded-full flex-shrink-0 object-cover">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1.5">
-                            <span class="font-semibold text-sm text-slate-900 dark:text-white">{{ $comment->user->name }}</span>
+                            <span class="font-semibold text-sm text-slate-900 dark:text-white">{{ $comment->user?->name ?? '(deleted user)' }}</span>
                             <span class="text-xs text-slate-400">{{ $comment->created_at->diffForHumans() }}</span>
                         </div>
                         <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ $comment->body }}</p>
@@ -917,7 +917,7 @@ $typeOptions = [
 $attachmentsJson = $task->attachments->map(fn($a) => [
     'id'=>$a->id,'original_name'=>$a->original_name,'mime_type'=>$a->mime_type,
     'size_formatted'=>$a->size_formatted,'is_image'=>$a->is_image,'is_video'=>$a->is_video,
-    'url'=>$a->url,'uploader_name'=>$a->user->name,'created_ago'=>$a->created_at->diffForHumans(),
+    'url'=>$a->url,'uploader_name'=>$a->user?->name ?? '—','created_ago'=>$a->created_at->diffForHumans(),
 ]);
 @endphp
 <script>

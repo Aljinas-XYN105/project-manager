@@ -340,7 +340,7 @@
         <button type="button"
                 onclick="window.open('{{ route('chat.popup') }}?open={{ $conversation->id }}', 'chatpopup', 'width=820,height=680,resizable=yes,menubar=no,toolbar=no,location=no,status=no')"
                 class="ct-btn-icon flex-shrink-0" title="Open in window">
-            <i class="bi bi-box-arrow-up-right" style="font-size:13px"></i>
+            <i class="bi bi-arrows-angle-expand" style="font-size:11px"></i>
         </button>
         @endif
     </div>

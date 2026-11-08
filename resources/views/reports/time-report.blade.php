@@ -117,13 +117,13 @@
                         <td class="px-5 py-3 text-slate-700 dark:text-slate-300">{{ $entry->started_at->format('M j') }}</td>
                         <td class="px-5 py-3">
                             <div class="flex items-center gap-2">
-                                <img src="{{ $entry->user->avatar_url }}" class="w-6 h-6 rounded-full" alt="">
-                                <span class="text-slate-700 dark:text-slate-300">{{ $entry->user->name }}</span>
+                                <img src="{{ $entry->user?->avatar_url ?? '' }}" class="w-6 h-6 rounded-full" alt="">
+                                <span class="text-slate-700 dark:text-slate-300">{{ $entry->user?->name ?? '—' }}</span>
                             </div>
                         </td>
                         <td class="px-5 py-3">
-                            <p class="font-medium text-slate-900 dark:text-white">{{ $entry->project->name ?? '—' }}</p>
-                            <p class="text-xs text-slate-500">{{ $entry->task->title ?? 'Manual entry' }}</p>
+                            <p class="font-medium text-slate-900 dark:text-white">{{ $entry->project?->name ?? '—' }}</p>
+                            <p class="text-xs text-slate-500">{{ $entry->task?->title ?? 'Manual entry' }}</p>
                         </td>
                         <td class="px-5 py-3 font-mono text-slate-900 dark:text-white">{{ $entry->duration_formatted }}</td>
                         <td class="px-5 py-3">

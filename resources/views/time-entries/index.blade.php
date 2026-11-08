@@ -82,8 +82,8 @@
                  @endif
                  ></div>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $entry->task->title }}</p>
-                <p class="text-xs text-slate-400 truncate">{{ $entry->project->name }}</p>
+                <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $entry->task?->title ?? '(deleted task)' }}</p>
+                <p class="text-xs text-slate-400 truncate">{{ $entry->project?->name ?? '(deleted project)' }}</p>
             </div>
             @if($entry->description)
             <p class="text-xs text-slate-400 truncate max-w-xs hidden md:block">{{ $entry->description }}</p>

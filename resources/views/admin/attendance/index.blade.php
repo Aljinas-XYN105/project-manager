@@ -68,14 +68,14 @@
         @php $st = $statuses[$row->status] ?? $statuses['offline']; @endphp
         <div class="flex items-center gap-3 px-5 py-3 border-b border-slate-50 dark:border-slate-800">
             <div class="relative flex-shrink-0">
-                <img src="{{ $row->user->avatar_url }}" class="w-9 h-9 rounded-full" alt="">
+                <img src="{{ $row->user?->avatar_url ?? asset('images/default-avatar.png') }}" class="w-9 h-9 rounded-full" alt="">
                 <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-white dark:ring-slate-900 {{ $st['dot'] }}"></span>
             </div>
             <div class="flex-1 min-w-0">
-                <a href="{{ route('users.show', $row->user) }}" class="text-sm font-medium text-slate-900 dark:text-white hover:text-violet-600 truncate block">{{ $row->user->name }}</a>
+                <a href="{{ route('users.show', $row->user) }}" class="text-sm font-medium text-slate-900 dark:text-white hover:text-violet-600 truncate block">{{ $row->user?->name ?? '—' }}</a>
                 <p class="text-xs text-slate-500 truncate">
-                    {{ $st['label'] }}@if($row->user->availability_note && $row->status !== 'offline') · {{ $row->user->availability_note }}@endif
-                    @if($row->status === 'offline' && $row->user->last_seen_at) · seen {{ $row->user->last_seen_at->diffForHumans() }}@endif
+                    {{ $st['label'] }}@if($row->user?->availability_note && $row->status !== 'offline') · {{ $row->user->availability_note }}@endif
+                    @if($row->status === 'offline' && $row->user?->last_seen_at) · seen {{ $row->user->last_seen_at->diffForHumans() }}@endif
                 </p>
             </div>
             <div class="text-right flex-shrink-0">
@@ -134,8 +134,8 @@
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                     <td class="px-5 py-3">
                         <div class="flex items-center gap-2.5">
-                            <img src="{{ $r->user->avatar_url }}" class="w-7 h-7 rounded-full" alt="">
-                            <span class="font-medium text-slate-900 dark:text-white">{{ $r->user->name }}</span>
+                            <img src="{{ $r->user?->avatar_url ?? asset('images/default-avatar.png') }}" class="w-7 h-7 rounded-full" alt="">
+                            <span class="font-medium text-slate-900 dark:text-white">{{ $r->user?->name ?? '—' }}</span>
                         </div>
                     </td>
                     <td class="px-5 py-3 text-slate-600 dark:text-slate-300">{{ $r->work_date->format('D, M j') }}</td>

@@ -73,7 +73,7 @@
     @endphp
     <div class="task-row">
       @if($rt->task)
-      <div class="task-project">{{ $rt->task->project->name ?? '' }}</div>
+      <div class="task-project">{{ $rt->task->project?->name ?? '' }}</div>
       <div class="task-title">{{ $rt->task->title }}</div>
       @else
       <div class="task-title">{{ $rt->task_description }}</div>

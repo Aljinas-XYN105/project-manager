@@ -448,8 +448,8 @@ function formatSeconds(s) {
                     <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Off today</p>
                     @forelse($offToday as $leave)
                     <div class="flex items-center gap-2.5 py-1">
-                        <img src="{{ $leave->user->avatar_url }}" class="w-6 h-6 rounded-full" alt="">
-                        <span class="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">{{ $leave->user->name }}</span>
+                        <img src="{{ $leave->user?->avatar_url ?? asset('images/default-avatar.png') }}" class="w-6 h-6 rounded-full" alt="">
+                        <span class="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">{{ $leave->user?->name ?? '—' }}</span>
                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-{{ $leave->type->color }}-100 text-{{ $leave->type->color }}-600 dark:bg-{{ $leave->type->color }}-900/30 dark:text-{{ $leave->type->color }}-400">{{ $leave->type->name }}{{ $leave->is_half_day ? ' ½' : '' }}</span>
                     </div>
                     @empty
@@ -462,7 +462,7 @@ function formatSeconds(s) {
                     @foreach($celebrations->take(5) as $c)
                     <div class="flex items-center gap-2.5 py-1">
                         <i class="bi {{ $c->kind === 'birthday' ? 'bi-cake2 text-rose-500' : 'bi-award text-amber-500' }}"></i>
-                        <span class="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate"><strong class="font-medium">{{ $c->user->name }}</strong> · {{ $c->label }}</span>
+                        <span class="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate"><strong class="font-medium">{{ $c->user?->name ?? '—' }}</strong> · {{ $c->label }}</span>
                         <span class="text-[10px] text-slate-400">{{ $c->date->isToday() ? 'Today' : ($c->date->isTomorrow() ? 'Tomorrow' : $c->date->format('M j')) }}</span>
                     </div>
                     @endforeach

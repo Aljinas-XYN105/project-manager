@@ -109,7 +109,7 @@
                 <i class="bi {{ $task->type_icon }} {{ $task->type_color }} text-sm"></i>
                 <a href="{{ route('projects.tasks.show', $task) }}" class="flex-1 min-w-0">
                     <p class="text-sm text-slate-900 dark:text-white truncate" :class="status === 'done' && 'line-through text-slate-400'">{{ $task->title }}</p>
-                    <p class="text-xs text-slate-400 truncate">{{ $task->ticket_key }} · {{ $task->project->name }}</p>
+                    <p class="text-xs text-slate-400 truncate">{{ $task->ticket_key }} · {{ $task->project?->name ?? '—' }}</p>
                 </a>
                 @if($isManager && $scope === 'all')
                 <div class="hidden sm:flex items-center -space-x-1.5 flex-shrink-0">

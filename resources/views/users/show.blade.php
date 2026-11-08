@@ -135,7 +135,7 @@
                         <span class="badge-{{ $task->status }} mt-0.5">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $task->title }}</p>
-                            <p class="text-xs text-slate-500 mt-0.5">{{ $task->project->name }}</p>
+                            <p class="text-xs text-slate-500 mt-0.5">{{ $task->project?->name ?? '—' }}</p>
                         </div>
                         @if($task->due_date)
                         <span class="text-xs {{ $task->is_overdue ? 'text-red-500' : 'text-slate-400' }} flex-shrink-0">{{ $task->due_date->format('M j') }}</span>
