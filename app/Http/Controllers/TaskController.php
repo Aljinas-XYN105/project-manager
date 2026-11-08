@@ -69,10 +69,48 @@ class TaskController extends Controller
 
         $columns = $this->taskService->getKanbanBoard($project->id);
         $members = \App\Models\User::active()->orderBy('name')->get()
-            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar_url]);
-        $labels  = $project->labels;
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]);
+        $labels  = $project->labels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color]);
 
-        return view('tasks.kanban', compact('project', 'columns', 'members', 'labels'));
+        $serializedColumns = collect($columns)->map(fn ($col) => [
+            'id'    => $col['id'],
+            'name'  => $col['name'],
+            'color' => $col['color'] ?? null,
+            'wip_limit' => $col['wip_limit'] ?? null,
+            'tasks' => collect($col['tasks'] ?? [])->map(fn ($t) => [
+                'id'          => $t->id,
+                'title'       => $t->title,
+                'ticket_key'  => $t->ticket_key,
+                'type'        => $t->type,
+                'type_icon'   => $t->type_icon,
+                'type_color'  => $t->type_color,
+                'priority'    => $t->priority,
+                'status'      => $t->status,
+                'due_date'    => $t->due_date?->format('M j'),
+                'is_overdue'  => $t->is_overdue,
+                'assignees'   => $t->assignees->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'avatar_url' => $a->avatar_url]),
+                'show_url'    => route('projects.tasks.show', $t),
+                'edit_url'    => route('tasks.edit', $t),
+                'move_url'    => route('tasks.move', $t),
+            ])->values(),
+        ])->values();
+
+        return Inertia::render('Tasks/Kanban', [
+            'project' => [
+                'id'          => $project->id,
+                'name'        => $project->name,
+                'color'       => $project->color,
+                'show_url'    => route('projects.show', $project),
+                'index_url'   => route('projects.tasks.index', $project),
+                'backlog_url' => route('projects.tasks.backlog', $project),
+                'calendar_url'=> route('projects.tasks.calendar', $project),
+                'create_url'  => route('projects.tasks.create', $project),
+                'store_url'   => route('projects.tasks.store', $project),
+            ],
+            'columns' => $serializedColumns,
+            'members' => $members,
+            'labels'  => $labels,
+        ]);
     }
 
     public function calendar(Request $request, Project $project)
@@ -84,15 +122,44 @@ class TaskController extends Controller
 
         $tasks = $this->taskService->getCalendarData($project->id, $year, $month);
 
-        return view('tasks.calendar', compact('project', 'tasks', 'year', 'month'));
+        $serializedTasks = collect($tasks)->map(fn ($t) => [
+            'id'         => $t->id,
+            'title'      => $t->title,
+            'ticket_key' => $t->ticket_key,
+            'type_icon'  => $t->type_icon,
+            'type_color' => $t->type_color,
+            'priority'   => $t->priority,
+            'status'     => $t->status,
+            'due_date'   => $t->due_date?->format('Y-m-d'),
+            'is_overdue' => $t->is_overdue,
+            'show_url'   => route('projects.tasks.show', $t),
+        ])->values();
+
+        return Inertia::render('Tasks/Calendar', [
+            'project' => [
+                'id'          => $project->id,
+                'name'        => $project->name,
+                'show_url'    => route('projects.show', $project),
+                'index_url'   => route('projects.tasks.index', $project),
+                'kanban_url'  => route('projects.tasks.kanban', $project),
+                'backlog_url' => route('projects.tasks.backlog', $project),
+                'create_url'  => route('projects.tasks.create', $project),
+            ],
+            'tasks' => $serializedTasks,
+            'year'  => $year,
+            'month' => $month,
+        ]);
     }
 
     public function show(Task $task)
     {
         $this->authorize('view', $task);
 
-        $task        = $this->taskRepository->findById($task->id);
-        $members     = \App\Models\User::active()->orderBy('name')->get();
+        $task = $this->taskRepository->findById($task->id);
+        $user = auth()->user();
+
+        $members = \App\Models\User::active()->orderBy('name')->get();
+
         $activityLogs = ActivityLog::where('subject_type', Task::class)
             ->where('subject_id', $task->id)
             ->with('causer')
@@ -100,7 +167,100 @@ class TaskController extends Controller
             ->limit(50)
             ->get();
 
-        return view('tasks.show', compact('task', 'members', 'activityLogs'));
+        $timeEntries = $task->timeEntries ?? collect();
+
+        return Inertia::render('Tasks/Show', [
+            'task' => [
+                'id'                  => $task->id,
+                'title'               => $task->title,
+                'description'         => $task->description,
+                'type'                => $task->type,
+                'type_icon'           => $task->type_icon,
+                'type_color'          => $task->type_color,
+                'priority'            => $task->priority,
+                'status'              => $task->status,
+                'ticket_key'          => $task->ticket_key,
+                'is_overdue'          => $task->is_overdue,
+                'due_date'            => $task->due_date?->format('Y-m-d'),
+                'estimated_hours'     => $task->estimated_hours,
+                'story_points'        => $task->story_points,
+                'severity'            => $task->severity,
+                'environment'         => $task->environment,
+                'steps_to_reproduce'  => $task->steps_to_reproduce,
+                'expected_behavior'   => $task->expected_behavior,
+                'actual_behavior'     => $task->actual_behavior,
+                'created_at'          => $task->created_at->diffForHumans(),
+                'project'             => [
+                    'id'       => $task->project->id,
+                    'name'     => $task->project->name,
+                    'show_url' => route('projects.show', $task->project),
+                    'store_subtask_url' => route('projects.tasks.store', $task->project),
+                ],
+                'creator'  => $task->creator ? ['name' => $task->creator->name] : null,
+                'sprint'   => $task->sprint ? [
+                    'id'       => $task->sprint->id,
+                    'name'     => $task->sprint->name,
+                    'show_url' => route('projects.sprints.show', [$task->project, $task->sprint]),
+                ] : null,
+                'assignees' => $task->assignees->map(fn ($a) => [
+                    'id' => $a->id, 'name' => $a->name, 'avatar_url' => $a->avatar_url,
+                ]),
+                'labels' => $task->labels->map(fn ($l) => [
+                    'id' => $l->id, 'name' => $l->name, 'color' => $l->color,
+                ]),
+                'subtasks' => ($task->subtasks ?? collect())->map(fn ($s) => [
+                    'id'       => $s->id,
+                    'title'    => $s->title,
+                    'status'   => $s->status,
+                    'show_url' => route('projects.tasks.show', $s),
+                ]),
+                'comments' => ($task->comments ?? collect())->map(fn ($c) => [
+                    'id'         => $c->id,
+                    'body'       => $c->body,
+                    'created_at' => $c->created_at->diffForHumans(),
+                    'user'       => $c->user ? ['name' => $c->user->name, 'avatar_url' => $c->user->avatar_url] : null,
+                ]),
+                'attachments' => ($task->attachments ?? collect())->map(fn ($a) => [
+                    'id'             => $a->id,
+                    'original_name'  => $a->original_name,
+                    'mime_type'      => $a->mime_type,
+                    'size_formatted' => $a->size_formatted,
+                    'is_image'       => $a->is_image,
+                    'is_video'       => $a->is_video,
+                    'url'            => $a->url,
+                    'uploader_name'  => $a->user?->name ?? '—',
+                    'created_ago'    => $a->created_at->diffForHumans(),
+                    'destroy_url'    => route('attachments.destroy', $a),
+                ]),
+                'time_entries' => $timeEntries->map(fn ($e) => [
+                    'id'       => $e->id,
+                    'started'  => $e->started_at?->format('M j, g:ia'),
+                    'duration' => $e->duration_formatted ?? ($e->duration_minutes ? floor($e->duration_minutes/60).'h '.($e->duration_minutes%60).'m' : '—'),
+                    'user'     => $e->user?->name ?? '',
+                ])->values(),
+                'total_logged_minutes' => $timeEntries->sum('duration_minutes'),
+                'column_id' => $task->column_id,
+                'parent_id' => $task->parent_id,
+                // URLs
+                'update_url'           => route('tasks.update', $task),
+                'destroy_url'          => route('tasks.destroy', $task),
+                'status_url'           => route('tasks.status', $task),
+                'assignees_add_url'    => route('tasks.assignees.add', $task),
+                'assignees_remove_base'=> url('tasks/'.$task->id.'/assignees'),
+                'attachments_store_url'=> route('attachments.store', $task),
+                'comments_store_url'   => route('comments.store'),
+                'edit_url'             => route('tasks.edit', $task),
+            ],
+            'members'    => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'avatar_url' => $m->avatar_url]),
+            'activity'   => $activityLogs->map(fn ($l) => [
+                'id'          => $l->id,
+                'description' => $l->description,
+                'created_at'  => $l->created_at->diffForHumans(),
+                'causer'      => $l->causer ? ['name' => $l->causer->name] : null,
+            ]),
+            'can_update' => $user->can('update', $task),
+            'can_delete' => $user->can('delete', $task),
+        ]);
     }
 
     public function backlog(Request $request, Project $project)
@@ -117,7 +277,37 @@ class TaskController extends Controller
 
         $columns = $project->columns()->orderBy('position')->get();
 
-        return view('tasks.backlog', compact('project', 'tasks', 'columns'));
+        return Inertia::render('Tasks/Backlog', [
+            'project' => [
+                'id'          => $project->id,
+                'name'        => $project->name,
+                'show_url'    => route('projects.show', $project),
+                'index_url'   => route('projects.tasks.index', $project),
+                'kanban_url'  => route('projects.tasks.kanban', $project),
+                'create_url'  => route('projects.tasks.create', $project),
+                'store_url'   => route('projects.tasks.store', $project),
+            ],
+            'tasks' => $tasks->map(fn ($t) => [
+                'id'          => $t->id,
+                'title'       => $t->title,
+                'ticket_key'  => $t->ticket_key,
+                'type'        => $t->type,
+                'type_icon'   => $t->type_icon,
+                'type_color'  => $t->type_color,
+                'priority'    => $t->priority,
+                'status'      => $t->status,
+                'due_date'    => $t->due_date?->format('M j'),
+                'is_overdue'  => $t->is_overdue,
+                'column'      => $t->column ? ['id' => $t->column->id, 'name' => $t->column->name] : null,
+                'assignees'   => $t->assignees->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'avatar_url' => $a->avatar_url]),
+                'labels'      => $t->labels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color]),
+                'show_url'    => route('projects.tasks.show', $t),
+                'edit_url'    => route('tasks.edit', $t),
+                'destroy_url' => route('tasks.destroy', $t),
+                'move_url'    => route('tasks.move', $t),
+            ]),
+            'columns' => $columns->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]),
+        ]);
     }
 
     public function bulkUpdate(Request $request)
@@ -154,8 +344,22 @@ class TaskController extends Controller
         $column  = $project->columns()->where('is_default', true)->first() ?? $project->columns()->first();
         $members = \App\Models\User::active()->orderBy('name')->get();
         $labels  = $project->labels;
+        $sprints = $project->sprints()->whereIn('status', ['planning', 'active'])->get();
 
-        return view('tasks.create', compact('project', 'column', 'members', 'labels'));
+        return Inertia::render('Tasks/Create', [
+            'project' => [
+                'id'        => $project->id,
+                'name'      => $project->name,
+                'show_url'  => route('projects.show', $project),
+                'store_url' => route('projects.tasks.store', $project),
+                'index_url' => route('projects.tasks.index', $project),
+            ],
+            'column'  => $column ? ['id' => $column->id, 'name' => $column->name] : null,
+            'columns' => $project->columns()->orderBy('position')->get()->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]),
+            'members' => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'avatar_url' => $m->avatar_url]),
+            'labels'  => $labels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color]),
+            'sprints' => $sprints->map(fn ($s) => ['id' => $s->id, 'name' => $s->name]),
+        ]);
     }
 
     public function createGlobal(Request $request)
@@ -171,10 +375,21 @@ class TaskController extends Controller
         }
 
         $projects = $projectQuery->get();
-
         $defaultProject = $projects->firstWhere('id', $request->query('project_id')) ?? $projects->first();
 
-        return view('tasks.create-global', compact('projects', 'defaultProject'));
+        return Inertia::render('Tasks/CreateGlobal', [
+            'projects' => $projects->map(fn ($p) => [
+                'id'        => $p->id,
+                'name'      => $p->name,
+                'store_url' => route('projects.tasks.store', $p),
+                'columns'   => $p->columns->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'is_default' => $c->is_default]),
+                'members'   => $p->members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name]),
+                'labels'    => $p->labels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color]),
+            ]),
+            'default_project_id' => $defaultProject?->id,
+            'store_global_url'   => route('tasks.store-global'),
+            'members_all'        => \App\Models\User::active()->orderBy('name')->get()->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'avatar_url' => $m->avatar_url]),
+        ]);
     }
 
     public function storeGlobal(Request $request)
@@ -333,7 +548,36 @@ class TaskController extends Controller
         $labels  = $task->project->labels;
         $sprints = $task->project->sprints()->whereIn('status', ['planning', 'active'])->get();
 
-        return view('tasks.edit', compact('task', 'columns', 'members', 'labels', 'sprints'));
+        return Inertia::render('Tasks/Edit', [
+            'task' => [
+                'id'                 => $task->id,
+                'title'              => $task->title,
+                'description'        => $task->description,
+                'type'               => $task->type,
+                'priority'           => $task->priority,
+                'status'             => $task->status,
+                'due_date'           => $task->due_date?->format('Y-m-d'),
+                'estimated_hours'    => $task->estimated_hours,
+                'story_points'       => $task->story_points,
+                'severity'           => $task->severity,
+                'environment'        => $task->environment,
+                'steps_to_reproduce' => $task->steps_to_reproduce,
+                'expected_behavior'  => $task->expected_behavior,
+                'actual_behavior'    => $task->actual_behavior,
+                'column_id'          => $task->column_id,
+                'sprint_id'          => $task->sprint_id,
+                'assignee_ids'       => $task->assignees->pluck('id'),
+                'label_ids'          => $task->labels->pluck('id'),
+                'ticket_key'         => $task->ticket_key,
+                'show_url'           => route('projects.tasks.show', $task),
+                'update_url'         => route('tasks.update', $task),
+                'project'            => ['id' => $task->project->id, 'name' => $task->project->name, 'show_url' => route('projects.show', $task->project)],
+            ],
+            'columns' => $columns->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]),
+            'members' => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'avatar_url' => $m->avatar_url]),
+            'labels'  => $labels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color]),
+            'sprints' => $sprints->map(fn ($s) => ['id' => $s->id, 'name' => $s->name, 'status' => $s->status]),
+        ]);
     }
 
     public function update(UpdateTaskRequest $request, Task $task)
@@ -462,6 +706,25 @@ class TaskController extends Controller
         }
         $projects = $projectsQuery->orderBy('name')->get();
 
-        return view('bugs.index', compact('bugs', 'projects', 'bugsByStatus'));
+        return Inertia::render('Bugs/Index', [
+            'bugs' => $bugs->through(fn ($t) => [
+                'id'          => $t->id,
+                'title'       => $t->title,
+                'ticket_key'  => $t->ticket_key,
+                'status'      => $t->status,
+                'priority'    => $t->priority,
+                'severity'    => $t->severity,
+                'type_icon'   => $t->type_icon,
+                'type_color'  => $t->type_color,
+                'created_at'  => $t->created_at->diffForHumans(),
+                'assignees'   => $t->assignees->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'avatar_url' => $a->avatar_url]),
+                'project'     => $t->project ? ['id' => $t->project->id, 'name' => $t->project->name] : null,
+                'creator'     => $t->creator ? ['name' => $t->creator->name] : null,
+                'show_url'    => route('projects.tasks.show', $t),
+            ]),
+            'projects'     => $projects->map(fn ($p) => ['id' => $p->id, 'name' => $p->name]),
+            'bugs_by_status' => $bugsByStatus,
+            'filters'      => $request->only(['status', 'severity', 'priority', 'project_id']),
+        ]);
     }
 }
