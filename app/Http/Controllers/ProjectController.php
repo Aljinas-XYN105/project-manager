@@ -13,6 +13,16 @@ class ProjectController extends Controller
 {
     public function __construct(private readonly ProjectService $projectService) {}
 
+    public function list(Request $request)
+    {
+        $projects = $request->user()->projects()
+            ->where('status', '!=', 'archived')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($projects);
+    }
+
     public function index(Request $request)
     {
         $projects = $this->projectService->getProjectsForUser($request->user(), $request->only([

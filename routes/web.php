@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Projects
+    Route::get('projects/list', [ProjectController::class, 'list'])->name('projects.list');
     Route::resource('projects', ProjectController::class);
     Route::patch('projects/{project}/archive', [ProjectController::class, 'archive'])->name('projects.archive');
     Route::patch('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
