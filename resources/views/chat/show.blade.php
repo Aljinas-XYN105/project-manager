@@ -759,7 +759,8 @@ function chatThread(conversationId, authUserId, initialMessages) {
                 ];
             }).catch(() => {});
 
-            // Echo
+            // Echo (only if Reverb is configured)
+            if (window.Echo) {
             window.Echo.private(`conversation.${this.conversationId}`)
                 .listen('.message.sent', (data) => {
                     // avoid duplicate if own optimistic already added
@@ -780,9 +781,11 @@ function chatThread(conversationId, authUserId, initialMessages) {
                         this.typingUsers = this.typingUsers.filter(u => u.id !== data.id);
                     }, 3000);
                 });
+            }
         },
 
         onKeydown() {
+            if (!window.Echo) return;
             clearTimeout(this._whisperTimer);
             this._whisperTimer = setTimeout(() => {
                 window.Echo.private(`conversation.${this.conversationId}`)
