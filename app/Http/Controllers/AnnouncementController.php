@@ -8,6 +8,7 @@ use App\Notifications\AnnouncementPosted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class AnnouncementController extends Controller
 {
@@ -21,10 +22,23 @@ class AnnouncementController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('announcements.index', [
-            'announcements' => $announcements,
-            'canManage'     => $this->canManage($request->user()),
-            'showExpired'   => $showExpired,
+        $canManage = $this->canManage($request->user());
+
+        return Inertia::render('Announcements/Index', [
+            'announcements' => $announcements->through(fn ($a) => [
+                'id'         => $a->id,
+                'title'      => $a->title,
+                'body'       => $a->body,
+                'is_pinned'  => $a->is_pinned,
+                'expires_at' => $a->expires_at?->format('M j, Y'),
+                'is_expired' => $a->expires_at && $a->expires_at->isPast(),
+                'author'     => ['name' => $a->author?->name, 'avatar_url' => $a->author?->avatar_url],
+                'created_at' => $a->created_at->diffForHumans(),
+                'edit_url'   => $canManage ? route('announcements.update', $a) : null,
+                'destroy_url'=> $canManage ? route('announcements.destroy', $a) : null,
+            ]),
+            'can_manage'  => $canManage,
+            'show_expired'=> $showExpired,
         ]);
     }
 

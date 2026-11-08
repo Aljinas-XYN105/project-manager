@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class MyTasksController extends Controller
 {
@@ -64,6 +65,36 @@ class MyTasksController extends Controller
 
         $members = $isManager ? User::active()->orderBy('name')->get() : collect();
 
-        return view('my-tasks.index', compact('groups', 'view', 'counts', 'projects', 'isManager', 'scope', 'members', 'assigneeId'));
+        $serializeTask = fn (Task $t) => [
+            'id'          => $t->id,
+            'title'       => $t->title,
+            'ticket_key'  => $t->ticket_key,
+            'status'      => $t->status,
+            'priority'    => $t->priority,
+            'type'        => $t->type,
+            'type_icon'   => $t->type_icon,
+            'type_color'  => $t->type_color,
+            'due_date'    => $t->due_date?->format('M j'),
+            'due_date_raw'=> $t->due_date?->toDateString(),
+            'is_overdue'  => $t->is_overdue,
+            'project'     => $t->project ? ['id' => $t->project->id, 'name' => $t->project->name] : null,
+            'assignees'   => $t->assignees ? $t->assignees->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'avatar_url' => $a->avatar_url]) : [],
+            'show_url'    => route('projects.tasks.show', $t),
+            'status_url'  => route('tasks.status', $t),
+        ];
+
+        $serializedGroups = collect($groups)->map(fn ($groupTasks) => $groupTasks->values()->map($serializeTask))->toArray();
+
+        return Inertia::render('MyTasks/Index', [
+            'groups'     => $serializedGroups,
+            'view'       => $view,
+            'scope'      => $scope,
+            'counts'     => $counts,
+            'isManager'  => $isManager,
+            'assigneeId' => $assigneeId,
+            'projects'   => $projects->map(fn ($p) => ['id' => $p->id, 'name' => $p->name]),
+            'members'    => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name]),
+            'filters'    => $request->only(['project_id', 'priority', 'type', 'assignee_id']),
+        ]);
     }
 }

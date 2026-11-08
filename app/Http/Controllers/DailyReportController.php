@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 
 class DailyReportController extends Controller
@@ -35,7 +36,37 @@ class DailyReportController extends Controller
             ->with('reportTasks.task')
             ->first();
 
-        return view('daily-reports.index', compact('reports', 'todayReport'));
+        $user = auth()->user();
+
+        return Inertia::render('DailyReports/Index', [
+            'reports'    => $reports->through(fn ($r) => [
+                'id'          => $r->id,
+                'report_date' => $r->report_date->format('l, F j, Y'),
+                'is_today'    => $r->report_date->isToday(),
+                'is_yesterday'=> $r->report_date->isYesterday(),
+                'total_hours' => $r->total_hours,
+                'summary'     => $r->summary,
+                'blockers'    => $r->blockers ? \Illuminate\Support\Str::limit($r->blockers, 100) : null,
+                'task_count'  => $r->reportTasks->count(),
+                'task_snippets'=> $r->reportTasks->take(5)->map(fn ($rt) => [
+                    'description' => \Illuminate\Support\Str::limit($rt->task_description, 30),
+                    'hours'       => $rt->hours_spent,
+                ]),
+                'extra_tasks' => max(0, $r->reportTasks->count() - 5),
+                'can_edit'    => $r->report_date->isToday() || $user->hasAnyRole(['admin', 'manager']),
+                'show_url'    => route('daily-reports.show', $r),
+                'edit_url'    => route('daily-reports.edit', $r),
+                'destroy_url' => route('daily-reports.destroy', $r),
+            ]),
+            'today_report' => $todayReport ? [
+                'id'          => $todayReport->id,
+                'total_hours' => $todayReport->total_hours,
+                'task_count'  => $todayReport->reportTasks->count(),
+                'show_url'    => route('daily-reports.show', $todayReport),
+                'edit_url'    => route('daily-reports.edit', $todayReport),
+            ] : null,
+            'can_see_team' => $user->hasAnyRole(['admin', 'manager']),
+        ]);
     }
 
     public function team(Request $request)

@@ -8,6 +8,7 @@ use App\Models\Task;
 use App\Models\TimeEntry;
 use App\Services\TimeTrackingService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class TimeEntryController extends Controller
 {
@@ -21,7 +22,33 @@ class TimeEntryController extends Controller
 
         $summary = $this->timeTrackingService->getSummaryForUser($user, now()->parse($from), now()->parse($to));
 
-        return view('time-entries.index', compact('summary', 'from', 'to'));
+        $entries = $summary['entries'];
+
+        $grouped = $entries->groupBy(fn ($e) => $e->started_at->toDateString())
+            ->map(fn ($dayEntries) => $dayEntries->map(fn ($e) => [
+                'id'              => $e->id,
+                'description'     => $e->description,
+                'task_title'      => $e->task?->title,
+                'project_name'    => $e->task?->project?->name ?? $e->project?->name,
+                'elapsed_seconds' => $e->elapsed_seconds,
+                'paused_seconds'  => $e->paused_seconds ?? 0,
+                'status'          => $e->status,
+                'started_at_ts'   => $e->started_at?->getTimestamp(),
+                'is_live'         => in_array($e->status, ['running', 'paused']),
+                'update_url'      => route('time-entries.update', $e),
+                'destroy_url'     => route('time-entries.destroy', $e),
+                'stop_url'        => route('time-entries.stop', $e),
+                'pause_url'       => route('time-entries.pause', $e),
+                'resume_url'      => route('time-entries.resume', $e),
+            ])->values())->sortKeysDesc();
+
+        return Inertia::render('TimeEntries/Index', [
+            'grouped'     => $grouped,
+            'from'        => $from,
+            'to'          => $to,
+            'total_hours' => $summary['total_hours'],
+            'entry_count' => $entries->count(),
+        ]);
     }
 
     public function store(StoreTimeEntryRequest $request)

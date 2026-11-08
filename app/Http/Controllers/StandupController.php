@@ -11,6 +11,7 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 
 class StandupController extends Controller
@@ -37,7 +38,34 @@ class StandupController extends Controller
             ->get()
             ->keyBy('user_id');
 
-        return view('standups.index', compact('date', 'users', 'standups'));
+        return Inertia::render('Standups/Index', [
+            'date'       => $date->toDateString(),
+            'date_label' => $date->isToday() ? 'Today, '.$date->format('F j') : $date->format('l, F j'),
+            'is_today'   => $date->isToday(),
+            'users'      => $users->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'avatar_url' => $u->avatar_url,
+                'has_standup'=> $standups->has($u->id),
+                'standup'    => $standups->has($u->id) ? [
+                    'id'       => $standups[$u->id]->id,
+                    'summary'  => $standups[$u->id]->summary,
+                    'blockers' => $standups[$u->id]->blockers,
+                    'items'    => $standups[$u->id]->items->map(fn ($item) => [
+                        'id'          => $item->id,
+                        'type'        => $item->type,
+                        'description' => $item->description,
+                        'hours'       => $item->hours,
+                    ]),
+                ] : null,
+                'show_url' => route('standups.show', $date->toDateString()).'?user='.$u->id,
+            ]),
+            'can_export' => auth()->user()->hasAnyRole(['admin', 'manager']),
+            'export_excel_url' => route('standups.export-excel', ['date' => $date->toDateString()]),
+            'export_pdf_url'   => route('standups.export-pdf', ['date' => $date->toDateString()]),
+            'my_standup_url'   => route('standups.show', today()->toDateString()),
+            'calendar_url'     => route('standups.calendar'),
+        ]);
     }
 
     // Full-page calendar for date navigation

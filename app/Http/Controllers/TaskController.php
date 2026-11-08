@@ -12,6 +12,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Services\TaskService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class TaskController extends Controller
 {
@@ -30,7 +31,36 @@ class TaskController extends Controller
 
         $members = $project->members;
 
-        return view('tasks.index', compact('project', 'tasks', 'members'));
+        return Inertia::render('Tasks/Index', [
+            'project' => [
+                'id'         => $project->id,
+                'name'       => $project->name,
+                'show_url'   => route('projects.show', $project),
+                'create_url' => route('projects.tasks.create', $project),
+                'kanban_url' => route('projects.tasks.kanban', $project),
+                'calendar_url' => route('projects.tasks.calendar', $project),
+                'backlog_url'  => route('projects.tasks.backlog', $project),
+                'index_url'    => route('projects.tasks.index', $project),
+            ],
+            'tasks' => $tasks->through(fn ($t) => [
+                'id'          => $t->id,
+                'title'       => $t->title,
+                'ticket_key'  => $t->ticket_key,
+                'status'      => $t->status,
+                'priority'    => $t->priority,
+                'type'        => $t->type,
+                'type_icon'   => $t->type_icon,
+                'type_color'  => $t->type_color,
+                'due_date'    => $t->due_date?->format('M j'),
+                'is_overdue'  => $t->is_overdue,
+                'assignees'   => $t->assignees->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'avatar_url' => $a->avatar_url]),
+                'show_url'    => route('projects.tasks.show', $t),
+                'edit_url'    => route('tasks.edit', $t),
+                'destroy_url' => route('tasks.destroy', $t),
+            ]),
+            'members' => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name]),
+            'filters' => $request->only(['status', 'priority', 'assignee', 'search']),
+        ]);
     }
 
     public function kanban(Request $request, Project $project)

@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class LeaveController extends Controller
 {
@@ -31,13 +32,45 @@ class LeaveController extends Controller
 
         $requests = $user->leaveRequests()->with(['type', 'reviewer'])->latest('start_date')->paginate(15);
 
-        return view('leave.index', [
-            'year'          => $year,
-            'balances'      => $balances,
-            'types'         => $types,
-            'requests'      => $requests,
-            'holidays'      => Holiday::upcoming()->limit(6)->get(),
-            'pendingReview' => $this->reviewableQuery($user)->where('status', 'pending')->count(),
+        return Inertia::render('Leave/Index', [
+            'year'      => $year,
+            'balances'  => $balances->map(fn ($b) => [
+                'type' => [
+                    'id'           => $b->type->id,
+                    'name'         => $b->type->name,
+                    'color'        => $b->type->color,
+                    'is_unlimited' => $b->type->is_unlimited,
+                    'days_per_year'=> $b->type->days_per_year,
+                    'is_paid'      => $b->type->is_paid,
+                ],
+                'approved'  => $b->approved,
+                'pending'   => $b->pending,
+                'remaining' => $b->remaining,
+                'label'     => $b->type->name.' — '.($b->remaining === null ? 'unlimited' : rtrim(rtrim(number_format($b->remaining, 1), '0'), '.').' left'),
+            ]),
+            'types'    => $types->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]),
+            'requests' => $requests->through(fn ($r) => [
+                'id'          => $r->id,
+                'type'        => ['name' => $r->type->name, 'color' => $r->type->color],
+                'days'        => $r->days,
+                'date_range'  => $r->date_range,
+                'reason'      => $r->reason,
+                'status'      => $r->status,
+                'reviewer'    => $r->reviewer ? ['name' => $r->reviewer->name] : null,
+                'reviewed_at' => $r->reviewed_at?->diffForHumans(),
+                'review_note' => $r->review_note,
+                'can_cancel'  => $r->status === 'pending' || ($r->status === 'approved' && ($r->start_date->isFuture() || $r->start_date->isToday())),
+                'cancel_url'  => route('leave.cancel', $r),
+            ]),
+            'holidays'      => Holiday::upcoming()->limit(6)->get()->map(fn ($h) => [
+                'name'       => $h->name,
+                'month'      => $h->date->format('M'),
+                'day'        => $h->date->format('j'),
+                'weekday'    => $h->date->format('l'),
+                'ago'        => $h->date->diffForHumans(),
+            ]),
+            'pending_review' => $this->reviewableQuery($user)->where('status', 'pending')->count(),
+            'manager_name'   => $user->manager?->name,
         ]);
     }
 

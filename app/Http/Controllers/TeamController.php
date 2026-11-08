@@ -7,6 +7,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\TeamService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class TeamController extends Controller
 {
@@ -15,7 +16,22 @@ class TeamController extends Controller
     public function index(Request $request)
     {
         $teams = $this->teamService->getTeamsForUser($request->user());
-        return view('teams.index', compact('teams'));
+        $canCreate = $request->user()->can('create', Team::class);
+
+        return Inertia::render('Teams/Index', [
+            'teams'      => $teams->map(fn ($t) => [
+                'id'          => $t->id,
+                'name'        => $t->name,
+                'description' => $t->description,
+                'member_count'=> $t->teamMembers->count(),
+                'users'       => $t->users->take(5)->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]),
+                'extra_users' => max(0, $t->users->count() - 5),
+                'show_url'    => route('teams.show', $t),
+                'edit_url'    => route('teams.edit', $t),
+                'can_edit'    => $request->user()->can('update', $t),
+            ]),
+            'can_create' => $canCreate,
+        ]);
     }
 
     public function create()
@@ -36,7 +52,36 @@ class TeamController extends Controller
         $team->load(['owner', 'teamMembers.user', 'projects']);
         $memberIds = $team->teamMembers->pluck('user_id');
         $availableUsers = User::whereNotIn('id', $memberIds)->orderBy('name')->get();
-        return view('teams.show', compact('team', 'availableUsers'));
+        $authUser = request()->user();
+
+        return Inertia::render('Teams/Show', [
+            'team' => [
+                'id'          => $team->id,
+                'name'        => $team->name,
+                'description' => $team->description,
+                'owner_id'    => $team->owner_id,
+                'members'     => $team->teamMembers->map(fn ($m) => [
+                    'id'         => $m->id,
+                    'user_id'    => $m->user_id,
+                    'name'       => $m->user?->name ?? '—',
+                    'email'      => $m->user?->email ?? '—',
+                    'avatar_url' => $m->user?->avatar_url ?? asset('images/default-avatar.png'),
+                    'role'       => $m->role,
+                    'remove_url' => $m->user ? route('teams.members.remove', [$team, $m->user]) : null,
+                ]),
+                'projects'    => $team->projects->map(fn ($p) => [
+                    'id'       => $p->id,
+                    'name'     => $p->name,
+                    'color'    => $p->color,
+                    'status'   => $p->status,
+                    'show_url' => route('projects.show', $p),
+                ]),
+                'edit_url'       => route('teams.edit', $team),
+                'add_member_url' => route('teams.members.add', $team),
+                'can_manage'     => $authUser->can('manageMember', $team),
+            ],
+            'available_users' => $availableUsers->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email]),
+        ]);
     }
 
     public function edit(Team $team)

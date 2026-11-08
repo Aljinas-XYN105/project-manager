@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\ReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ReportController extends Controller
 {
@@ -32,7 +33,14 @@ class ReportController extends Controller
         $snapshots = ReportSnapshot::where('user_id', auth()->id())
             ->latest()->limit(10)->get();
 
-        return view('reports.index', compact('stats', 'snapshots'));
+        return Inertia::render('Reports/Index', [
+            'stats'     => $stats,
+            'snapshots' => $snapshots->map(fn ($s) => [
+                'id'         => $s->id,
+                'name'       => $s->name ?? 'Report',
+                'created_at' => $s->created_at->diffForHumans(),
+            ]),
+        ]);
     }
 
     public function timeReport(Request $request)

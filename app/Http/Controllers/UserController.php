@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -34,7 +35,35 @@ class UserController extends Controller
             'online'   => User::where('last_seen_at', '>=', now()->subMinutes(5))->count(),
         ];
 
-        return view('users.index', ['users' => $users, 'roles' => $this->roles(), 'counts' => $counts]);
+        $authUser = $request->user();
+        $canManage = $authUser->hasRole('admin') || $authUser->can('users.manage');
+        $isAdmin = $authUser->hasRole('admin');
+        $statuses = \App\Models\User::AVAILABILITY;
+
+        return Inertia::render('Users/Index', [
+            'users' => $users->through(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'email'      => $u->email,
+                'job_title'  => $u->job_title,
+                'avatar_url' => $u->avatar_url,
+                'is_active'  => $u->is_active,
+                'is_self'    => $u->id === $authUser->id,
+                'roles'      => $u->roles->map(fn ($r) => ['name' => $r->name, 'headline' => Str::headline($r->name)]),
+                'availability_label' => ($statuses[$u->effective_availability] ?? $statuses['offline'])['label'],
+                'availability_dot'   => ($statuses[$u->effective_availability] ?? $statuses['offline'])['dot'],
+                'last_seen' => $u->last_seen_at ? 'Seen '.$u->last_seen_at->diffForHumans() : 'Never signed in',
+                'show_url'  => route('users.show', $u),
+                'edit_url'  => route('users.edit', $u),
+                'toggle_url'=> route('users.toggle-active', $u),
+                'admin_url' => route('admin.employee', $u),
+            ]),
+            'roles'      => $this->roles()->map(fn ($r) => ['name' => $r->name, 'headline' => Str::headline($r->name), 'count' => $r->users_count]),
+            'counts'     => $counts,
+            'can_manage' => $canManage,
+            'is_admin'   => $isAdmin,
+            'filters'    => $request->only(['search', 'role', 'active']),
+        ]);
     }
 
     public function show(User $user)
@@ -57,7 +86,33 @@ class UserController extends Controller
             ->limit(10)
             ->get();
 
-        return view('users.show', compact('user', 'stats', 'recentTasks'));
+        return Inertia::render('Users/Show', [
+            'user' => [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'job_title'   => $user->job_title,
+                'avatar_url'  => $user->avatar_url,
+                'is_active'   => $user->is_active,
+                'bio'         => $user->bio,
+                'phone'       => $user->phone,
+                'location'    => $user->location,
+                'joined_on'   => $user->joined_on?->format('M j, Y'),
+                'roles'       => $user->roles->map(fn ($r) => Str::headline($r->name)),
+                'teams'       => $user->teams->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'show_url' => route('teams.show', $t)]),
+                'edit_url'    => route('users.edit', $user),
+            ],
+            'stats'       => $stats,
+            'recent_tasks'=> $recentTasks->map(fn ($t) => [
+                'id'       => $t->id,
+                'title'    => $t->title,
+                'status'   => $t->status,
+                'priority' => $t->priority,
+                'project'  => $t->project ? ['name' => $t->project->name] : null,
+                'show_url' => route('projects.tasks.show', $t),
+            ]),
+            'can_manage' => request()->user()->hasRole('admin') || request()->user()->can('users.manage'),
+        ]);
     }
 
     public function create()
