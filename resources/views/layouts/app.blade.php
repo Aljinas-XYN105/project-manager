@@ -57,7 +57,8 @@
                sidebarOpen ? 'w-[220px]' : 'w-[56px]',
                mobileSidebar ? 'translate-x-0 !w-[220px]' : '-translate-x-full lg:translate-x-0'
            ]"
-           class="fixed inset-y-0 left-0 z-50 flex flex-col
+           class="fixed inset-y-0 left-0 z-50 flex flex-col w-[220px]
+                  -translate-x-full lg:translate-x-0
                   bg-white dark:bg-[#0C0E13] text-slate-800 dark:text-white
                   transition-all duration-250 ease-in-out
                   border-r border-slate-200 dark:border-white/[0.05] lg:relative lg:inset-auto flex-shrink-0">
