@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Exports;
+
+use Illuminate\Support\Collection;
+use Illuminate\Support\Carbon;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+
+class StandupRangeSummarySheet implements FromCollection, WithHeadings, WithStyles, WithTitle, WithColumnWidths
+{
+    public function __construct(
+        private readonly Collection $standups,
+        private readonly Carbon $from,
+        private readonly Carbon $to,
+    ) {}
+
+    public function title(): string { return 'Summary'; }
+
+    public function headings(): array
+    {
+        return ['Date', 'Employee', 'Job Title', 'Items', 'Done', 'In Progress', 'Blockers'];
+    }
+
+    public function collection(): Collection
+    {
+        return $this->standups->map(fn ($s) => [
+            $s->standup_date instanceof Carbon
+                ? $s->standup_date->format('Y-m-d')
+                : Carbon::parse($s->standup_date)->format('Y-m-d'),
+            $s->user->name,
+            $s->user->job_title ?? '',
+            $s->items->count(),
+            $s->items->where('status', 'done')->pluck('description')->implode("\n"),
+            $s->items->whereIn('status', ['in_progress', 'in_review'])->pluck('description')->implode("\n"),
+            $s->blockers ?? '',
+        ]);
+    }
+
+    public function columnWidths(): array
+    {
+        return ['A' => 14, 'B' => 24, 'C' => 24, 'D' => 8, 'E' => 60, 'F' => 60, 'G' => 50];
+    }
+
+    public function styles(Worksheet $sheet): array
+    {
+        $lastRow = $sheet->getHighestRow() ?: 2;
+        $sheet->getStyle("E2:F{$lastRow}")->getAlignment()->setWrapText(true);
+
+        return [
+            1 => [
+                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF7C3AED']],
+            ],
+        ];
+    }
+}

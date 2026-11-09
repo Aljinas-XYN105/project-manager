@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -12,9 +12,17 @@ const props = defineProps({
     can_export: Boolean,
     export_excel_url: String,
     export_pdf_url: String,
+    export_excel_range_url: String,
+    export_pdf_range_url: String,
     my_standup_url: String,
     calendar_url: String,
 })
+
+const exportOpen = ref(false)
+
+function rangeUrl(base, preset) {
+    return base + '?preset=' + preset
+}
 
 const avatarBgs   = ['#ede9fe','#dbeafe','#d1fae5','#fef3c7','#fee2e2','#e0e7ff','#ccfbf1','#fce7f3','#ddd6fe','#bfdbfe']
 const avatarTexts = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#4f46e5','#0d9488','#be185d','#6d28d9','#1d4ed8']
@@ -85,14 +93,59 @@ const pendingCount   = computed(() => props.users.length - submittedCount.value)
                         Today
                     </Link>
 
-                    <template v-if="can_export">
-                        <a :href="export_excel_url" class="btn-secondary flex items-center gap-2">
-                            <i class="bi bi-file-earmark-excel"></i> Excel
-                        </a>
-                        <a :href="export_pdf_url" class="btn-secondary flex items-center gap-2">
-                            <i class="bi bi-file-earmark-pdf"></i> PDF
-                        </a>
-                    </template>
+                    <!-- Export dropdown -->
+                    <div v-if="can_export" class="relative">
+                        <button @click="exportOpen = !exportOpen"
+                                @blur="setTimeout(() => exportOpen = false, 150)"
+                                class="btn-secondary flex items-center gap-2">
+                            <i class="bi bi-download"></i>
+                            Export
+                            <i class="bi bi-chevron-down text-xs opacity-60"></i>
+                        </button>
+
+                        <div v-if="exportOpen"
+                             class="absolute right-0 top-full mt-1 z-30 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1 min-w-[220px]">
+
+                            <!-- Today's date -->
+                            <div class="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                {{ date_label }}
+                            </div>
+                            <a :href="export_excel_url"
+                               class="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-sm text-slate-700 dark:text-slate-200">
+                                <i class="bi bi-file-earmark-excel text-green-600 w-4 text-center"></i> Excel
+                            </a>
+                            <a :href="export_pdf_url"
+                               class="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-sm text-slate-700 dark:text-slate-200">
+                                <i class="bi bi-file-earmark-pdf text-red-500 w-4 text-center"></i> PDF
+                            </a>
+
+                            <div class="border-t border-slate-100 dark:border-slate-700 my-1"></div>
+
+                            <!-- This week -->
+                            <div class="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">This week</div>
+                            <a :href="rangeUrl(export_excel_range_url, 'this_week')"
+                               class="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-sm text-slate-700 dark:text-slate-200">
+                                <i class="bi bi-file-earmark-excel text-green-600 w-4 text-center"></i> Excel
+                            </a>
+                            <a :href="rangeUrl(export_pdf_range_url, 'this_week')"
+                               class="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-sm text-slate-700 dark:text-slate-200">
+                                <i class="bi bi-file-earmark-pdf text-red-500 w-4 text-center"></i> PDF
+                            </a>
+
+                            <div class="border-t border-slate-100 dark:border-slate-700 my-1"></div>
+
+                            <!-- This month -->
+                            <div class="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">This month</div>
+                            <a :href="rangeUrl(export_excel_range_url, 'this_month')"
+                               class="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-sm text-slate-700 dark:text-slate-200">
+                                <i class="bi bi-file-earmark-excel text-green-600 w-4 text-center"></i> Excel
+                            </a>
+                            <a :href="rangeUrl(export_pdf_range_url, 'this_month')"
+                               class="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-sm text-slate-700 dark:text-slate-200">
+                                <i class="bi bi-file-earmark-pdf text-red-500 w-4 text-center"></i> PDF
+                            </a>
+                        </div>
+                    </div>
 
                     <Link :href="my_standup_url" class="btn-primary">
                         <i class="bi bi-pencil-square text-sm"></i> My Standup

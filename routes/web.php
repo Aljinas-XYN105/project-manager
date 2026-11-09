@@ -170,6 +170,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/calendar', [StandupController::class, 'calendar'])->name('calendar');
         Route::get('/export-excel', [StandupController::class, 'exportExcel'])->name('export-excel');
         Route::get('/export-pdf', [StandupController::class, 'exportPdf'])->name('export-pdf');
+        Route::get('/export-excel-range', [StandupController::class, 'exportExcelRange'])->name('export-excel-range');
+        Route::get('/export-pdf-range', [StandupController::class, 'exportPdfRange'])->name('export-pdf-range');
         Route::get('/tasks/search', [StandupController::class, 'taskSearch'])->name('tasks.search');
         Route::get('/my/{date}', [StandupController::class, 'show'])->name('show');
         Route::get('/{date}', [StandupController::class, 'day'])->name('day');
