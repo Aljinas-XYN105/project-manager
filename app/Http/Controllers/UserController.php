@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -183,7 +184,7 @@ class UserController extends Controller
             'is_active'         => $request->boolean('is_active', true),
             'email_verified_at' => now(),
         ] + $this->hrFields($data));
-        $user->syncRoles($data['roles']);
+        $user->syncRoles($data['current_roles']);
 
         $message = "Member \"{$user->name}\" created.";
         if (! $data['password']) {
@@ -209,6 +210,7 @@ class UserController extends Controller
                 'phone' => $user->phone ?? '', 'emergency_contact_name' => $user->emergency_contact_name ?? '',
                 'emergency_contact_phone' => $user->emergency_contact_phone ?? '',
                 'current_roles' => $user->roles->pluck('name')->all(), 'is_self' => $isSelf,
+                'direct_permissions' => $user->getDirectPermissions()->pluck('name')->all(),
                 'reset_password_url' => ! $isSelf ? route('users.reset-password', $user) : null,
                 'destroy_url' => ! $isSelf ? route('users.destroy', $user) : null,
             ],
@@ -217,6 +219,8 @@ class UserController extends Controller
             'managers' => User::active()->where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'job_title'])->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'job_title' => $m->job_title]),
             'departments' => User::whereNotNull('department')->distinct()->orderBy('department')->pluck('department'),
             'employment_types' => User::EMPLOYMENT_TYPES,
+            'permission_groups' => $this->groupedPermissions(),
+            'role_permissions' => Role::with('permissions')->get()->mapWithKeys(fn ($r) => [$r->name => $r->permissions->pluck('name')->all()]),
             'update_url' => route('users.update', $user),
             'is_edit' => true,
         ]);
@@ -229,7 +233,7 @@ class UserController extends Controller
         ]);
 
         $isSelf = $user->is($request->user());
-        if ($isSelf && $user->hasRole('admin') && ! in_array('admin', $data['roles'])) {
+        if ($isSelf && $user->hasRole('admin') && ! in_array('admin', $data['current_roles'])) {
             return back()->withInput()->with('error', 'You cannot remove the admin role from your own account.');
         }
 
@@ -241,7 +245,12 @@ class UserController extends Controller
             'timezone'  => $data['timezone'] ?? $user->timezone,
             'is_active' => $isSelf ? true : $request->boolean('is_active'),
         ] + $this->hrFields($data));
-        $user->syncRoles($data['roles']);
+        $user->syncRoles($data['current_roles']);
+
+        // Only admins can assign direct permissions
+        if (auth()->user()->hasRole('admin') && isset($data['direct_permissions'])) {
+            $user->syncPermissions($data['direct_permissions']);
+        }
 
         return redirect()->route('users.index')->with('success', "Member \"{$user->name}\" updated.");
     }
@@ -328,9 +337,21 @@ class UserController extends Controller
             'job_title' => ['nullable', 'string', 'max:100'],
             'team_id'   => ['nullable', 'exists:teams,id'],
             'timezone'  => ['nullable', 'timezone'],
-            'roles'     => ['required', 'array', 'min:1'],
-            'roles.*'   => ['string', 'exists:roles,name'],
+            'current_roles'        => ['required', 'array', 'min:1'],
+            'current_roles.*'      => ['string', 'exists:roles,name'],
+            'direct_permissions'   => ['nullable', 'array'],
+            'direct_permissions.*' => ['string', 'exists:permissions,name'],
         ];
+    }
+
+    private function groupedPermissions(): array
+    {
+        return Permission::orderBy('name')->get()
+            ->groupBy(fn ($p) => explode('.', $p->name)[0])
+            ->map(fn ($perms, $group) => [
+                'group'       => $group,
+                'permissions' => $perms->map(fn ($p) => ['name' => $p->name])->values()->all(),
+            ])->values()->all();
     }
 
     private function roles()

@@ -11,14 +11,31 @@ const props = defineProps({
     managers: Array,
     departments: Array,
     employment_types: Object,
+    permission_groups: { type: Array, default: () => [] },
+    role_permissions: { type: Object, default: () => ({}) },
     store_url: String,
     update_url: String,
     is_edit: Boolean,
 })
 
-const form = ref({ ...props.user })
+const form = ref({
+    ...props.user,
+    direct_permissions: props.user?.direct_permissions ?? [],
+})
 const errors = ref({})
 const processing = ref(false)
+const openGroups = ref({})
+
+// Permissions inherited from currently-selected roles
+const inheritedPermissions = computed(() => {
+    const set = new Set()
+    for (const roleName of form.value.current_roles) {
+        for (const perm of (props.role_permissions[roleName] ?? [])) {
+            set.add(perm)
+        }
+    }
+    return set
+})
 
 const title = computed(() => props.is_edit ? `Edit member` : 'Add member')
 
@@ -52,6 +69,25 @@ function toggleRole(name) {
         if (props.user.is_self && name === 'admin') return
         form.value.current_roles = form.value.current_roles.filter(r => r !== name)
     }
+}
+
+function toggleDirectPermission(name) {
+    const idx = form.value.direct_permissions.indexOf(name)
+    if (idx === -1) {
+        form.value.direct_permissions = [...form.value.direct_permissions, name]
+    } else {
+        form.value.direct_permissions = form.value.direct_permissions.filter(p => p !== name)
+    }
+}
+
+function toggleGroup(group) {
+    openGroups.value[group] = !openGroups.value[group]
+}
+
+function directPermCount(group) {
+    return group.permissions.filter(p =>
+        form.value.direct_permissions.includes(p.name) && !inheritedPermissions.value.has(p.name)
+    ).length
 }
 </script>
 
@@ -197,6 +233,46 @@ function toggleRole(name) {
                         </label>
                     </div>
                     <p v-if="errors.roles" class="form-error mt-2">{{ errors.roles }}</p>
+                </div>
+
+                <!-- Direct Permissions (edit only) -->
+                <div v-if="is_edit && permission_groups.length" class="card p-6 space-y-4">
+                    <div>
+                        <h2 class="font-semibold text-slate-900 dark:text-white">Direct Permissions</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Grant extra permissions beyond this member's roles. Permissions already included via a role are shown as inherited.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div v-for="group in permission_groups" :key="group.group" class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <!-- Group header -->
+                            <button type="button"
+                                    @click="toggleGroup(group.group)"
+                                    class="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left">
+                                <i class="bi text-xs text-slate-400 transition-transform"
+                                   :class="openGroups[group.group] ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+                                <span class="flex-1 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{{ group.group }}</span>
+                                <span v-if="directPermCount(group)" class="text-[11px] font-medium text-violet-600 dark:text-violet-400">+{{ directPermCount(group) }}</span>
+                            </button>
+
+                            <!-- Permissions list -->
+                            <div v-show="openGroups[group.group]" class="grid grid-cols-1 sm:grid-cols-2 gap-px bg-slate-100 dark:bg-slate-700/50 border-t border-slate-200 dark:border-slate-700">
+                                <label v-for="perm in group.permissions" :key="perm.name"
+                                       :class="[
+                                           'flex items-center gap-2.5 px-4 py-2 bg-white dark:bg-slate-900 transition-colors',
+                                           inheritedPermissions.has(perm.name) ? 'opacity-70' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60',
+                                       ]">
+                                    <input type="checkbox"
+                                           :checked="form.direct_permissions.includes(perm.name) || inheritedPermissions.has(perm.name)"
+                                           :disabled="inheritedPermissions.has(perm.name)"
+                                           @change="toggleDirectPermission(perm.name)"
+                                           class="rounded text-violet-600 border-slate-300 focus:ring-violet-500 shrink-0">
+                                    <span class="flex-1 text-xs text-slate-700 dark:text-slate-300 leading-tight">{{ perm.name }}</span>
+                                    <span v-if="inheritedPermissions.has(perm.name)"
+                                          class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-full whitespace-nowrap">via role</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3">
