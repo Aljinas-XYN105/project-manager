@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\StandupDayExport;
+use App\Exports\StandupRangeExport;
 use App\Models\Project;
 use App\Models\Standup;
 use App\Models\StandupItem;
@@ -73,9 +74,11 @@ class StandupController extends Controller
                 'member_day_url'  => route('standups.member-day', [$date->toDateString(), $u->id]),
                 'show_url'        => route('standups.show', $date->toDateString()).'?user='.$u->id,
             ]),
-            'can_export'       => auth()->user()->can('standups.manage'),
-            'export_excel_url' => route('standups.export-excel', ['date' => $date->toDateString()]),
-            'export_pdf_url'   => route('standups.export-pdf', ['date' => $date->toDateString()]),
+            'can_export'             => auth()->user()->can('standups.view-team'),
+            'export_excel_url'       => route('standups.export-excel', ['date' => $date->toDateString()]),
+            'export_pdf_url'         => route('standups.export-pdf', ['date' => $date->toDateString()]),
+            'export_excel_range_url' => route('standups.export-excel-range'),
+            'export_pdf_range_url'   => route('standups.export-pdf-range'),
             'my_standup_url'   => route('standups.show', today()->toDateString()),
             'calendar_url'     => route('standups.calendar'),
         ]);
@@ -310,7 +313,7 @@ class StandupController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $this->authorizeManagerOrAdmin();
+        $this->authorizeExport();
 
         $date     = $request->input('date', today()->toDateString());
         $standups = Standup::whereDate('standup_date', $date)
@@ -323,7 +326,7 @@ class StandupController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $this->authorizeManagerOrAdmin();
+        $this->authorizeExport();
 
         $date = $request->input('date', today()->toDateString());
 
@@ -340,9 +343,80 @@ class StandupController extends Controller
         return $pdf->download('standups-'.$date.'.pdf');
     }
 
-    private function authorizeManagerOrAdmin(): void
+    public function exportExcelRange(Request $request)
     {
-        if (!auth()->user()->can('standups.manage')) {
+        $this->authorizeExport();
+
+        [$from, $to] = $this->rangeFromRequest($request);
+
+        $standups = Standup::whereBetween('standup_date', [$from, $to])
+            ->with(['user', 'items'])
+            ->orderBy('standup_date')
+            ->orderBy('user_id')
+            ->get();
+
+        $label = $from->format('Y-m-d').'_to_'.$to->format('Y-m-d');
+
+        return Excel::download(new StandupRangeExport($standups, $from, $to), "standups-{$label}.xlsx");
+    }
+
+    public function exportPdfRange(Request $request)
+    {
+        $this->authorizeExport();
+
+        [$from, $to] = $this->rangeFromRequest($request);
+
+        $users = User::where('is_active', true)->orderBy('name')->get();
+
+        $standups = Standup::whereBetween('standup_date', [$from, $to])
+            ->with(['user', 'items'])
+            ->get();
+
+        // Group by date string → keyed by user_id
+        $days = $standups
+            ->groupBy(fn ($s) => Carbon::parse($s->standup_date)->toDateString())
+            ->map(fn ($group) => $group->keyBy('user_id'));
+
+        $pdf = Pdf::loadView('standups.range-pdf', [
+            'from'  => $from->toDateString(),
+            'to'    => $to->toDateString(),
+            'users' => $users,
+            'days'  => $days,
+        ])->setPaper('a4', 'portrait');
+
+        $label = $from->format('Y-m-d').'_to_'.$to->format('Y-m-d');
+
+        return $pdf->download("standups-{$label}.pdf");
+    }
+
+    private function rangeFromRequest(Request $request): array
+    {
+        $preset = $request->input('preset', 'this_week');
+
+        $from = match ($preset) {
+            'last_week'  => Carbon::now()->subWeek()->startOfWeek(Carbon::MONDAY),
+            'this_month' => Carbon::now()->startOfMonth(),
+            'last_month' => Carbon::now()->subMonth()->startOfMonth(),
+            default      => Carbon::now()->startOfWeek(Carbon::MONDAY), // this_week
+        };
+
+        $to = match ($preset) {
+            'last_week'  => Carbon::now()->subWeek()->endOfWeek(Carbon::SUNDAY),
+            'this_month' => Carbon::now()->endOfMonth(),
+            'last_month' => Carbon::now()->subMonth()->endOfMonth(),
+            default      => Carbon::now()->endOfWeek(Carbon::SUNDAY),
+        };
+
+        // Allow explicit from/to to override preset
+        if ($request->filled('from')) $from = Carbon::parse($request->input('from'))->startOfDay();
+        if ($request->filled('to'))   $to   = Carbon::parse($request->input('to'))->endOfDay();
+
+        return [$from, $to];
+    }
+
+    private function authorizeExport(): void
+    {
+        if (!auth()->user()->can('standups.view-team')) {
             abort(403);
         }
     }
