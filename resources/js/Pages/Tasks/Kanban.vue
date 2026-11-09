@@ -157,7 +157,7 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
         </div>
 
         <!-- Board -->
-        <div class="flex gap-3 overflow-x-auto pb-6 -mx-4 lg:-mx-6 px-4 lg:px-6 min-h-[calc(100vh-13rem)] items-stretch">
+        <div class="flex gap-3 overflow-x-auto pb-3 -mx-4 lg:-mx-5 px-4 lg:px-5 h-[calc(100vh-13rem)]">
             <div v-for="col in columns" :key="col.id"
                  class="flex flex-col flex-shrink-0 w-[280px] rounded-2xl bg-slate-100/70 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/50 overflow-hidden"
                  @dragover.prevent="dragEnter(col.id)"
@@ -181,7 +181,7 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
                 </div>
 
                 <!-- Task Cards -->
-                <div class="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2">
+                <div class="flex-1 overflow-y-auto px-2.5 pb-2.5 flex flex-col gap-2">
                     <div v-for="task in col.tasks" :key="task.id"
                          class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm cursor-pointer p-3 hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700/60 hover:-translate-y-px transition-all duration-150 group"
                          draggable="true"
@@ -220,7 +220,7 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
 
                     <!-- Empty column hint -->
                     <div v-if="col.tasks.length === 0 && dragOver !== col.id"
-                         class="flex flex-col items-center justify-center gap-1.5 py-8 opacity-40">
+                         class="h-full flex flex-col items-center justify-center gap-1.5 opacity-40">
                         <i class="bi bi-arrow-left-right text-lg text-slate-400"></i>
                         <span class="text-[11px] font-medium text-slate-400">Drag tasks here</span>
                     </div>

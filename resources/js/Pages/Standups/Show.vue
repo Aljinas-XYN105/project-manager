@@ -279,9 +279,9 @@ const taskTypes = [
             </div>
 
             <!-- Kanban columns -->
-            <div class="flex gap-3 overflow-x-auto pb-2 items-stretch">
+            <div class="flex gap-3 pb-2 items-stretch">
                 <div v-for="col in columns" :key="col.status"
-                     class="rounded-2xl flex flex-col min-h-[200px] transition-all duration-150 flex-shrink-0 w-56 border"
+                     class="rounded-2xl flex flex-col min-h-[200px] transition-all duration-150 flex-1 min-w-[180px] border"
                      :class="[col.activeBg, col.border, dragOverStatus === col.status ? 'ring-2 ring-inset ' + col.ring : '']"
                      @dragover.prevent="dragOverStatus = col.status"
                      @dragleave.self="dragOverStatus = null"

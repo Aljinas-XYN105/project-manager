@@ -221,9 +221,9 @@ function toggleLabel(lblId) {
             </div>
 
             <!-- Kanban board -->
-            <div class="flex gap-3 overflow-x-auto pb-2 items-stretch flex-1">
+            <div class="flex gap-3 pb-2 items-stretch flex-1">
                 <div v-for="col in columns" :key="col.status"
-                     class="rounded-2xl flex flex-col min-h-[100px] transition-all duration-150 flex-shrink-0 w-56 border"
+                     class="rounded-2xl flex flex-col min-h-[100px] transition-all duration-150 flex-1 min-w-[160px] border"
                      :class="[col.activeBg, col.border, dragOverStatus === col.status ? 'ring-2 ring-inset ' + col.ring : '']"
                      @dragover.prevent="dragOverStatus = col.status"
                      @dragleave.self="dragOverStatus = null"
