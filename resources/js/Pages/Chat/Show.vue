@@ -792,7 +792,7 @@ onBeforeUnmount(() => {
 <style>
 /* ── Chat thread ───────────────────────────────────────────── */
 :root {
-    --ct-bg: #f1f5f9;
+    --ct-bg: transparent;
     --ct-header-bg: #ffffff;
     --ct-header-border: #e2e8f0;
     --ct-bubble-out-bg: #7c3aed;
@@ -869,7 +869,7 @@ onBeforeUnmount(() => {
 .ct-dot.online { background: var(--ct-online); }
 .ct-dot.offline { background: var(--ct-offline); }
 .ct-dot.busy { background: #f59e0b; }
-.ct-messages { flex: 1; overflow-y: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 2px; scroll-behavior: smooth; }
+.ct-messages { flex: 1; overflow-y: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; scroll-behavior: smooth; }
 .ct-sep { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
 .ct-sep::before, .ct-sep::after { content: ''; flex: 1; height: 1px; background: var(--ct-sep-line); }
 .ct-sep span { font-size: 11px; font-weight: 600; color: var(--ct-sep-text); padding: 2px 10px; white-space: nowrap; background: var(--ct-bg); border-radius: 10px; border: 1px solid var(--ct-sep-line); }
