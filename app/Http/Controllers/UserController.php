@@ -68,7 +68,13 @@ class UserController extends Controller
 
     public function show(User $user)
     {
-        $user->load(['teams', 'roles']);
+        $user->loadMissing(['teams', 'roles', 'manager', 'directReports']);
+
+        $viewer = request()->user();
+        $canSeePrivate = $viewer->is($user)
+            || $viewer->hasRole('admin')
+            || $viewer->can('employees.view-private')
+            || $user->manager_id === $viewer->id;
 
         $stats = [
             'assigned_tasks'   => $user->assignedTasks()->whereNull('parent_id')->count(),
@@ -86,6 +92,20 @@ class UserController extends Controller
             ->limit(10)
             ->get();
 
+        $employmentRows = array_filter([
+            'Employee ID'       => $user->employee_code,
+            'Department'        => $user->department,
+            'Type'              => \App\Models\User::EMPLOYMENT_TYPES[$user->employment_type] ?? null,
+            'Joined'            => $user->joined_on ? $user->joined_on->format('M j, Y').' ('.$user->joined_on->diffForHumans(null, true).')' : null,
+            'Birthday'          => $user->date_of_birth
+                ? ($canSeePrivate ? $user->date_of_birth->format('M j, Y') : $user->date_of_birth->format('F j'))
+                : null,
+            'Phone'             => $user->phone,
+            'Emergency contact' => $canSeePrivate && $user->emergency_contact_name
+                ? $user->emergency_contact_name.($user->emergency_contact_phone ? ' · '.$user->emergency_contact_phone : '')
+                : null,
+        ]);
+
         return Inertia::render('Users/Show', [
             'user' => [
                 'id'          => $user->id,
@@ -97,9 +117,13 @@ class UserController extends Controller
                 'bio'         => $user->bio,
                 'phone'       => $user->phone,
                 'location'    => $user->location,
+                'timezone'    => $user->timezone,
                 'joined_on'   => $user->joined_on?->format('M j, Y'),
                 'roles'       => $user->roles->map(fn ($r) => Str::headline($r->name)),
                 'teams'       => $user->teams->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'show_url' => route('teams.show', $t)]),
+                'manager'     => $user->manager ? ['name' => $user->manager->name, 'show_url' => route('users.show', $user->manager)] : null,
+                'direct_reports' => $user->directReports->map(fn ($r) => ['id' => $r->id, 'name' => $r->name, 'avatar_url' => $r->avatar_url, 'show_url' => route('users.show', $r)]),
+                'employment_rows' => collect($employmentRows)->map(fn ($v, $k) => ['label' => $k, 'value' => $v])->values(),
                 'edit_url'    => route('users.edit', $user),
             ],
             'stats'       => $stats,
@@ -108,10 +132,12 @@ class UserController extends Controller
                 'title'    => $t->title,
                 'status'   => $t->status,
                 'priority' => $t->priority,
+                'due_date' => $t->due_date ? $t->due_date->format('M j') : null,
+                'is_overdue' => $t->due_date && $t->due_date->isPast() && $t->status !== 'done',
                 'project'  => $t->project ? ['name' => $t->project->name] : null,
                 'show_url' => route('projects.tasks.show', $t),
             ]),
-            'can_manage' => request()->user()->hasRole('admin') || request()->user()->can('users.manage'),
+            'can_manage' => $viewer->hasRole('admin') || $viewer->can('users.manage'),
         ]);
     }
 

@@ -46,8 +46,14 @@ class ExpenseController extends Controller
                 'review_note' => $e->review_note,
                 'reviewed_at' => $e->reviewed_at?->diffForHumans(),
                 'reviewer'    => $e->reviewer ? ['name' => $e->reviewer->name] : null,
-                'has_receipts'=> !empty($e->receipts) || !empty($e->receipt_path),
-                'receipt_count' => count($e->receipts ?? []),
+                'has_receipts'  => !empty($e->receipts) || !empty($e->receipt_path),
+                'receipt_urls'  => collect($e->receipts ?? [])->keys()->map(fn ($i) => [
+                    'url'  => route('expenses.receipt', [$e, $i]),
+                    'name' => ($e->receipts[$i]['name'] ?? 'Receipt '.($i+1)),
+                ])->when(empty($e->receipts) && $e->receipt_path, fn ($c) => $c->push([
+                    'url'  => route('expenses.receipt', $e),
+                    'name' => $e->receipt_name ?? 'Receipt',
+                ]))->values(),
                 'cancel_url'  => $e->status === 'pending' ? route('expenses.cancel', $e) : null,
             ]),
             'pending_review'=> $pendingReview,

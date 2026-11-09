@@ -161,7 +161,10 @@ async function cancelExpense(url) {
 
                         <!-- Amount + receipt -->
                         <div class="flex items-center gap-3 flex-shrink-0">
-                            <i v-if="e.has_receipts" class="bi bi-paperclip text-sm text-slate-400"></i>
+                            <a v-for="r in e.receipt_urls" :key="r.url" :href="r.url" target="_blank"
+                               class="text-slate-400 hover:text-violet-600 transition-colors" :title="r.name">
+                                <i class="bi bi-paperclip text-sm"></i>
+                            </a>
                             <p class="text-sm font-bold text-slate-900 dark:text-white">{{ e.currency }} {{ Number(e.amount).toFixed(2) }}</p>
                         </div>
 
