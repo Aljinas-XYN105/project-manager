@@ -301,7 +301,7 @@ function burnClass(rate) {
             <!-- Recent Standups -->
             <div class="card overflow-hidden">
                 <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                    <h2 class="font-semibold text-slate-900 dark:text-white">Recent Standups</h2>
+                    <h2 class="font-semibold text-slate-900 dark:text-white">Recent Daily Reports</h2>
                     <a :href="reports_url" class="text-xs text-violet-600 hover:text-violet-700 font-medium">View all →</a>
                 </div>
                 <div class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -328,7 +328,7 @@ function burnClass(rate) {
                     </template>
                     <div v-else class="py-10 text-center text-slate-400 text-sm">
                         <i class="bi bi-journal-x text-2xl block mb-2"></i>
-                        No standup reports yet.
+                        No daily reports yet.
                     </div>
                 </div>
             </div>

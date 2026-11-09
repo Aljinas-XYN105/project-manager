@@ -151,7 +151,7 @@
         <i class="bi bi-journal-plus text-amber-600 dark:text-amber-400 text-xl"></i>
       </div>
       <div class="flex-1">
-        <p class="font-semibold text-sm text-amber-800 dark:text-amber-200">Daily standup not submitted</p>
+        <p class="font-semibold text-sm text-amber-800 dark:text-amber-200">Daily report not submitted</p>
         <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Submit today's progress report to keep your team in sync.</p>
       </div>
       <Link :href="route('daily-reports.create')" class="flex-shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-medium transition-colors">

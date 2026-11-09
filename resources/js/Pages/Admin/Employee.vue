@@ -138,7 +138,7 @@ const maxDH = Math.max(...props.daily_breakdown.map(d => d.hours), 1)
                 <!-- Recent Daily Reports -->
                 <div class="card overflow-hidden">
                     <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                        <h2 class="font-semibold text-slate-900 dark:text-white">Recent Standups ({{ kpi.reports }})</h2>
+                        <h2 class="font-semibold text-slate-900 dark:text-white">Recent Daily Reports ({{ kpi.reports }})</h2>
                     </div>
                     <div class="divide-y divide-slate-50 dark:divide-slate-800 max-h-80 overflow-y-auto">
                         <template v-if="daily_reports.length">
