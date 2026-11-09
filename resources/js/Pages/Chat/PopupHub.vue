@@ -278,3 +278,29 @@ async function createGroup() {
         </Teleport>
     </ChatPopupLayout>
 </template>
+
+<style>
+:root {
+    --ci-bg: #f8fafc; --ci-header-bg: #ffffff; --ci-header-border: #e2e8f0;
+    --ci-row-hover: #f1f5f9; --ci-row-active: #ede9fe; --ci-row-active-border: #7c3aed;
+    --ci-name: #1e293b; --ci-preview: #64748b; --ci-time: #94a3b8;
+    --ci-avatar-bg: #ede9fe; --ci-avatar-fg: #7c3aed;
+    --ci-badge-bg: #7c3aed; --ci-badge-fg: #ffffff;
+    --ci-search-bg: #f1f5f9; --ci-search-border: #e2e8f0;
+    --ci-sep: #f1f5f9; --ci-modal-bg: #ffffff;
+    --ci-chip-bg: #ede9fe; --ci-chip-fg: #5b21b6;
+    --ci-online: #22c55e; --ci-offline: #94a3b8;
+}
+.dark {
+    --ci-bg: #0f172a; --ci-header-bg: #1e293b; --ci-header-border: #334155;
+    --ci-row-hover: #1e293b; --ci-row-active: #2e1065; --ci-row-active-border: #7c3aed;
+    --ci-name: #f1f5f9; --ci-preview: #94a3b8; --ci-time: #64748b;
+    --ci-avatar-bg: #2e1065; --ci-avatar-fg: #a78bfa;
+    --ci-badge-bg: #7c3aed; --ci-badge-fg: #ffffff;
+    --ci-search-bg: #1e293b; --ci-search-border: #334155;
+    --ci-sep: #1e293b; --ci-modal-bg: #1e293b;
+    --ci-chip-bg: #2e1065; --ci-chip-fg: #c4b5fd;
+    --ci-online: #22c55e; --ci-offline: #475569;
+}
+html, body { height: 100%; overflow: hidden; }
+</style>

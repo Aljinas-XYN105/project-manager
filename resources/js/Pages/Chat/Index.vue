@@ -97,89 +97,6 @@ async function createGroup() {
 
 <template>
     <AppLayout title="Chat">
-        <!-- CI CSS tokens -->
-        <style>
-        :root {
-            --ci-bg: #f8fafc; --ci-header-bg: #ffffff; --ci-header-border: #e2e8f0;
-            --ci-row-hover: #f1f5f9; --ci-row-active: #ede9fe; --ci-row-active-border: #7c3aed;
-            --ci-name: #1e293b; --ci-preview: #64748b; --ci-time: #94a3b8;
-            --ci-avatar-bg: #ede9fe; --ci-avatar-fg: #7c3aed;
-            --ci-badge-bg: #7c3aed; --ci-badge-fg: #ffffff;
-            --ci-search-bg: #f1f5f9; --ci-search-border: #e2e8f0;
-            --ci-sep: #f1f5f9; --ci-tab-active: #7c3aed; --ci-tab-inactive: #94a3b8;
-            --ci-modal-bg: #ffffff; --ci-chip-bg: #ede9fe; --ci-chip-fg: #5b21b6;
-            --ci-online: #22c55e; --ci-offline: #94a3b8;
-        }
-        .dark {
-            --ci-bg: #0f172a; --ci-header-bg: #1e293b; --ci-header-border: #334155;
-            --ci-row-hover: #1e293b; --ci-row-active: #2e1065; --ci-row-active-border: #7c3aed;
-            --ci-name: #f1f5f9; --ci-preview: #94a3b8; --ci-time: #64748b;
-            --ci-avatar-bg: #2e1065; --ci-avatar-fg: #a78bfa;
-            --ci-badge-bg: #7c3aed; --ci-badge-fg: #ffffff;
-            --ci-search-bg: #1e293b; --ci-search-border: #334155;
-            --ci-sep: #1e293b; --ci-modal-bg: #1e293b; --ci-chip-bg: #2e1065; --ci-chip-fg: #c4b5fd;
-            --ci-online: #22c55e; --ci-offline: #475569;
-        }
-        .ci-index-wrap { background: var(--ci-bg); height: calc(100vh - 7rem); overflow: hidden; }
-        .conv-row-ci {
-            display: flex; align-items: center; gap: 12px;
-            padding: 11px 16px; cursor: pointer;
-            text-decoration: none; color: inherit;
-            transition: background .12s;
-            border-left: 3px solid transparent;
-            position: relative;
-        }
-        .conv-row-ci:hover { background: var(--ci-row-hover); }
-        .conv-row-ci.ci-active { background: var(--ci-row-active); border-left-color: var(--ci-row-active-border); }
-        .conv-sep-ci { height: 1px; background: var(--ci-sep); margin: 0 16px; }
-        .conv-name-ci { font-weight: 600; font-size: 14px; color: var(--ci-name); line-height: 1.2; }
-        .conv-preview-ci { font-size: 12.5px; color: var(--ci-preview); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .conv-time-ci { font-size: 11px; color: var(--ci-time); white-space: nowrap; }
-        .conv-badge-ci {
-            min-width: 18px; height: 18px;
-            background: var(--ci-badge-bg); color: var(--ci-badge-fg);
-            border-radius: 9px; font-size: 10px; font-weight: 700;
-            display: flex; align-items: center; justify-content: center; padding: 0 4px;
-            flex-shrink: 0;
-        }
-        .ci-search-input {
-            background: var(--ci-search-bg);
-            border: 1px solid var(--ci-search-border);
-            border-radius: 10px;
-            padding: 7px 12px 7px 34px;
-            font-size: 13.5px;
-            color: var(--ci-name); outline: none; width: 100%;
-            transition: border-color .15s;
-        }
-        .ci-search-input:focus { border-color: #7c3aed; }
-        .ci-search-input::placeholder { color: var(--ci-time); }
-        .status-dot-ci {
-            width: 9px; height: 9px; border-radius: 50%;
-            border: 2px solid var(--ci-header-bg);
-            position: absolute; bottom: 0; right: 0;
-        }
-        .status-dot-ci.online { background: var(--ci-online); }
-        .status-dot-ci.offline { background: var(--ci-offline); }
-        .ci-modal-overlay {
-            position: fixed; inset: 0; background: rgba(15,23,42,.6);
-            z-index: 200; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px);
-        }
-        .ci-modal-card {
-            background: var(--ci-modal-bg);
-            border-radius: 20px; padding: 28px 24px;
-            width: min(500px, calc(100vw - 32px));
-            max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 25px 60px rgba(0,0,0,.25);
-            border: 1px solid rgba(124,58,237,.2);
-        }
-        .member-chip-ci {
-            display: inline-flex; align-items: center; gap: 5px;
-            background: var(--ci-chip-bg); color: var(--ci-chip-fg);
-            border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 500;
-        }
-        </style>
-
         <!-- Full-height chat wrapper (negative margins to bleed to edges) -->
         <div class="ci-index-wrap -mt-6 -mx-4 lg:-mx-5 flex flex-col">
 
@@ -395,3 +312,85 @@ async function createGroup() {
         </Teleport>
     </AppLayout>
 </template>
+
+<style>
+:root {
+    --ci-bg: #f8fafc; --ci-header-bg: #ffffff; --ci-header-border: #e2e8f0;
+    --ci-row-hover: #f1f5f9; --ci-row-active: #ede9fe; --ci-row-active-border: #7c3aed;
+    --ci-name: #1e293b; --ci-preview: #64748b; --ci-time: #94a3b8;
+    --ci-avatar-bg: #ede9fe; --ci-avatar-fg: #7c3aed;
+    --ci-badge-bg: #7c3aed; --ci-badge-fg: #ffffff;
+    --ci-search-bg: #f1f5f9; --ci-search-border: #e2e8f0;
+    --ci-sep: #f1f5f9; --ci-tab-active: #7c3aed; --ci-tab-inactive: #94a3b8;
+    --ci-modal-bg: #ffffff; --ci-chip-bg: #ede9fe; --ci-chip-fg: #5b21b6;
+    --ci-online: #22c55e; --ci-offline: #94a3b8;
+}
+.dark {
+    --ci-bg: #0f172a; --ci-header-bg: #1e293b; --ci-header-border: #334155;
+    --ci-row-hover: #1e293b; --ci-row-active: #2e1065; --ci-row-active-border: #7c3aed;
+    --ci-name: #f1f5f9; --ci-preview: #94a3b8; --ci-time: #64748b;
+    --ci-avatar-bg: #2e1065; --ci-avatar-fg: #a78bfa;
+    --ci-badge-bg: #7c3aed; --ci-badge-fg: #ffffff;
+    --ci-search-bg: #1e293b; --ci-search-border: #334155;
+    --ci-sep: #1e293b; --ci-modal-bg: #1e293b; --ci-chip-bg: #2e1065; --ci-chip-fg: #c4b5fd;
+    --ci-online: #22c55e; --ci-offline: #475569;
+}
+.ci-index-wrap { background: var(--ci-bg); height: calc(100vh - 7rem); overflow: hidden; }
+.conv-row-ci {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px; cursor: pointer;
+    text-decoration: none; color: inherit;
+    transition: background .12s;
+    border-left: 3px solid transparent;
+    position: relative;
+}
+.conv-row-ci:hover { background: var(--ci-row-hover); }
+.conv-row-ci.ci-active { background: var(--ci-row-active); border-left-color: var(--ci-row-active-border); }
+.conv-sep-ci { height: 1px; background: var(--ci-sep); margin: 0 16px; }
+.conv-name-ci { font-weight: 600; font-size: 14px; color: var(--ci-name); line-height: 1.2; }
+.conv-preview-ci { font-size: 12.5px; color: var(--ci-preview); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-time-ci { font-size: 11px; color: var(--ci-time); white-space: nowrap; }
+.conv-badge-ci {
+    min-width: 18px; height: 18px;
+    background: var(--ci-badge-bg); color: var(--ci-badge-fg);
+    border-radius: 9px; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; padding: 0 4px;
+    flex-shrink: 0;
+}
+.ci-search-input {
+    background: var(--ci-search-bg);
+    border: 1px solid var(--ci-search-border);
+    border-radius: 10px;
+    padding: 7px 12px 7px 34px;
+    font-size: 13.5px;
+    color: var(--ci-name); outline: none; width: 100%;
+    transition: border-color .15s;
+}
+.ci-search-input:focus { border-color: #7c3aed; }
+.ci-search-input::placeholder { color: var(--ci-time); }
+.status-dot-ci {
+    width: 9px; height: 9px; border-radius: 50%;
+    border: 2px solid var(--ci-header-bg);
+    position: absolute; bottom: 0; right: 0;
+}
+.status-dot-ci.online { background: var(--ci-online); }
+.status-dot-ci.offline { background: var(--ci-offline); }
+.ci-modal-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,.6);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.ci-modal-card {
+    background: var(--ci-modal-bg);
+    border-radius: 20px; padding: 28px 24px;
+    width: min(500px, calc(100vw - 32px));
+    max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0,0,0,.25);
+    border: 1px solid rgba(124,58,237,.2);
+}
+.member-chip-ci {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--ci-chip-bg); color: var(--ci-chip-fg);
+    border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 500;
+}
+</style>

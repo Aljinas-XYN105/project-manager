@@ -115,3 +115,27 @@ function popOut() {
         </div>
     </ChatPopupLayout>
 </template>
+
+<style>
+:root {
+    --ct-bg: #f1f5f9; --ct-header-bg: #ffffff; --ct-header-border: #e2e8f0;
+    --ct-bubble-out-bg: #7c3aed; --ct-bubble-out-fg: #ffffff;
+    --ct-bubble-in-bg: #ffffff; --ct-bubble-in-fg: #1e293b; --ct-bubble-in-border: #e2e8f0;
+    --ct-time: #94a3b8; --ct-compose-bg: #ffffff; --ct-compose-border: #e2e8f0;
+    --ct-input-bg: #f8fafc; --ct-input-border: #e2e8f0;
+    --ct-action-btn: #64748b; --ct-action-hover: #7c3aed; --ct-send-bg: #7c3aed;
+    --ct-name: #1e293b; --ct-preview: #64748b;
+    --ct-online: #22c55e; --ct-offline: #94a3b8;
+}
+.dark {
+    --ct-bg: #0f172a; --ct-header-bg: #1e293b; --ct-header-border: #334155;
+    --ct-bubble-out-bg: #6d28d9; --ct-bubble-out-fg: #f1f5f9;
+    --ct-bubble-in-bg: #1e293b; --ct-bubble-in-fg: #e2e8f0; --ct-bubble-in-border: #334155;
+    --ct-time: #64748b; --ct-compose-bg: #1e293b; --ct-compose-border: #334155;
+    --ct-input-bg: #0f172a; --ct-input-border: #334155;
+    --ct-action-btn: #64748b; --ct-action-hover: #a78bfa; --ct-send-bg: #7c3aed;
+    --ct-name: #f1f5f9; --ct-preview: #94a3b8;
+    --ct-online: #22c55e; --ct-offline: #475569;
+}
+html, body { height: 100%; overflow: hidden; }
+</style>
