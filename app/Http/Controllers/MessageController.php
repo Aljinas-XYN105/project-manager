@@ -49,7 +49,7 @@ class MessageController extends Controller
 
         $conversation->touch();
 
-        broadcast(new MessageSent($message))->toOthers();
+        try { broadcast(new MessageSent($message))->toOthers(); } catch (\Throwable) {}
 
         return response()->json([
             'id'              => $message->id,
@@ -83,7 +83,7 @@ class MessageController extends Controller
 
         $message->delete();
 
-        broadcast(new \App\Events\MessageDeleted($message->id, $message->conversation_id))->toOthers();
+        try { broadcast(new \App\Events\MessageDeleted($message->id, $message->conversation_id))->toOthers(); } catch (\Throwable) {}
 
         return response()->json(['ok' => true]);
     }
