@@ -9,6 +9,9 @@
    Inspired by Linear, Vercel, and Notion
    ================================================================ */
 
+/* Ensure the Inertia root div fills the viewport so AppLayout h-full works */
+#app { height: 100%; }
+
 @layer base {
     * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 

@@ -387,7 +387,7 @@ class TaskController extends Controller
                 'labels'    => $p->labels->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'color' => $l->color]),
             ]),
             'default_project_id' => $defaultProject?->id,
-            'store_global_url'   => route('tasks.store-global'),
+            'store_global_url'   => route('tasks.store'),
             'members_all'        => \App\Models\User::active()->orderBy('name')->get()->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'avatar_url' => $m->avatar_url]),
         ]);
     }

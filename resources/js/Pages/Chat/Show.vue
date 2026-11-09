@@ -79,16 +79,24 @@ function isMine(msg) { return msg.is_mine || msg.user?.id === authId.value }
 
 function isDifferentDay(a, b) {
     if (!a || !b) return false
-    const dA = a.created_date || (a.created_at ? new Date(a.created_at).toDateString() : null)
-    const dB = b.created_date || (b.created_at ? new Date(b.created_at).toDateString() : null)
-    if (a.created_date) return a.created_date !== b.created_date
-    return new Date(a.created_at).toDateString() !== new Date(b.created_at).toDateString()
+    // created_date is "YYYY-MM-DD" for initial page messages
+    if (a.created_date && b.created_date) return a.created_date !== b.created_date
+    // realtime messages carry ISO created_at
+    const dA = msgDate(a), dB = msgDate(b)
+    if (!dA || !dB) return false
+    return dA.toDateString() !== dB.toDateString()
+}
+
+function msgDate(msg) {
+    if (msg.created_date) return new Date(msg.created_date)
+    if (!msg.created_at) return null
+    const d = new Date(msg.created_at)
+    return isNaN(d.getTime()) ? null : d
 }
 
 function formatDateSep(msg) {
-    const iso = msg.created_at
-    if (!iso) return ''
-    const d   = new Date(iso)
+    const d = msgDate(msg)
+    if (!d) return msg.created_date ?? ''
     const now = new Date()
     const ys  = new Date(now); ys.setDate(now.getDate() - 1)
     if (d.toDateString() === now.toDateString()) return 'Today'
@@ -96,9 +104,11 @@ function formatDateSep(msg) {
     return d.toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' })
 }
 
-function formatTime(iso) {
-    if (!iso) return ''
-    return new Date(iso).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
+function formatTime(val) {
+    if (!val) return ''
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return val   // already a formatted string like "10:30 AM"
+    return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
 }
 
 function renderBody(body) {
