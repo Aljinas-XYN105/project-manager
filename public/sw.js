@@ -1,6 +1,9 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE  = `workzen-static-${CACHE_VERSION}`;
 const ASSET_CACHE   = `workzen-assets-${CACHE_VERSION}`;
+
+// Auth/guest pages — never intercept these, always go straight to network
+const SKIP_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/offline'];
 
 // ── Install ──────────────────────────────────────────────────
 self.addEventListener('install', event => {
@@ -33,9 +36,11 @@ self.addEventListener('fetch', event => {
     // Only handle same-origin GET requests
     if (req.method !== 'GET' || url.origin !== self.location.origin) return;
 
-    // Skip Inertia XHR (they carry X-Inertia header; can't intercept headers
-    // here, but they're same-origin fetches — let them pass to network)
+    // Skip Inertia XHR
     if (req.headers.get('X-Inertia')) return;
+
+    // Never intercept auth/guest pages — let them hit the network directly
+    if (SKIP_PATHS.some(p => url.pathname === p || url.pathname.startsWith(p + '/'))) return;
 
     // Vite-built assets: immutable hashed filenames → cache-first forever
     if (url.pathname.startsWith('/build/')) {
@@ -53,7 +58,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Navigation requests → network-first, offline fallback
+    // Navigation requests → network-first with timeout, offline fallback
     if (req.mode === 'navigate') {
         event.respondWith(networkFirstWithOffline(req));
         return;
@@ -75,17 +80,22 @@ async function cacheFirst(req, cacheName) {
     return response;
 }
 
+function fetchWithTimeout(req, ms = 8000) {
+    return Promise.race([
+        fetch(req),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+    ]);
+}
+
 async function networkFirstWithOffline(req) {
     try {
-        const response = await fetch(req);
-        // Cache the latest successful page load
+        const response = await fetchWithTimeout(req);
         if (response.ok) {
             const cache = await caches.open(STATIC_CACHE);
             cache.put(req, response.clone());
         }
         return response;
     } catch {
-        // Offline: try cached version first, then /offline fallback
         const cached = await caches.match(req);
         if (cached) return cached;
 
