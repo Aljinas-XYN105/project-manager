@@ -279,9 +279,9 @@ const taskTypes = [
             </div>
 
             <!-- Kanban columns -->
-            <div class="flex gap-3 overflow-x-auto pb-2 items-start">
+            <div class="flex gap-3 overflow-x-auto pb-2 items-stretch">
                 <div v-for="col in columns" :key="col.status"
-                     class="rounded-2xl flex flex-col min-h-[180px] transition-all duration-150 flex-shrink-0 w-56 border"
+                     class="rounded-2xl flex flex-col min-h-[200px] transition-all duration-150 flex-shrink-0 w-56 border"
                      :class="[col.activeBg, col.border, dragOverStatus === col.status ? 'ring-2 ring-inset ' + col.ring : '']"
                      @dragover.prevent="dragOverStatus = col.status"
                      @dragleave.self="dragOverStatus = null"
@@ -319,6 +319,13 @@ const taskTypes = [
                             </div>
                         </div>
 
+                        <!-- Empty column drag hint -->
+                        <div v-if="itemsFor(col.status).length === 0 && dragging === null"
+                             class="flex-1 flex flex-col items-center justify-center gap-1.5 py-6 opacity-40">
+                            <i class="bi bi-arrow-left-right text-lg" :class="col.color"></i>
+                            <span class="text-[11px] font-medium text-slate-400">Drag tasks here</span>
+                        </div>
+
                         <!-- Drop target placeholder -->
                         <div v-if="dragOverStatus === col.status && dragging !== null"
                              class="rounded-xl border-2 border-dashed border-violet-300 dark:border-violet-600 h-12 flex items-center justify-center">
@@ -348,20 +355,10 @@ const taskTypes = [
                           class="form-input w-full resize-none text-sm bg-white dark:bg-slate-800"></textarea>
             </div>
 
-            <!-- Bottom submit -->
-            <div class="flex items-center justify-between gap-4 pt-2">
-                <p class="text-xs text-slate-400">
-                    Changes auto-save · drag tasks between columns to update status.
-                </p>
-                <button @click="submitStandup()" :disabled="saving"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-50"
-                        :class="submitted
-                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700'
-                            : 'bg-violet-600 hover:bg-violet-700 text-white border border-violet-600'">
-                    <i class="bi text-xs" :class="saving ? 'bi-arrow-repeat animate-spin' : (submitted ? 'bi-check-circle-fill' : 'bi-send-fill')"></i>
-                    {{ submitted ? 'Submitted ✓' : 'Submit Standup' }}
-                </button>
-            </div>
+            <!-- Bottom hint -->
+            <p class="text-xs text-slate-400 pt-1">
+                Changes auto-save · drag tasks between columns to update status.
+            </p>
         </div>
 
         <!-- Add Task Modal -->

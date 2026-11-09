@@ -57,7 +57,7 @@ class AttendanceController extends Controller
                 'id'        => $r->id,
                 'user_id'   => $r->user_id,
                 'user_name' => $r->user?->name ?? '—',
-                'work_date' => $r->work_date,
+                'work_date' => $r->work_date->toDateString(),
                 'clock_in'  => $r->clock_in_at?->setTimezone($tz)->format('H:i'),
                 'clock_out' => $r->clock_out_at?->setTimezone($tz)->format('H:i'),
                 'duration'  => $fmt($r->duration_minutes ?? 0),

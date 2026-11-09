@@ -279,7 +279,7 @@
 
           <!-- Presence widget -->
           <div class="relative" @click.outside="presenceOpen = false">
-            <button @click="togglePresence" :disabled="presenceBusy"
+            <button @click.stop="togglePresence" :disabled="presenceBusy"
                     class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-150
                            text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                     :class="presenceOpen ? 'bg-slate-100 dark:bg-slate-800' : ''">
@@ -329,7 +329,7 @@
 
           <!-- Multi-timer widget -->
           <div class="relative" @click.outside="timerOpen = false">
-            <button @click="timerOpen = !timerOpen"
+            <button @click.stop="timerOpen = !timerOpen"
                     class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-150 relative"
                     :class="timerHasActive
                       ? (timerRunningCount > 0
@@ -427,7 +427,7 @@
 
           <!-- Notifications -->
           <div class="relative" @click.outside="notifOpen = false">
-            <button @click="toggleNotif"
+            <button @click.stop="toggleNotif"
                     class="btn-icon btn-ghost relative"
                     :class="notifOpen ? 'bg-slate-100 dark:bg-slate-800' : ''">
               <i class="bi bi-bell text-[15px] text-slate-500 dark:text-slate-400"></i>
@@ -492,7 +492,7 @@
 
           <!-- User menu -->
           <div class="relative" @click.outside="userMenuOpen = false">
-            <button @click="userMenuOpen = !userMenuOpen"
+            <button @click.stop="userMenuOpen = !userMenuOpen"
                     class="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-xl
                            hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150"
                     :class="userMenuOpen ? 'bg-slate-100 dark:bg-slate-800' : ''">
