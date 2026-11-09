@@ -221,7 +221,7 @@ function toggleLabel(lblId) {
             </div>
 
             <!-- Kanban board -->
-            <div class="flex gap-3 overflow-x-auto pb-2 items-start flex-1">
+            <div class="flex gap-3 overflow-x-auto pb-2 items-stretch flex-1">
                 <div v-for="col in columns" :key="col.status"
                      class="rounded-2xl flex flex-col min-h-[100px] transition-all duration-150 flex-shrink-0 w-56 border"
                      :class="[col.activeBg, col.border, dragOverStatus === col.status ? 'ring-2 ring-inset ' + col.ring : '']"
@@ -260,6 +260,13 @@ function toggleLabel(lblId) {
                                     <i class="bi bi-x text-sm"></i>
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- Empty column hint -->
+                        <div v-if="itemsFor(col.status).length === 0 && dragging === null"
+                             class="flex-1 flex flex-col items-center justify-center gap-1.5 py-6 opacity-40">
+                            <i class="bi bi-arrow-left-right text-lg" :class="col.color"></i>
+                            <span class="text-[11px] font-medium text-slate-400">Drag tasks here</span>
                         </div>
 
                         <!-- Drop target -->

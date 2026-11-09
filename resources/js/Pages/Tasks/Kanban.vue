@@ -157,7 +157,7 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
         </div>
 
         <!-- Board -->
-        <div class="flex gap-3 overflow-x-auto pb-6 -mx-4 lg:-mx-6 px-4 lg:px-6 min-h-[calc(100vh-13rem)] items-start">
+        <div class="flex gap-3 overflow-x-auto pb-6 -mx-4 lg:-mx-6 px-4 lg:px-6 min-h-[calc(100vh-13rem)] items-stretch">
             <div v-for="col in columns" :key="col.id"
                  class="flex flex-col flex-shrink-0 w-[280px] rounded-2xl bg-slate-100/70 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/50 overflow-hidden"
                  @dragover.prevent="dragEnter(col.id)"
@@ -216,6 +216,13 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Empty column hint -->
+                    <div v-if="col.tasks.length === 0 && dragOver !== col.id"
+                         class="flex flex-col items-center justify-center gap-1.5 py-8 opacity-40">
+                        <i class="bi bi-arrow-left-right text-lg text-slate-400"></i>
+                        <span class="text-[11px] font-medium text-slate-400">Drag tasks here</span>
                     </div>
 
                     <!-- Drop zone -->
