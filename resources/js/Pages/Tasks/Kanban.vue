@@ -235,8 +235,8 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
                 <!-- Quick Add -->
                 <div class="px-2.5 pb-2.5 flex-shrink-0">
                     <button @click="openPanel(col.id)"
-                            class="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-colors">
-                        <i class="bi bi-plus-lg text-sm"></i> Add task
+                            class="flex items-center gap-1.5 w-full px-2 py-1.5 rounded-xl border border-dashed border-violet-200 dark:border-violet-800/50 text-xs text-violet-400 dark:text-violet-500 justify-center hover:border-violet-400 hover:text-violet-600 dark:hover:border-violet-600 dark:hover:text-violet-300 transition-all">
+                        <i class="bi bi-plus text-sm"></i> Add task
                     </button>
                 </div>
             </div>
