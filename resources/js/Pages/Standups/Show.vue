@@ -46,6 +46,7 @@ const columns = [
     { status: 'todo',        label: 'To Do',       icon: 'bi-circle-fill',       color: 'text-slate-400',  dotBg: 'bg-slate-400',  activeTxt: 'text-slate-600 dark:text-slate-300',  activeBg: 'bg-slate-50 dark:bg-slate-800/60',   border: 'border-slate-200 dark:border-slate-700',   ring: 'ring-slate-300' },
     { status: 'in_progress', label: 'In Progress',  icon: 'bi-arrow-repeat',       color: 'text-blue-400',   dotBg: 'bg-blue-500',   activeTxt: 'text-blue-600 dark:text-blue-400',    activeBg: 'bg-blue-50/50 dark:bg-blue-900/10',    border: 'border-blue-200 dark:border-blue-800/50',   ring: 'ring-blue-300' },
     { status: 'in_review',   label: 'In Review',    icon: 'bi-eye-fill',           color: 'text-amber-400',  dotBg: 'bg-amber-400',  activeTxt: 'text-amber-600 dark:text-amber-400',  activeBg: 'bg-amber-50/50 dark:bg-amber-900/10',  border: 'border-amber-200 dark:border-amber-800/50', ring: 'ring-amber-300' },
+    { status: 'qa_testing',  label: 'QA Testing',   icon: 'bi-bug-fill',           color: 'text-cyan-500',   dotBg: 'bg-cyan-500',   activeTxt: 'text-cyan-600 dark:text-cyan-400',    activeBg: 'bg-cyan-50/50 dark:bg-cyan-900/10',    border: 'border-cyan-200 dark:border-cyan-800/50',   ring: 'ring-cyan-300' },
     { status: 'done',        label: 'Done',         icon: 'bi-check-circle-fill',  color: 'text-green-400',  dotBg: 'bg-green-500',  activeTxt: 'text-green-600 dark:text-green-400',  activeBg: 'bg-green-50/50 dark:bg-green-900/10',  border: 'border-green-200 dark:border-green-800/50', ring: 'ring-green-300' },
 ]
 
