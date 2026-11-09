@@ -32,6 +32,11 @@ const hasAnyManager = props.tree.some(n => n.children?.length > 0)
         <div>
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <Link :href="index_url" class="hover:text-violet-600 transition-colors">People</Link>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Org Chart</span>
+                    </div>
                     <h1 class="page-title">Org chart</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Built from each member's "Reports to" setting.</p>
                 </div>

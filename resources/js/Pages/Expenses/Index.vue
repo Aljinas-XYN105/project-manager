@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     expenses: Object,
@@ -93,6 +94,11 @@ function cancelExpense(url) {
             <!-- Header -->
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Expenses</span>
+                    </div>
                     <h1 class="page-title flex items-center gap-2.5">
                         <span class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                             <i class="bi bi-receipt text-emerald-600 dark:text-emerald-400"></i>
@@ -235,8 +241,7 @@ function cancelExpense(url) {
                         <!-- Date -->
                         <div>
                             <label class="form-label">Expense Date <span class="text-rose-500">*</span></label>
-                            <input type="date" v-model="form.expense_date" required class="form-input"
-                                   :max="new Date().toISOString().slice(0,10)">
+                            <DatePicker v-model="form.expense_date" :max="new Date().toISOString().slice(0,10)" />
                         </div>
 
                         <!-- Description -->

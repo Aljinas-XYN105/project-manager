@@ -2,6 +2,7 @@
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import MemberPicker from '@/Components/MemberPicker.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     project: Object,
@@ -42,7 +43,16 @@ function submit(e) {
     <AppLayout :title="`Edit — ${project.name}`">
         <div class="max-w-2xl mx-auto">
             <div class="page-header">
-                <h1 class="page-title">Edit Project</h1>
+                <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('projects.index')" class="hover:text-violet-600 transition-colors">Projects</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <a :href="project.show_url" class="hover:text-violet-600 transition-colors">{{ project.name }}</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Edit</span>
+                    </div>
+                    <h1 class="page-title">Edit Project</h1>
+                </div>
                 <Link :href="project.show_url" class="btn-ghost">
                     <i class="bi bi-arrow-left"></i> Back
                 </Link>
@@ -94,11 +104,11 @@ function submit(e) {
                         </div>
                         <div>
                             <label class="form-label">Start Date</label>
-                            <input v-model="form.start_date" type="date" class="form-input">
+                            <DatePicker v-model="form.start_date" />
                         </div>
                         <div>
                             <label class="form-label">Due Date</label>
-                            <input v-model="form.due_date" type="date" class="form-input">
+                            <DatePicker v-model="form.due_date" />
                         </div>
                         <div class="sm:col-span-2">
                             <label class="flex items-center gap-3 cursor-pointer">

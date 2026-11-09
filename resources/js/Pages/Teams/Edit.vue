@@ -29,7 +29,16 @@ function deleteTeam() {
     <AppLayout :title="`Edit Team — ${team.name}`">
         <div class="max-w-xl">
             <div class="page-header">
-                <h1 class="page-title">Edit Team</h1>
+                <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('teams.index')" class="hover:text-violet-600 transition-colors">Teams</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <a :href="team.show_url" class="hover:text-violet-600 transition-colors">{{ team.name }}</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Edit</span>
+                    </div>
+                    <h1 class="page-title">Edit Team</h1>
+                </div>
                 <a :href="team.show_url" class="btn-secondary">Cancel</a>
             </div>
 

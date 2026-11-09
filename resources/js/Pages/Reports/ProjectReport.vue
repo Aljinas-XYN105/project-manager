@@ -27,6 +27,11 @@ function resetFilters() {
         <div class="space-y-6">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('reports.index')" class="hover:text-violet-600 transition-colors">Reports</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Projects</span>
+                    </div>
                     <h1 class="page-title">Project Report</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Progress and completion metrics for all projects</p>
                 </div>

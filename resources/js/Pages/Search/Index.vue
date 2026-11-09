@@ -26,6 +26,11 @@ const noResults = (props.term?.length ?? 0) >= 2 && !hasResults
         <div class="max-w-4xl mx-auto">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Search</span>
+                    </div>
                     <h1 class="page-title">Search</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Projects, tasks (including ticket keys like MOBILE-12) and people.</p>
                 </div>

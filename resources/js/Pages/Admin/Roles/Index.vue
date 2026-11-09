@@ -42,6 +42,11 @@ function deleteRole(role) {
         <!-- Admin nav placeholder -->
         <div class="page-header">
             <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('admin.dashboard')" class="hover:text-violet-600 transition-colors">Admin</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>Roles</span>
+                </div>
                 <h1 class="page-title">Roles &amp; Permissions</h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Roles bundle permissions. Assign roles to members on the Members page.</p>
             </div>

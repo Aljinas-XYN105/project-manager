@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     task: Object,
@@ -665,7 +666,7 @@ function typeBg(type) {
                                 </button>
                             </div>
                             <div v-else class="flex items-center gap-1.5">
-                                <input v-model="dueDate" type="date" class="form-input text-xs py-1" @change="saveDue" @keydown.escape="editingDue=false">
+                                <DatePicker v-model="dueDate" @update:modelValue="saveDue" />
                                 <button v-if="dueDate" @click="dueDate=''; saveDue()" class="text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0">
                                     <i class="bi bi-x-circle text-xs"></i>
                                 </button>

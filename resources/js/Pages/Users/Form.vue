@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     user: Object,
@@ -151,11 +152,11 @@ function toggleRole(name) {
                         </div>
                         <div>
                             <label class="form-label">Joining date</label>
-                            <input v-model="form.joined_on" type="date" class="form-input">
+                            <DatePicker v-model="form.joined_on" />
                         </div>
                         <div>
                             <label class="form-label">Date of birth</label>
-                            <input v-model="form.date_of_birth" type="date" class="form-input">
+                            <DatePicker v-model="form.date_of_birth" />
                             <p v-if="errors.date_of_birth" class="form-error">{{ errors.date_of_birth }}</p>
                         </div>
                         <div>

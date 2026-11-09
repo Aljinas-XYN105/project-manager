@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     projects: Array,
@@ -87,6 +88,11 @@ function submit() {
         <div class="max-w-2xl mx-auto">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>New Task</span>
+                    </div>
                     <h1 class="page-title">Create Task</h1>
                     <p class="text-sm text-slate-500 mt-0.5">Create a task in any project</p>
                 </div>
@@ -186,7 +192,7 @@ function submit() {
                         </div>
                         <div>
                             <label class="form-label">Due date</label>
-                            <input v-model="form.due_date" type="date" class="form-input">
+                            <DatePicker v-model="form.due_date" />
                         </div>
                     </div>
 

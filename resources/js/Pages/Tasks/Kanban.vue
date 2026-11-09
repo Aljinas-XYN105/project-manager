@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     project: Object,
@@ -317,7 +318,7 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="form-label">Due date</label>
-                                <input v-model="taskForm.due_date" type="date" class="form-input">
+                                <DatePicker v-model="taskForm.due_date" />
                             </div>
                             <div>
                                 <label class="form-label">Estimate (hrs)</label>

@@ -153,6 +153,11 @@ const taskRows = [
                     <div class="w-4 h-4 rounded-full" :style="`background-color: ${project.color};`"></div>
                 </div>
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('projects.index')" class="hover:text-violet-600 transition-colors">Projects</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>{{ project.name }}</span>
+                    </div>
                     <h1 class="page-title">{{ project.name }}</h1>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-medium"

@@ -40,6 +40,11 @@ function toggleActive(user) {
     <AppLayout title="Members">
         <div class="page-header">
             <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>Members</span>
+                </div>
                 <h1 class="page-title">Members</h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     {{ counts.total }} members · {{ counts.online }} online now

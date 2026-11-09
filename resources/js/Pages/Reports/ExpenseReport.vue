@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     from: String,
@@ -44,6 +45,11 @@ const statusClass = {
         <div class="space-y-6">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('reports.index')" class="hover:text-violet-600 transition-colors">Reports</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Expenses</span>
+                    </div>
                     <h1 class="page-title">Expense Report</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Review submitted expenses by category and employee</p>
                 </div>
@@ -57,11 +63,11 @@ const statusClass = {
                 <form @submit.prevent="applyFilters" class="flex flex-wrap gap-3 items-end">
                     <div>
                         <label class="form-label">From</label>
-                        <input type="date" v-model="form.from" class="form-input">
+                        <DatePicker v-model="form.from" />
                     </div>
                     <div>
                         <label class="form-label">To</label>
-                        <input type="date" v-model="form.to" class="form-input">
+                        <DatePicker v-model="form.to" />
                     </div>
                     <div>
                         <label class="form-label">Employee</label>

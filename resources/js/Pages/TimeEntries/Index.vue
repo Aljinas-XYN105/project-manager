@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     grouped: Object,
@@ -74,6 +75,11 @@ const days = Object.entries(props.grouped ?? {})
     <AppLayout title="Time Tracking">
         <div class="page-header">
             <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>Time Tracking</span>
+                </div>
                 <h1 class="page-title">Time Tracking</h1>
                 <p class="text-sm text-slate-500 mt-0.5">Start timers from any task page or the ⏱ icon on task cards.</p>
             </div>
@@ -93,8 +99,8 @@ const days = Object.entries(props.grouped ?? {})
 
         <!-- Filter -->
         <form @submit.prevent="applyFilter" class="flex gap-3 mb-5">
-            <input v-model="fromVal" type="date" class="form-input text-sm">
-            <input v-model="toVal"   type="date" class="form-input text-sm">
+            <DatePicker v-model="fromVal" />
+            <DatePicker v-model="toVal" />
             <button type="submit" class="btn-primary btn-sm">Filter</button>
         </form>
 

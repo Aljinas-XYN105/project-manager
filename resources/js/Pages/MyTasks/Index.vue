@@ -77,6 +77,11 @@ const priorityBadge = {
     <AppLayout title="My Tasks">
         <div class="page-header">
             <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>My Tasks</span>
+                </div>
                 <h1 class="page-title">
                     <template v-if="isManager && assigneeId && members.find(m => m.id === assigneeId)">
                         {{ members.find(m => m.id === assigneeId)?.name }}'s Tasks

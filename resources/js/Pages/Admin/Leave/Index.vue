@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     types: Array,
@@ -183,7 +184,7 @@ const colorText = { amber: 'text-amber-600 dark:text-amber-400', violet: 'text-v
 
                 <!-- Add holiday -->
                 <div class="px-5 py-4 bg-slate-50/60 dark:bg-slate-800/30 flex flex-wrap gap-2 items-end">
-                    <div><label class="form-label text-xs">Date</label><input v-model="newHoliday.date" type="date" class="form-input text-sm"></div>
+                    <div><label class="form-label text-xs">Date</label><DatePicker v-model="newHoliday.date" /></div>
                     <div class="flex-1 min-w-[10rem]"><label class="form-label text-xs">Name</label><input v-model="newHoliday.name" required placeholder="e.g. Thanksgiving" class="form-input text-sm"></div>
                     <button type="button" @click="storeHoliday" class="btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add holiday</button>
                 </div>

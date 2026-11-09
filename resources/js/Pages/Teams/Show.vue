@@ -26,7 +26,14 @@ function removeMember(member) {
 <template>
     <AppLayout :title="team.name">
         <div class="page-header">
-            <h1 class="page-title">{{ team.name }}</h1>
+            <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('teams.index')" class="hover:text-violet-600 transition-colors">Teams</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>{{ team.name }}</span>
+                </div>
+                <h1 class="page-title">{{ team.name }}</h1>
+            </div>
             <Link v-if="team.can_manage" :href="team.edit_url" class="btn-secondary btn-sm">
                 <i class="bi bi-pencil"></i> Edit
             </Link>

@@ -25,6 +25,12 @@ function statusLabel(s) {
 <template>
     <AppLayout :title="user.name">
         <div class="space-y-6">
+            <!-- Breadcrumb -->
+            <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                <a :href="route('users.index')" class="hover:text-violet-600 transition-colors">Members</a>
+                <i class="bi bi-chevron-right text-[10px]"></i>
+                <span>{{ user.name }}</span>
+            </div>
             <!-- Header card -->
             <div class="card p-6">
                 <div class="flex items-start gap-5">

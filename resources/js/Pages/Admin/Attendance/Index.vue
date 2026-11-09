@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     records: Object,
@@ -88,6 +89,11 @@ const clockedInCount = () => props.board.filter(r => r.clocked_in).length
     <AppLayout title="Team Attendance">
         <div class="page-header">
             <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('admin.dashboard')" class="hover:text-violet-600 transition-colors">Admin</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>Attendance</span>
+                </div>
                 <h1 class="page-title">Team Attendance</h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Who is available right now, and everyone's sign-in / sign-out times. Times shown in {{ timezone }}.</p>
             </div>
@@ -148,11 +154,11 @@ const clockedInCount = () => props.board.filter(r => r.clocked_in).length
             <form @submit.prevent="applyFilter" class="flex flex-wrap gap-3 items-end">
                 <div>
                     <label class="form-label">From</label>
-                    <input v-model="dateFrom" type="date" class="form-input">
+                    <DatePicker v-model="dateFrom" />
                 </div>
                 <div>
                     <label class="form-label">To</label>
-                    <input v-model="dateTo" type="date" class="form-input">
+                    <DatePicker v-model="dateTo" />
                 </div>
                 <button type="submit" class="btn-primary">Filter</button>
             </form>
@@ -216,7 +222,7 @@ const clockedInCount = () => props.board.filter(r => r.clocked_in).length
                     </div>
                     <div>
                         <label class="form-label">Work date</label>
-                        <input v-model="modalForm.work_date" type="date" class="form-input">
+                        <DatePicker v-model="modalForm.work_date" />
                         <p v-if="modalErrors.work_date" class="form-error">{{ modalErrors.work_date }}</p>
                     </div>
                     <div class="grid grid-cols-2 gap-4">

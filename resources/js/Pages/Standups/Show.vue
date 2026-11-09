@@ -211,6 +211,12 @@ const taskTypes = [
 <template>
     <AppLayout :title="`My Standup — ${date_label}`">
         <div class="flex flex-col gap-4">
+            <!-- Breadcrumb -->
+            <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                <a :href="route('standups.index')" class="hover:text-violet-600 transition-colors">Standups</a>
+                <i class="bi bi-chevron-right text-[10px]"></i>
+                <span>{{ date_label }}</span>
+            </div>
             <!-- Header -->
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div class="flex items-center gap-3 min-w-0">

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     from: String,
@@ -36,6 +37,11 @@ function rateColor(rate) {
         <div class="space-y-6">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('reports.index')" class="hover:text-violet-600 transition-colors">Reports</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Team</span>
+                    </div>
                     <h1 class="page-title">Team Report</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Member workload and productivity metrics</p>
                 </div>
@@ -53,11 +59,11 @@ function rateColor(rate) {
                     </div>
                     <div>
                         <label class="form-label">From</label>
-                        <input type="date" v-model="form.from" class="form-input">
+                        <DatePicker v-model="form.from" />
                     </div>
                     <div>
                         <label class="form-label">To</label>
-                        <input type="date" v-model="form.to" class="form-input">
+                        <DatePicker v-model="form.to" />
                     </div>
                     <button type="submit" class="btn-primary">Apply</button>
                     <button type="button" @click="resetFilters" class="btn-secondary">Reset</button>

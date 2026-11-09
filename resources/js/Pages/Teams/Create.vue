@@ -25,7 +25,14 @@ function submit() {
     <AppLayout title="New Team">
         <div class="max-w-lg mx-auto">
             <div class="page-header">
-                <h1 class="page-title">New Team</h1>
+                <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('teams.index')" class="hover:text-violet-600 transition-colors">Teams</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>New</span>
+                    </div>
+                    <h1 class="page-title">New Team</h1>
+                </div>
                 <a :href="back_url" class="btn-ghost"><i class="bi bi-arrow-left"></i> Back</a>
             </div>
             <div class="card p-6">

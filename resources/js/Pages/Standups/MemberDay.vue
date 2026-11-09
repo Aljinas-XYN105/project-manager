@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     date: String,
@@ -173,6 +174,14 @@ function toggleLabel(lblId) {
 <template>
     <AppLayout :title="`${user.name} — Standup`">
         <div class="flex flex-col h-full gap-4">
+            <!-- Breadcrumb -->
+            <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                <a :href="route('standups.index')" class="hover:text-violet-600 transition-colors">Standups</a>
+                <i class="bi bi-chevron-right text-[10px]"></i>
+                <Link :href="`${index_url}?date=${date}`" class="hover:text-violet-600 transition-colors">{{ date_label }}</Link>
+                <i class="bi bi-chevron-right text-[10px]"></i>
+                <span>{{ user.name }}</span>
+            </div>
             <!-- Header -->
             <div class="flex items-start justify-between gap-4 flex-wrap">
                 <div class="flex items-center gap-3 min-w-0">
@@ -398,9 +407,8 @@ function toggleLabel(lblId) {
                             </div>
                             <div>
                                 <label class="form-label">Due Date</label>
-                                <input type="date" class="form-input text-sm"
-                                       :value="panel.task.due_date"
-                                       @change="patchPanel('due_date', $event.target.value || null)">
+                                <DatePicker :modelValue="panel.task.due_date ?? ''"
+                                            @update:modelValue="val => patchPanel('due_date', val || null)" />
                             </div>
                         </div>
 

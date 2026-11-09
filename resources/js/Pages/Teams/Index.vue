@@ -11,7 +11,14 @@ defineProps({
 <template>
     <AppLayout title="Teams">
         <div class="page-header">
-            <h1 class="page-title">Teams</h1>
+            <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>Teams</span>
+                </div>
+                <h1 class="page-title">Teams</h1>
+            </div>
             <Link v-if="can_create" :href="route('teams.create')" class="btn-primary">
                 <i class="bi bi-plus-lg"></i> New Team
             </Link>

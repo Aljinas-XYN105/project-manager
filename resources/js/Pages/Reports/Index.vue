@@ -13,6 +13,11 @@ defineProps({
         <div class="space-y-6">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Reports</span>
+                    </div>
                     <h1 class="page-title">Reports</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Analytics and insights across your projects</p>
                 </div>

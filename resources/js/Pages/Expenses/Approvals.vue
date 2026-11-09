@@ -48,10 +48,10 @@ const tabs = [
             <!-- Header -->
             <div class="page-header">
                 <div>
-                    <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
-                        <Link :href="index_url" class="hover:text-violet-600 transition-colors flex items-center gap-1">
-                            <i class="bi bi-arrow-left text-[10px]"></i> My Expenses
-                        </Link>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <Link :href="index_url" class="hover:text-violet-600 transition-colors">Expenses</Link>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Approvals</span>
                     </div>
                     <h1 class="page-title flex items-center gap-2.5">
                         <span class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">

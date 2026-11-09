@@ -42,6 +42,11 @@ function deleteNotification(n) {
         <div class="max-w-2xl">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Notifications</span>
+                    </div>
                     <h1 class="page-title flex items-center gap-2.5">
                         <span class="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
                             <i class="bi bi-bell-fill text-violet-600 dark:text-violet-400"></i>

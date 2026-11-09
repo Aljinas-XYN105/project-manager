@@ -131,6 +131,11 @@ async function submit() {
         <div class="max-w-3xl mx-auto">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('daily-reports.index')" class="hover:text-violet-600 transition-colors">Daily Reports</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>New</span>
+                    </div>
                     <h1 class="page-title flex items-center gap-2.5">
                         <span class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                             <i class="bi bi-journal-plus text-amber-600 dark:text-amber-400"></i>

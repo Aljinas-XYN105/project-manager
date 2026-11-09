@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     announcements: Object,
@@ -70,6 +71,11 @@ function toggleExpired() {
         <div class="max-w-3xl mx-auto">
             <div class="page-header">
                 <div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Announcements</span>
+                    </div>
                     <h1 class="page-title">Announcements</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Company news, policies and events.</p>
                 </div>
@@ -168,7 +174,7 @@ function toggleExpired() {
                             </div>
                             <div>
                                 <label class="form-label">Show until <span class="text-slate-400 font-normal">(optional)</span></label>
-                                <input v-model="modalForm.expires_on" type="date" class="form-input">
+                                <DatePicker v-model="modalForm.expires_on" />
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-4 text-sm text-slate-700 dark:text-slate-300">

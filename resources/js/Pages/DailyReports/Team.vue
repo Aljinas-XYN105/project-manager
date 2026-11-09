@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     reports: Object,
@@ -45,6 +46,11 @@ function toggle(id) { expanded.value[id] = !expanded.value[id] }
     <AppLayout title="Team Standups">
         <div class="page-header">
             <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('daily-reports.index')" class="hover:text-violet-600 transition-colors">Daily Reports</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>Team</span>
+                </div>
                 <h1 class="page-title flex items-center gap-2.5">
                     <span class="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
                         <i class="bi bi-people-fill text-violet-600 dark:text-violet-400"></i>
@@ -64,7 +70,7 @@ function toggle(id) { expanded.value[id] = !expanded.value[id] }
             <div class="flex flex-wrap items-end gap-3">
                 <div class="flex-1 min-w-[180px]">
                     <label class="form-label">Date</label>
-                    <input type="date" v-model="filters.date" class="form-input">
+                    <DatePicker v-model="filters.date" />
                 </div>
                 <div class="flex-1 min-w-[180px]">
                     <label class="form-label">Team Member</label>

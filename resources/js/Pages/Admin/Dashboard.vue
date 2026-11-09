@@ -47,6 +47,11 @@ function burnClass(rate) {
                             <i class="bi bi-shield-fill-check text-xs"></i> Super Admin
                         </span>
                     </div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                        <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                        <i class="bi bi-chevron-right text-[10px]"></i>
+                        <span>Admin</span>
+                    </div>
                     <h1 class="page-title">Admin Overview</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Organisation-wide performance dashboard</p>
                 </div>

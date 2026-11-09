@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     year: Number,
@@ -54,6 +55,11 @@ const statusLabel = { pending: 'Pending', approved: 'Approved', rejected: 'Rejec
     <AppLayout title="My Leave">
         <div class="page-header">
             <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('dashboard')" class="hover:text-violet-600 transition-colors">Home</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>Leave</span>
+                </div>
                 <h1 class="page-title">My Leave</h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Balances for {{ year }}. Weekends and company holidays are not counted.</p>
             </div>
@@ -176,11 +182,11 @@ const statusLabel = { pending: 'Pending', approved: 'Approved', rejected: 'Rejec
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="form-label">From <span class="text-rose-500">*</span></label>
-                                <input v-model="applyForm.start_date" type="date" class="form-input" required>
+                                <DatePicker v-model="applyForm.start_date" />
                             </div>
                             <div>
                                 <label class="form-label">To <span class="text-rose-500">*</span></label>
-                                <input v-model="applyForm.end_date" type="date" class="form-input" required>
+                                <DatePicker v-model="applyForm.end_date" />
                             </div>
                         </div>
                         <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"

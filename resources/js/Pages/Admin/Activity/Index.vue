@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     logs: Object,
@@ -66,6 +67,11 @@ function needsDateHeader(idx) {
     <AppLayout title="Activity Log">
         <div class="page-header">
             <div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <a :href="route('admin.dashboard')" class="hover:text-violet-600 transition-colors">Admin</a>
+                    <i class="bi bi-chevron-right text-[10px]"></i>
+                    <span>Activity Log</span>
+                </div>
                 <h1 class="page-title">Activity Log</h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Every sign-in, sign-out and change made by every user. Times shown in {{ timezone }}.</p>
             </div>
@@ -107,11 +113,11 @@ function needsDateHeader(idx) {
             </div>
             <div>
                 <label class="form-label">From</label>
-                <input v-model="form.from" type="date" class="form-input">
+                <DatePicker v-model="form.from" />
             </div>
             <div>
                 <label class="form-label">To</label>
-                <input v-model="form.to" type="date" class="form-input">
+                <DatePicker v-model="form.to" />
             </div>
             <div class="sm:col-span-2 lg:col-span-6 flex justify-end gap-2">
                 <button v-if="filters?.q || filters?.user_id || filters?.category || filters?.from || filters?.to"

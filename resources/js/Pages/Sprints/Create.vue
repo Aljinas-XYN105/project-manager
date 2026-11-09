@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DatePicker from '@/Components/DatePicker.vue'
 
 const props = defineProps({
     project: Object,
@@ -69,12 +70,12 @@ function submit() {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="form-label">Start Date <span class="text-rose-500">*</span></label>
-                            <input type="date" v-model="form.start_date" required class="form-input">
+                            <DatePicker v-model="form.start_date" />
                             <p v-if="errors.start_date" class="form-error">{{ errors.start_date }}</p>
                         </div>
                         <div>
                             <label class="form-label">End Date <span class="text-rose-500">*</span></label>
-                            <input type="date" v-model="form.end_date" required class="form-input">
+                            <DatePicker v-model="form.end_date" />
                             <p v-if="errors.end_date" class="form-error">{{ errors.end_date }}</p>
                         </div>
                     </div>
