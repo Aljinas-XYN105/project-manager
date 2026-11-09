@@ -20,6 +20,10 @@ const memberSearch = ref('')
 const selected = ref([])
 const loading = ref(false)
 
+function openPopup() {
+    window.open(props.popup_url, 'chatpopup', 'width=820,height=680,resizable=yes,menubar=no,toolbar=no,location=no,status=no')
+}
+
 const peopleResults = computed(() => {
     const q = search.value.toLowerCase().trim()
     if (!q) return []
@@ -106,7 +110,7 @@ async function createGroup() {
                 <div class="flex items-center gap-2">
                     <h1 class="text-base font-bold" style="color:var(--ci-name)">Messages</h1>
                     <button type="button"
-                            @click="() => window.open(popup_url, 'chatpopup', 'width=820,height=680,resizable=yes,menubar=no,toolbar=no,location=no,status=no')"
+                            @click="openPopup"
                             class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
                             style="color:var(--ci-time)"
                             title="Open in popup window"

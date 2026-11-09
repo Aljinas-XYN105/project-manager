@@ -26,20 +26,32 @@
              border-r border-slate-200 dark:border-white/[0.05] lg:relative lg:inset-auto flex-shrink-0"
     >
       <!-- Workspace Header -->
-      <div class="flex items-center h-14 px-3 border-b border-slate-200 dark:border-white/[0.05] flex-shrink-0 gap-2.5">
-        <div class="min-w-0 flex-1 flex items-center">
-          <img src="/images/workzen-logo.png" alt="Workzen"
-               class="h-9 w-auto dark:hidden" style="max-width:none; width:100%; object-fit:contain; object-position:left center;">
-          <p class="hidden dark:block font-bold text-[15px] text-white/90 truncate leading-none tracking-tight">Workzen</p>
-        </div>
-        <button v-if="sidebarOpen || mobileSidebar"
-                @click="sidebarOpen = !sidebarOpen"
-                class="hidden lg:flex ml-auto w-6 h-6 items-center justify-center rounded-lg
-                       text-slate-400 hover:text-slate-700 hover:bg-slate-100
-                       dark:text-white/20 dark:hover:text-white/60 dark:hover:bg-white/[0.07]
-                       transition-all duration-150 flex-shrink-0">
-          <i class="bi bi-chevron-double-left text-[10px]"></i>
-        </button>
+      <div class="flex items-center h-14 border-b border-slate-200 dark:border-white/[0.05] flex-shrink-0 gap-2.5"
+           :class="sidebarOpen || mobileSidebar ? 'px-3' : 'px-0 justify-center'">
+        <!-- Expanded: full logo -->
+        <template v-if="sidebarOpen || mobileSidebar">
+          <div class="min-w-0 flex-1 flex items-center">
+            <img src="/images/workzen-logo.png" alt="Workzen"
+                 class="h-9 w-auto dark:hidden" style="max-width:none; width:100%; object-fit:contain; object-position:left center;">
+            <p class="hidden dark:block font-bold text-[15px] text-white/90 truncate leading-none tracking-tight">Workzen</p>
+          </div>
+          <button @click="sidebarOpen = !sidebarOpen"
+                  class="hidden lg:flex ml-auto w-6 h-6 items-center justify-center rounded-lg
+                         text-slate-400 hover:text-slate-700 hover:bg-slate-100
+                         dark:text-white/20 dark:hover:text-white/60 dark:hover:bg-white/[0.07]
+                         transition-all duration-150 flex-shrink-0">
+            <i class="bi bi-chevron-double-left text-[10px]"></i>
+          </button>
+        </template>
+        <!-- Collapsed: W icon only -->
+        <template v-else>
+          <button @click="sidebarOpen = true"
+                  class="w-9 h-9 rounded-xl flex items-center justify-center
+                         bg-violet-600 hover:bg-violet-700 transition-colors"
+                  title="Expand sidebar">
+            <span class="text-white font-bold text-[15px] leading-none">W</span>
+          </button>
+        </template>
       </div>
 
       <!-- Quick Add Button -->

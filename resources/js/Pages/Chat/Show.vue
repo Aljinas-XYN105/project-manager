@@ -439,6 +439,10 @@ onMounted(() => {
     document.addEventListener('keydown', handleDocKeydown)
 })
 
+function openChatPopup() {
+    window.open(`${props.conversation.popup_url}?open=${props.conversation.id}`, 'chatpopup', 'width=820,height=680,resizable=yes,menubar=no,toolbar=no')
+}
+
 onBeforeUnmount(() => {
     document.removeEventListener('keydown', handleDocKeydown)
     if (window.Echo) {
@@ -489,7 +493,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <button v-if="!conversation.is_group" type="button"
-                        @click="window.open(`${conversation.popup_url}?open=${conversation.id}`, 'chatpopup', 'width=820,height=680,resizable=yes,menubar=no,toolbar=no')"
+                        @click="openChatPopup"
                         class="ct-btn-icon flex-shrink-0" title="Open in window">
                     <i class="bi bi-arrows-angle-expand" style="font-size:11px"></i>
                 </button>

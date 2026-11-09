@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import ChatPopupLayout from '@/Layouts/ChatPopupLayout.vue'
 
 const props = defineProps({
@@ -9,6 +10,9 @@ const props = defineProps({
     chat_index_url: String,
     groups_store_url: String,
 })
+
+const page = usePage()
+const authId = computed(() => page.props.auth?.user?.id ?? 0)
 
 const search = ref('')
 const activeId = ref(props.open_conv?.id ?? null)
@@ -33,13 +37,13 @@ const filteredUsersByMember = computed(() =>
 
 function convTitle(c) {
     if (c.name) return c.name
-    const other = c.participants.find(p => p.id !== (window.__auth_id ?? 0))
+    const other = c.participants.find(p => p.id !== authId.value)
     return other?.name ?? 'Direct Message'
 }
 
 function convAvatar(c) {
     if (!c.is_group) {
-        const other = c.participants[0]
+        const other = c.participants.find(p => p.id !== authId.value)
         return other?.avatar_url ?? null
     }
     return null
