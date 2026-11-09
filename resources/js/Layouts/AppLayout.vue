@@ -32,8 +32,7 @@
         <template v-if="sidebarOpen || mobileSidebar">
           <div class="min-w-0 flex-1 flex items-center">
             <img src="/images/workzen-logo.webp" alt="Workzen"
-                 class="h-9 w-auto dark:hidden" style="max-width:none; width:100%; object-fit:contain; object-position:left center;">
-            <p class="hidden dark:block font-bold text-[15px] text-white/90 truncate leading-none tracking-tight">Workzen</p>
+                 class="h-9 w-auto" style="object-fit:contain; object-position:left center;">
           </div>
           <button @click="sidebarOpen = !sidebarOpen"
                   class="hidden lg:flex ml-auto w-6 h-6 items-center justify-center rounded-lg

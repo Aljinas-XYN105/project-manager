@@ -22,7 +22,7 @@ const year = new Date().getFullYear()
             <!-- Logo -->
             <div class="relative z-10 mb-12">
                 <img src="/images/workzen-logo.webp" alt="Workzen"
-                     class="h-12 w-auto" style="filter: brightness(0) invert(1); max-width: 200px;">
+                     class="h-12 w-auto" style="max-width: 200px;">
             </div>
 
             <!-- Hero -->
