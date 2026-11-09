@@ -200,7 +200,7 @@ class ExpenseController extends Controller
     {
         $query = Expense::query()->where('user_id', '!=', $user->id);
 
-        if ($user->hasRole('admin') || $user->hasRole('manager')) {
+        if ($user->can('expenses.review')) {
             return $query;
         }
 

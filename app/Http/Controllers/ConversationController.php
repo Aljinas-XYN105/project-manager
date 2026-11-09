@@ -343,7 +343,7 @@ class ConversationController extends Controller
         $user = auth()->user();
         $q    = $request->q;
 
-        $isAdmin = $user->hasAnyRole(['admin', 'manager']);
+        $isAdmin = $user->can('tasks.view-all');
 
         // Top-level tasks
         $tasks = Task::whereNull('parent_id')

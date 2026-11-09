@@ -12,7 +12,7 @@ class MyTasksController extends Controller
     public function __invoke(Request $request)
     {
         $user = $request->user();
-        $isManager = $user->hasRole(['admin', 'manager']);
+        $isManager = $user->can('tasks.view-all');
         $view = $request->input('view', 'open');
         $scope = $request->input('scope', 'mine'); // 'mine' or 'all' (managers only)
 

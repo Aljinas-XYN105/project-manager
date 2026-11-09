@@ -367,7 +367,7 @@ class TaskController extends Controller
         $user = $request->user();
         $projectQuery = Project::with(['columns', 'members', 'labels'])->orderBy('name');
 
-        if (! $user->hasRole(['admin', 'manager'])) {
+        if (! $user->can('tasks.view-all')) {
             $projectQuery->where(fn ($q) =>
                 $q->whereHas('members', fn ($m) => $m->where('users.id', $user->id))
                   ->orWhere('owner_id', $user->id)
@@ -654,7 +654,7 @@ class TaskController extends Controller
     {
         $user = auth()->user();
 
-        $isPrivileged = $user->hasRole(['admin', 'manager']);
+        $isPrivileged = $user->can('tasks.view-all');
 
         $query = Task::with(['project', 'assignees', 'creator'])
             ->where('type', 'bug');

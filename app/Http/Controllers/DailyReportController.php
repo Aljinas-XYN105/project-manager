@@ -53,7 +53,7 @@ class DailyReportController extends Controller
                     'hours'       => $rt->hours_spent,
                 ]),
                 'extra_tasks' => max(0, $r->reportTasks->count() - 5),
-                'can_edit'    => $r->report_date->isToday() || $user->hasAnyRole(['admin', 'manager']),
+                'can_edit'    => $r->report_date->isToday() || $user->can('daily-reports.view-team'),
                 'show_url'    => route('daily-reports.show', $r),
                 'edit_url'    => route('daily-reports.edit', $r),
                 'destroy_url' => route('daily-reports.destroy', $r),
@@ -65,7 +65,7 @@ class DailyReportController extends Controller
                 'show_url'    => route('daily-reports.show', $todayReport),
                 'edit_url'    => route('daily-reports.edit', $todayReport),
             ] : null,
-            'can_see_team' => $user->hasAnyRole(['admin', 'manager']),
+            'can_see_team' => $user->can('daily-reports.view-team'),
             'today_date'   => today()->format('l, F j, Y'),
         ]);
     }
@@ -73,7 +73,7 @@ class DailyReportController extends Controller
     public function team(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['admin', 'manager'])) {
+        if (!$user->can('daily-reports.view-team')) {
             abort(403, 'Only admins and managers can view team reports.');
         }
 
@@ -240,7 +240,7 @@ class DailyReportController extends Controller
                 'summary'          => $dailyReport->summary,
                 'plan_for_tomorrow'=> $dailyReport->plan_for_tomorrow,
                 'blockers'         => $dailyReport->blockers,
-                'can_edit'         => $dailyReport->report_date->isToday() || $user->hasAnyRole(['admin', 'manager']),
+                'can_edit'         => $dailyReport->report_date->isToday() || $user->can('daily-reports.view-team'),
                 'user' => [
                     'id'         => $dailyReport->user->id,
                     'name'       => $dailyReport->user->name,
@@ -345,7 +345,7 @@ class DailyReportController extends Controller
     public function exportExcel(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['admin', 'manager'])) {
+        if (!$user->can('daily-reports.view-team')) {
             abort(403);
         }
 
@@ -459,7 +459,7 @@ class DailyReportController extends Controller
     {
         return Project::query()
             ->where('status', '!=', 'archived')
-            ->when(! $user->hasRole(['admin', 'manager']), fn ($q) => $q->where(fn ($q) => $q
+            ->when(! $user->can('daily-reports.view-team'), fn ($q) => $q->where(fn ($q) => $q
                 ->where('is_public', true)
                 ->orWhere('owner_id', $user->id)
                 ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))
@@ -470,7 +470,7 @@ class DailyReportController extends Controller
     private function authorizeReport(DailyReport $report): void
     {
         $user = auth()->user();
-        if ($report->user_id !== $user->id && !$user->hasAnyRole(['admin', 'manager'])) {
+        if ($report->user_id !== $user->id && !$user->can('daily-reports.view-team')) {
             abort(403);
         }
     }
@@ -480,7 +480,7 @@ class DailyReportController extends Controller
         $this->authorizeReport($report);
 
         $user = auth()->user();
-        if (!$user->hasAnyRole(['admin', 'manager']) && !$report->report_date->isToday()) {
+        if (!$user->can('daily-reports.view-team') && !$report->report_date->isToday()) {
             abort(403, 'You can only edit your report on the day it was submitted.');
         }
     }

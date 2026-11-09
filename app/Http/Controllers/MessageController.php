@@ -77,7 +77,7 @@ class MessageController extends Controller
         $user = auth()->user();
 
         abort_unless(
-            $message->user_id === $user->id || $user->hasAnyRole(['admin', 'manager']),
+            $message->user_id === $user->id || $user->can('messages.delete-any'),
             403
         );
 

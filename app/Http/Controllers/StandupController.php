@@ -21,7 +21,7 @@ class StandupController extends Controller
     {
         $authUser = auth()->user();
 
-        if (!$authUser->hasRole(['admin', 'manager'])) {
+        if (!$authUser->can('standups.view-team')) {
             return redirect()->route('standups.show', today()->toDateString());
         }
 
@@ -73,7 +73,7 @@ class StandupController extends Controller
                 'member_day_url'  => route('standups.member-day', [$date->toDateString(), $u->id]),
                 'show_url'        => route('standups.show', $date->toDateString()).'?user='.$u->id,
             ]),
-            'can_export'       => auth()->user()->hasAnyRole(['admin', 'manager']),
+            'can_export'       => auth()->user()->can('standups.manage'),
             'export_excel_url' => route('standups.export-excel', ['date' => $date->toDateString()]),
             'export_pdf_url'   => route('standups.export-pdf', ['date' => $date->toDateString()]),
             'my_standup_url'   => route('standups.show', today()->toDateString()),
@@ -160,7 +160,7 @@ class StandupController extends Controller
         }
 
         // Projects the member belongs to (for the quick-create task form)
-        $projects = $user->hasRole(['admin', 'manager'])
+        $projects = $user->can('standups.view-team')
             ? \App\Models\Project::where('status', 'active')->select('id', 'name', 'slug')->orderBy('name')->get()
             : $user->projects()->where('projects.status', 'active')->select('projects.id', 'projects.name', 'projects.slug')->orderBy('projects.name')->get();
 
@@ -195,7 +195,7 @@ class StandupController extends Controller
     // Admin/manager: view and manage a member's standup items for a date
     public function memberDay(string $date, User $user)
     {
-        abort_unless(auth()->user()->hasRole(['admin', 'manager']), 403);
+        abort_unless(auth()->user()->can('standups.view-team'), 403);
 
         $day     = Carbon::parse($date);
         $standup = Standup::whereDate('standup_date', $day)
@@ -240,7 +240,7 @@ class StandupController extends Controller
         $authUser = auth()->user();
 
         // Managers/admins may save on behalf of another user
-        if (!empty($validated['user_id']) && $authUser->hasRole(['admin', 'manager'])) {
+        if (!empty($validated['user_id']) && $authUser->can('standups.manage')) {
             $targetUserId = $validated['user_id'];
         } else {
             $targetUserId = $authUser->id;
@@ -282,7 +282,7 @@ class StandupController extends Controller
         $term  = trim((string) $request->input('q', ''));
 
         $accessibleIds = Project::query()
-            ->when(! $user->hasRole(['admin', 'manager']), fn ($q) => $q->where(fn ($q) => $q
+            ->when(! $user->can('standups.view-team'), fn ($q) => $q->where(fn ($q) => $q
                 ->where('is_public', true)
                 ->orWhere('owner_id', $user->id)
                 ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))
@@ -342,7 +342,7 @@ class StandupController extends Controller
 
     private function authorizeManagerOrAdmin(): void
     {
-        if (!auth()->user()->hasAnyRole(['admin', 'manager'])) {
+        if (!auth()->user()->can('standups.manage')) {
             abort(403);
         }
     }
