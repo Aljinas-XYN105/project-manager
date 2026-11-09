@@ -31,7 +31,7 @@
         <!-- Expanded: full logo -->
         <template v-if="sidebarOpen || mobileSidebar">
           <div class="min-w-0 flex-1 flex items-center">
-            <img src="/images/workzen-logo.png" alt="Workzen"
+            <img src="/images/workzen-logo.webp" alt="Workzen"
                  class="h-9 w-auto dark:hidden" style="max-width:none; width:100%; object-fit:contain; object-position:left center;">
             <p class="hidden dark:block font-bold text-[15px] text-white/90 truncate leading-none tracking-tight">Workzen</p>
           </div>
@@ -49,7 +49,7 @@
                   class="w-9 h-9 flex items-center justify-center rounded-lg flex-shrink-0
                          hover:opacity-80 transition-opacity"
                   title="Expand sidebar">
-            <img src="/images/workzen-icon.png" alt="Workzen" class="h-8 w-auto">
+            <img src="/images/workzen-icon.webp" alt="Workzen" class="h-8 w-auto">
           </button>
         </template>
       </div>

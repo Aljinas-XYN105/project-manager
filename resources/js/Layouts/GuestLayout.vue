@@ -21,7 +21,7 @@ const year = new Date().getFullYear()
 
             <!-- Logo -->
             <div class="relative z-10 mb-12">
-                <img src="/images/workzen-logo.png" alt="Workzen"
+                <img src="/images/workzen-logo.webp" alt="Workzen"
                      class="h-12 w-auto" style="filter: brightness(0) invert(1); max-width: 200px;">
             </div>
 
@@ -74,7 +74,7 @@ const year = new Date().getFullYear()
             <div class="lg:hidden flex flex-col min-h-screen">
                 <div class="flex-1 flex flex-col items-center justify-center px-6 py-12">
                     <div class="mb-8 text-center">
-                        <img src="/images/workzen-logo.png" alt="Workzen" class="h-9 w-auto mx-auto">
+                        <img src="/images/workzen-logo.webp" alt="Workzen" class="h-9 w-auto mx-auto">
                     </div>
                     <div class="w-full" style="max-width: 380px;">
                         <slot />
