@@ -9,6 +9,14 @@ import { ZiggyVue } from 'ziggy-js';
 // Keep Echo/Reverb real-time working
 import './echo';
 
+// Register service worker for PWA support
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .catch(() => {});
+    });
+}
+
 createInertiaApp({
     title: (title) => `${title} — Workzen`,
     resolve: (name) =>

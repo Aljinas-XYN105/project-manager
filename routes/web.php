@@ -277,6 +277,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Help / Documentation
     Route::get('help', fn() => view('help.index'))->name('help');
 
+    // PWA offline fallback
+    Route::get('offline', fn() => view('offline'))->name('offline');
+
     // Settings
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile');
