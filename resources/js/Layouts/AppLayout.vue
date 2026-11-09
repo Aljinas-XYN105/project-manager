@@ -43,18 +43,13 @@
             <i class="bi bi-chevron-double-left text-[10px]"></i>
           </button>
         </template>
-        <!-- Collapsed: logo icon only -->
+        <!-- Collapsed: W icon only -->
         <template v-else>
           <button @click="sidebarOpen = true"
-                  class="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity"
+                  class="w-9 h-9 flex items-center justify-center rounded-lg flex-shrink-0
+                         hover:opacity-80 transition-opacity"
                   title="Expand sidebar">
-            <!-- Light: crop W icon from full logo (image is 1613×392; at h=36 the W fills ~36px width) -->
-            <div class="w-9 h-9 overflow-hidden dark:hidden">
-              <img src="/images/workzen-logo.png" alt="Workzen" class="h-9 w-auto">
-            </div>
-            <!-- Dark: styled W since logo has light background -->
-            <span class="hidden dark:flex w-9 h-9 items-center justify-center
-                         bg-violet-600 text-white font-bold text-[15px] leading-none">W</span>
+            <img src="/images/workzen-icon.png" alt="Workzen" class="h-8 w-auto">
           </button>
         </template>
       </div>
