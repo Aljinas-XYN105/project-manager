@@ -21,26 +21,17 @@ function cancelReject(id) {
     rejectNotes.value[id] = ''
 }
 
-async function approve(url) {
-    const fd = new FormData()
-    fd.append('_method', 'PATCH')
-    fd.append('_token', document.querySelector('meta[name=csrf-token]')?.content)
-    fd.append('decision', 'approved')
-    await fetch(url, { method: 'POST', body: fd })
-    router.reload({ only: ['expenses'] })
+function approve(url) {
+    router.patch(url, { decision: 'approved' }, { preserveScroll: true })
 }
 
-async function reject(url, id) {
+function reject(url, id) {
     const note = rejectNotes.value[id]
     if (!note?.trim()) return
-    const fd = new FormData()
-    fd.append('_method', 'PATCH')
-    fd.append('_token', document.querySelector('meta[name=csrf-token]')?.content)
-    fd.append('decision', 'rejected')
-    fd.append('note', note.trim())
-    await fetch(url, { method: 'POST', body: fd })
-    rejectOpen.value[id] = false
-    router.reload({ only: ['expenses'] })
+    router.patch(url, { decision: 'rejected', note: note.trim() }, {
+        preserveScroll: true,
+        onSuccess: () => { rejectOpen.value[id] = false },
+    })
 }
 
 const tabs = [

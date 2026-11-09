@@ -81,13 +81,9 @@ async function submitExpense(e) {
     }
 }
 
-async function cancelExpense(url) {
+function cancelExpense(url) {
     if (!confirm('Cancel this expense?')) return
-    const fd = new FormData()
-    fd.append('_method', 'PATCH')
-    fd.append('_token', document.querySelector('meta[name=csrf-token]')?.content)
-    await fetch(url, { method: 'POST', body: fd })
-    router.reload({ only: ['expenses', 'summary', 'pending_review'] })
+    router.patch(url, {}, { preserveScroll: true })
 }
 </script>
 

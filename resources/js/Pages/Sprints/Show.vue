@@ -13,35 +13,21 @@ const props = defineProps({
 })
 
 const showBacklog = ref(false)
-const csrf = () => document.querySelector('meta[name=csrf-token]')?.content
 
-async function patchSprint(url, msg) {
+function patchSprint(url, msg) {
     if (!confirm(msg)) return
-    const fd = new FormData()
-    fd.append('_method', 'PATCH')
-    fd.append('_token', csrf())
-    await fetch(url, { method: 'POST', body: fd })
-    router.reload()
+    router.patch(url, {}, { preserveScroll: true })
 }
 
-async function removeTask(url) {
-    const fd = new FormData()
-    fd.append('_method', 'DELETE')
-    fd.append('_token', csrf())
-    await fetch(url, { method: 'POST', body: fd })
-    router.reload()
+function removeTask(url) {
+    router.delete(url, { preserveScroll: true })
 }
 
 const selectedTasks = ref([])
 
-async function addSelected() {
+function addSelected() {
     if (!selectedTasks.value.length) { alert('Select at least one task.'); return }
-    await fetch(props.sprint.add_task_url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf() },
-        body: JSON.stringify({ task_ids: selectedTasks.value }),
-    })
-    router.reload()
+    router.post(props.sprint.add_task_url, { task_ids: selectedTasks.value }, { preserveScroll: true })
 }
 
 const priorityClass = {

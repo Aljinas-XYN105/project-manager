@@ -6,6 +6,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 const props = defineProps({
     requests: Object,
     status: String,
+    is_global_view: Boolean,
     calendar_url: String,
 })
 
@@ -15,26 +16,17 @@ const declineNotes = ref({})
 function openDecline(id) { declineOpen.value[id] = true; declineNotes.value[id] = '' }
 function cancelDecline(id) { declineOpen.value[id] = false }
 
-async function approve(url) {
-    const fd = new FormData()
-    fd.append('_method', 'PATCH')
-    fd.append('_token', document.querySelector('meta[name=csrf-token]')?.content)
-    fd.append('decision', 'approved')
-    await fetch(url, { method: 'POST', body: fd })
-    router.reload({ only: ['requests'] })
+function approve(url) {
+    router.patch(url, { decision: 'approved' }, { preserveScroll: true })
 }
 
-async function decline(url, id) {
+function decline(url, id) {
     const note = declineNotes.value[id]
     if (!note?.trim()) return
-    const fd = new FormData()
-    fd.append('_method', 'PATCH')
-    fd.append('_token', document.querySelector('meta[name=csrf-token]')?.content)
-    fd.append('decision', 'rejected')
-    fd.append('note', note.trim())
-    await fetch(url, { method: 'POST', body: fd })
-    declineOpen.value[id] = false
-    router.reload({ only: ['requests'] })
+    router.patch(url, { decision: 'rejected', note: note.trim() }, {
+        preserveScroll: true,
+        onSuccess: () => { declineOpen.value[id] = false },
+    })
 }
 
 const tabs = [
@@ -57,7 +49,7 @@ function typeColorDot(color) {
                 <div>
                     <h1 class="page-title">Leave approvals</h1>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                        Requests from people who report to you.
+                        {{ is_global_view ? 'Requests from everyone.' : 'Requests from people who report to you.' }}
                     </p>
                 </div>
                 <div class="flex items-center gap-2">

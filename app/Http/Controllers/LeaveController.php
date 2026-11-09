@@ -190,8 +190,9 @@ class LeaveController extends Controller
                 'review_url'  => route('leave.review', $r),
                 'overlaps'    => array_values(($overlaps[$r->id] ?? collect())->all()),
             ]),
-            'status'       => $status,
-            'calendar_url' => route('leave.calendar'),
+            'status'          => $status,
+            'is_global_view'  => $user->hasRole('admin') || $user->can('leave.approve'),
+            'calendar_url'    => route('leave.calendar'),
         ]);
     }
 
