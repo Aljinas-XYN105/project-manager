@@ -61,7 +61,7 @@ function search() {
                         <div class="relative flex-shrink-0">
                             <img :src="person.avatar_url" class="w-12 h-12 rounded-full" :alt="person.name">
                             <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-slate-900"
-                                  :class="person.is_on_leave ? 'bg-amber-400' : 'bg-slate-300 dark:bg-slate-600'"
+                                  :class="person.dot_class"
                                   :title="person.is_on_leave ? 'On leave' : 'Available'"></span>
                         </div>
                         <div class="min-w-0 flex-1">
@@ -79,6 +79,7 @@ function search() {
                     </div>
                     <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1 text-xs text-slate-500">
                         <p class="truncate"><i class="bi bi-envelope mr-1.5"></i>{{ person.email }}</p>
+                        <p v-if="person.phone" class="truncate"><i class="bi bi-telephone mr-1.5"></i>{{ person.phone }}</p>
                         <p v-if="person.manager" class="truncate">
                             <i class="bi bi-person-up mr-1.5"></i>Reports to {{ person.manager.name }}
                         </p>

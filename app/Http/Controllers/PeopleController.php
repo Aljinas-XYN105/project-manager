@@ -21,17 +21,21 @@ class PeopleController extends Controller
 
         $onLeaveToday = LeaveRequest::where('status', 'approved')->onDate(today()->toDateString())->pluck('user_id')->all();
 
+        $statuses = User::AVAILABILITY;
+
         return Inertia::render('People/Index', [
             'people'       => $people->map(fn ($u) => [
                 'id'               => $u->id,
                 'name'             => $u->name,
                 'email'            => $u->email,
+                'phone'            => $u->phone,
                 'job_title'        => $u->job_title,
                 'department'       => $u->department,
                 'avatar_url'       => $u->avatar_url,
                 'direct_reports_count' => $u->direct_reports_count,
                 'manager'          => $u->manager ? ['id' => $u->manager->id, 'name' => $u->manager->name] : null,
                 'is_on_leave'      => in_array($u->id, $onLeaveToday),
+                'dot_class'        => ($statuses[$u->effective_availability] ?? $statuses['offline'])['dot'],
                 'show_url'         => route('users.show', $u),
             ]),
             'departments'  => User::active()->whereNotNull('department')->select('department')->distinct()->orderBy('department')->pluck('department'),

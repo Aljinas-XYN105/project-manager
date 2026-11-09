@@ -66,6 +66,7 @@ class DailyReportController extends Controller
                 'edit_url'    => route('daily-reports.edit', $todayReport),
             ] : null,
             'can_see_team' => $user->hasAnyRole(['admin', 'manager']),
+            'today_date'   => today()->format('l, F j, Y'),
         ]);
     }
 

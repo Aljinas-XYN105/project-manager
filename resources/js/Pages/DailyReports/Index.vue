@@ -6,6 +6,7 @@ const props = defineProps({
     reports: Object,
     today_report: Object,
     can_see_team: Boolean,
+    today_date: String,
 })
 
 function deleteReport(url) {
@@ -57,6 +58,7 @@ function deleteReport(url) {
                     </div>
                     <div>
                         <p class="font-semibold text-sm text-gray-900 dark:text-white">You haven't submitted today's report yet</p>
+                        <p class="text-xs text-gray-500">{{ today_date }}</p>
                     </div>
                 </div>
                 <Link :href="route('daily-reports.create')" class="btn-primary btn-sm">
