@@ -236,7 +236,7 @@ class StandupController extends Controller
             'blockers'     => 'nullable|string|max:2000',
             'items'        => 'nullable|array',
             'items.*.description' => 'required|string|max:500',
-            'items.*.status'      => 'required|in:todo,in_progress,in_review,done',
+            'items.*.status'      => 'required|in:todo,in_progress,in_review,qa_testing,done',
             'items.*.task_id'     => 'nullable|integer|exists:tasks,id',
         ]);
 
