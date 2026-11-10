@@ -20,6 +20,10 @@
         "vite": "^6.0.11"
     },
     "dependencies": {
-        "@alpinejs/persist": "^3.15.9"
+        "@alpinejs/persist": "^3.15.9",
+        "@inertiajs/vue3": "^3.11.0",
+        "@vitejs/plugin-vue": "^6.0.10",
+        "vue": "^3.5.45",
+        "ziggy-js": "^2.6.5"
     }
 }

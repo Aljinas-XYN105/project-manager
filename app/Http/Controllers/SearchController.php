@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class SearchController extends Controller
 {
@@ -49,14 +50,42 @@ class SearchController extends Controller
             ]);
         }
 
-        return view('search.index', ['term' => $term] + $results);
+        return Inertia::render('Search/Index', [
+            'term'     => $term,
+            'projects' => $results['projects']->map(fn ($p) => [
+                'id'       => $p->id,
+                'name'     => $p->name,
+                'color'    => $p->color,
+                'status'   => $p->status,
+                'show_url' => route('projects.show', $p),
+            ]),
+            'tasks' => $results['tasks']->map(fn ($t) => [
+                'id'         => $t->id,
+                'title'      => $t->title,
+                'ticket_key' => $t->ticket_key,
+                'status'     => $t->status,
+                'type_icon'  => $t->type_icon,
+                'type_color' => $t->type_color,
+                'project'    => $t->project ? ['name' => $t->project->name] : null,
+                'show_url'   => route('projects.tasks.show', $t),
+            ]),
+            'people' => $results['people']->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'email'      => $u->email,
+                'job_title'  => $u->job_title,
+                'department' => $u->department,
+                'avatar_url' => $u->avatar_url,
+                'show_url'   => route('users.show', $u),
+            ]),
+        ]);
     }
 
     /** Returns only the IDs — lean query used for both project and task searches. */
     private function accessibleProjectIds(User $user)
     {
         return Project::query()
-            ->when(! $user->hasRole(['admin', 'manager']), fn ($q) => $q->where(fn ($q) => $q
+            ->when(! $user->can('tasks.view-all'), fn ($q) => $q->where(fn ($q) => $q
                 ->where('is_public', true)
                 ->orWhere('owner_id', $user->id)
                 ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))

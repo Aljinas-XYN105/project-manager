@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->prependToGroup('web', \App\Http\Middleware\SecurityHeaders::class);
         $middleware->appendToGroup('web', [
+            \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\TrackPresence::class,
             \App\Http\Middleware\LogUserActivity::class,
         ]);

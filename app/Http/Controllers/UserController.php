@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -34,12 +36,46 @@ class UserController extends Controller
             'online'   => User::where('last_seen_at', '>=', now()->subMinutes(5))->count(),
         ];
 
-        return view('users.index', ['users' => $users, 'roles' => $this->roles(), 'counts' => $counts]);
+        $authUser = $request->user();
+        $canManage = $authUser->hasRole('admin') || $authUser->can('users.manage');
+        $isAdmin = $authUser->hasRole('admin');
+        $statuses = \App\Models\User::AVAILABILITY;
+
+        return Inertia::render('Users/Index', [
+            'users' => $users->through(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'email'      => $u->email,
+                'job_title'  => $u->job_title,
+                'avatar_url' => $u->avatar_url,
+                'is_active'  => $u->is_active,
+                'is_self'    => $u->id === $authUser->id,
+                'roles'      => $u->roles->map(fn ($r) => ['name' => $r->name, 'headline' => Str::headline($r->name)]),
+                'availability_label' => ($statuses[$u->effective_availability] ?? $statuses['offline'])['label'],
+                'availability_dot'   => ($statuses[$u->effective_availability] ?? $statuses['offline'])['dot'],
+                'last_seen' => $u->last_seen_at ? 'Seen '.$u->last_seen_at->diffForHumans() : 'Never signed in',
+                'show_url'  => route('users.show', $u),
+                'edit_url'  => route('users.edit', $u),
+                'toggle_url'=> route('users.toggle-active', $u),
+                'admin_url' => route('admin.employee', $u),
+            ]),
+            'roles'      => $this->roles()->map(fn ($r) => ['name' => $r->name, 'headline' => Str::headline($r->name), 'count' => $r->users_count]),
+            'counts'     => $counts,
+            'can_manage' => $canManage,
+            'is_admin'   => $isAdmin,
+            'filters'    => $request->only(['search', 'role', 'active']),
+        ]);
     }
 
     public function show(User $user)
     {
-        $user->load(['teams', 'roles']);
+        $user->loadMissing(['teams', 'roles', 'manager', 'directReports']);
+
+        $viewer = request()->user();
+        $canSeePrivate = $viewer->is($user)
+            || $viewer->hasRole('admin')
+            || $viewer->can('employees.view-private')
+            || $user->manager_id === $viewer->id;
 
         $stats = [
             'assigned_tasks'   => $user->assignedTasks()->whereNull('parent_id')->count(),
@@ -57,16 +93,76 @@ class UserController extends Controller
             ->limit(10)
             ->get();
 
-        return view('users.show', compact('user', 'stats', 'recentTasks'));
+        $employmentRows = array_filter([
+            'Employee ID'       => $user->employee_code,
+            'Department'        => $user->department,
+            'Type'              => \App\Models\User::EMPLOYMENT_TYPES[$user->employment_type] ?? null,
+            'Joined'            => $user->joined_on ? $user->joined_on->format('M j, Y').' ('.$user->joined_on->diffForHumans(null, true).')' : null,
+            'Birthday'          => $user->date_of_birth
+                ? ($canSeePrivate ? $user->date_of_birth->format('M j, Y') : $user->date_of_birth->format('F j'))
+                : null,
+            'Phone'             => $user->phone,
+            'Emergency contact' => $canSeePrivate && $user->emergency_contact_name
+                ? $user->emergency_contact_name.($user->emergency_contact_phone ? ' · '.$user->emergency_contact_phone : '')
+                : null,
+        ]);
+
+        return Inertia::render('Users/Show', [
+            'user' => [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'job_title'   => $user->job_title,
+                'avatar_url'  => $user->avatar_url,
+                'is_active'   => $user->is_active,
+                'bio'         => $user->bio,
+                'phone'       => $user->phone,
+                'location'    => $user->location,
+                'timezone'    => $user->timezone,
+                'joined_on'   => $user->joined_on?->format('M j, Y'),
+                'roles'       => $user->roles->map(fn ($r) => Str::headline($r->name)),
+                'teams'       => $user->teams->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'show_url' => route('teams.show', $t)]),
+                'manager'     => $user->manager ? ['name' => $user->manager->name, 'show_url' => route('users.show', $user->manager)] : null,
+                'direct_reports' => $user->directReports->map(fn ($r) => ['id' => $r->id, 'name' => $r->name, 'avatar_url' => $r->avatar_url, 'show_url' => route('users.show', $r)]),
+                'employment_rows' => collect($employmentRows)->map(fn ($v, $k) => ['label' => $k, 'value' => $v])->values(),
+                'edit_url'    => route('users.edit', $user),
+            ],
+            'stats'       => $stats,
+            'recent_tasks'=> $recentTasks->map(fn ($t) => [
+                'id'       => $t->id,
+                'title'    => $t->title,
+                'status'   => $t->status,
+                'priority' => $t->priority,
+                'due_date' => $t->due_date ? $t->due_date->format('M j') : null,
+                'is_overdue' => $t->due_date && $t->due_date->isPast() && $t->status !== 'done',
+                'project'  => $t->project ? ['name' => $t->project->name] : null,
+                'show_url' => route('projects.tasks.show', $t),
+            ]),
+            'can_manage' => $viewer->hasRole('admin') || $viewer->can('users.manage'),
+        ]);
     }
 
     public function create()
     {
-        return view('users.form', [
-            'user'  => new User(['is_active' => true, 'timezone' => auth()->user()->timezone ?: config('app.timezone')]),
-            'roles' => $this->roles(),
-            'teams' => Team::orderBy('name')->get(),
-        ] + $this->formLookups());
+        return Inertia::render('Users/Form', [
+            'user' => [
+                'id' => null, 'name' => '', 'email' => '', 'job_title' => '',
+                'team_id' => null, 'timezone' => auth()->user()->timezone ?: config('app.timezone'),
+                'is_active' => true, 'employee_code' => '', 'department' => '',
+                'employment_type' => 'full_time', 'manager_id' => null,
+                'joined_on' => '', 'date_of_birth' => '', 'phone' => '',
+                'emergency_contact_name' => '', 'emergency_contact_phone' => '',
+                'current_roles' => ['member'], 'is_self' => false,
+                'reset_password_url' => null, 'destroy_url' => null,
+            ],
+            'roles' => $this->roles()->map(fn ($r) => ['name' => $r->name, 'headline' => Str::headline($r->name), 'users_count' => $r->users_count]),
+            'teams' => Team::orderBy('name')->get()->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]),
+            'managers' => User::active()->orderBy('name')->get(['id', 'name', 'job_title'])->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'job_title' => $m->job_title]),
+            'departments' => User::whereNotNull('department')->distinct()->orderBy('department')->pluck('department'),
+            'employment_types' => User::EMPLOYMENT_TYPES,
+            'store_url' => route('users.store'),
+            'is_edit' => false,
+        ]);
     }
 
     public function store(Request $request)
@@ -88,7 +184,7 @@ class UserController extends Controller
             'is_active'         => $request->boolean('is_active', true),
             'email_verified_at' => now(),
         ] + $this->hrFields($data));
-        $user->syncRoles($data['roles']);
+        $user->syncRoles($data['current_roles']);
 
         $message = "Member \"{$user->name}\" created.";
         if (! $data['password']) {
@@ -100,11 +196,34 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('users.form', [
-            'user'  => $user->load('roles'),
-            'roles' => $this->roles(),
-            'teams' => Team::orderBy('name')->get(),
-        ] + $this->formLookups($user));
+        $user->load('roles');
+        $isSelf = $user->is(auth()->user());
+        return Inertia::render('Users/Form', [
+            'user' => [
+                'id' => $user->id, 'name' => $user->name, 'email' => $user->email,
+                'job_title' => $user->job_title ?? '', 'team_id' => $user->team_id,
+                'timezone' => $user->timezone ?? config('app.timezone'), 'is_active' => $user->is_active,
+                'employee_code' => $user->employee_code ?? '', 'department' => $user->department ?? '',
+                'employment_type' => $user->employment_type ?? 'full_time', 'manager_id' => $user->manager_id,
+                'joined_on' => $user->joined_on?->toDateString() ?? '',
+                'date_of_birth' => $user->date_of_birth?->toDateString() ?? '',
+                'phone' => $user->phone ?? '', 'emergency_contact_name' => $user->emergency_contact_name ?? '',
+                'emergency_contact_phone' => $user->emergency_contact_phone ?? '',
+                'current_roles' => $user->roles->pluck('name')->all(), 'is_self' => $isSelf,
+                'direct_permissions' => $user->getDirectPermissions()->pluck('name')->all(),
+                'reset_password_url' => ! $isSelf ? route('users.reset-password', $user) : null,
+                'destroy_url' => ! $isSelf ? route('users.destroy', $user) : null,
+            ],
+            'roles' => $this->roles()->map(fn ($r) => ['name' => $r->name, 'headline' => Str::headline($r->name), 'users_count' => $r->users_count]),
+            'teams' => Team::orderBy('name')->get()->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]),
+            'managers' => User::active()->where('id', '!=', $user->id)->orderBy('name')->get(['id', 'name', 'job_title'])->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'job_title' => $m->job_title]),
+            'departments' => User::whereNotNull('department')->distinct()->orderBy('department')->pluck('department'),
+            'employment_types' => User::EMPLOYMENT_TYPES,
+            'permission_groups' => $this->groupedPermissions(),
+            'role_permissions' => Role::with('permissions')->get()->mapWithKeys(fn ($r) => [$r->name => $r->permissions->pluck('name')->all()]),
+            'update_url' => route('users.update', $user),
+            'is_edit' => true,
+        ]);
     }
 
     public function update(Request $request, User $user)
@@ -114,7 +233,7 @@ class UserController extends Controller
         ]);
 
         $isSelf = $user->is($request->user());
-        if ($isSelf && $user->hasRole('admin') && ! in_array('admin', $data['roles'])) {
+        if ($isSelf && $user->hasRole('admin') && ! in_array('admin', $data['current_roles'])) {
             return back()->withInput()->with('error', 'You cannot remove the admin role from your own account.');
         }
 
@@ -126,7 +245,12 @@ class UserController extends Controller
             'timezone'  => $data['timezone'] ?? $user->timezone,
             'is_active' => $isSelf ? true : $request->boolean('is_active'),
         ] + $this->hrFields($data));
-        $user->syncRoles($data['roles']);
+        $user->syncRoles($data['current_roles']);
+
+        // Only admins can assign direct permissions
+        if (auth()->user()->hasRole('admin') && isset($data['direct_permissions'])) {
+            $user->syncPermissions($data['direct_permissions']);
+        }
 
         return redirect()->route('users.index')->with('success', "Member \"{$user->name}\" updated.");
     }
@@ -213,9 +337,21 @@ class UserController extends Controller
             'job_title' => ['nullable', 'string', 'max:100'],
             'team_id'   => ['nullable', 'exists:teams,id'],
             'timezone'  => ['nullable', 'timezone'],
-            'roles'     => ['required', 'array', 'min:1'],
-            'roles.*'   => ['string', 'exists:roles,name'],
+            'current_roles'        => ['required', 'array', 'min:1'],
+            'current_roles.*'      => ['string', 'exists:roles,name'],
+            'direct_permissions'   => ['nullable', 'array'],
+            'direct_permissions.*' => ['string', 'exists:permissions,name'],
         ];
+    }
+
+    private function groupedPermissions(): array
+    {
+        return Permission::orderBy('name')->get()
+            ->groupBy(fn ($p) => explode('.', $p->name)[0])
+            ->map(fn ($perms, $group) => [
+                'group'       => $group,
+                'permissions' => $perms->map(fn ($p) => ['name' => $p->name])->values()->all(),
+            ])->values()->all();
     }
 
     private function roles()

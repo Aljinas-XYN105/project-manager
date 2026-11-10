@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ConversationController extends Controller
 {
@@ -29,7 +30,41 @@ class ConversationController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'avatar', 'job_title', 'last_seen_at', 'availability']);
 
-        return view('chat.index', compact('conversations', 'users'));
+        $authId = $user->id;
+
+        return Inertia::render('Chat/Index', [
+            'conversations' => $conversations->map(fn ($c) => [
+                'id'            => $c->id,
+                'is_group'      => $c->is_group,
+                'name'          => $c->name,
+                'unread_count'  => $c->unread_count,
+                'participants'  => $c->participants->map(fn ($p) => [
+                    'id'           => $p->id,
+                    'name'         => $p->name,
+                    'avatar_url'   => $p->avatar_url,
+                    'availability' => $p->effective_availability,
+                    'is_online'    => $p->effective_availability !== 'offline',
+                ]),
+                'latest_message'=> $c->latestMessage ? [
+                    'body'      => $c->latestMessage->body,
+                    'is_mine'   => $c->latestMessage->user_id === $authId,
+                    'user'      => $c->latestMessage->user ? ['name' => $c->latestMessage->user->name] : null,
+                    'time_label'=> $c->latestMessage->created_at->diffForHumans(null, true, true),
+                ] : null,
+                'show_url' => route('chat.show', $c),
+            ]),
+            'users' => $users->map(fn ($u) => [
+                'id'           => $u->id,
+                'name'         => $u->name,
+                'avatar_url'   => $u->avatar_url,
+                'job_title'    => $u->job_title,
+                'availability' => $u->effective_availability,
+                'is_online'    => $u->effective_availability !== 'offline',
+                'direct_url'   => route('chat.direct', $u),
+            ]),
+            'popup_url'       => route('chat.popup'),
+            'group_store_url' => route('chat.groups.store'),
+        ]);
     }
 
     // Show a conversation and mark it as read
@@ -59,7 +94,58 @@ class ConversationController extends Controller
         $users = User::where('id', '!=', $user->id)->where('is_active', true)->orderBy('name')
             ->get(['id', 'name', 'avatar', 'job_title']);
 
-        return view('chat.show', compact('conversation', 'messages', 'users'));
+        $authId = $user->id;
+        $other  = $conversation->type === 'direct'
+            ? $conversation->participants->firstWhere('id', '!=', $authId)
+            : null;
+
+        $statusLabel = '';
+        if ($other) {
+            if ($other->effective_availability !== 'offline') {
+                $statusLabel = ucfirst($other->availability ?? 'Online');
+            } elseif ($other->last_seen_at) {
+                $statusLabel = 'Last seen ' . $other->last_seen_at->diffForHumans();
+            } else {
+                $statusLabel = 'Offline';
+            }
+        }
+
+        return Inertia::render('Chat/Show', [
+            'conversation' => [
+                'id'           => $conversation->id,
+                'is_group'     => $conversation->is_group,
+                'name'         => $conversation->name,
+                'participants' => $conversation->participants->map(fn ($p) => [
+                    'id'           => $p->id,
+                    'name'         => $p->name,
+                    'avatar_url'   => $p->avatar_url,
+                    'availability' => $p->effective_availability,
+                    'is_online'    => $p->effective_availability !== 'offline',
+                ]),
+                'other'        => $other ? [
+                    'id'           => $other->id,
+                    'name'         => $other->name,
+                    'avatar_url'   => $other->avatar_url,
+                    'is_online'    => $other->effective_availability !== 'offline',
+                    'status_label' => $statusLabel,
+                ] : null,
+                'member_count' => $conversation->participants->count(),
+                'store_url'    => route('chat.messages.store', $conversation),
+                'popup_url'    => route('chat.popup'),
+            ],
+            'messages' => $messages->through(fn ($m) => [
+                'id'          => $m->id,
+                'body'        => $m->body,
+                'is_deleted'  => (bool) $m->deleted_at,
+                'is_mine'     => $m->user_id === $authId,
+                'user'        => $m->user ? ['id' => $m->user->id, 'name' => $m->user->name, 'avatar_url' => $m->user->avatar_url] : null,
+                'created_at'  => $m->created_at->format('g:i A'),
+                'created_date'=> $m->created_at->toDateString(),
+                'destroy_url' => route('chat.messages.destroy', $m),
+            ]),
+            'users' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]),
+            'back_url' => route('chat.index'),
+        ]);
     }
 
     // Start or open a DM with another user
@@ -113,7 +199,52 @@ class ConversationController extends Controller
         $openConvId = (int) $request->get('open', 0);
         $openConv   = $openConvId ? $conversations->firstWhere('id', $openConvId) : $conversations->first();
 
-        return view('chat.popup-hub', compact('conversations', 'users', 'openConv'));
+        $openConvSerialized = $openConv ? [
+            'id'           => $openConv->id,
+            'is_group'     => $openConv->is_group,
+            'name'         => $openConv->name,
+            'participants' => $openConv->participants->map(fn ($p) => [
+                'id'           => $p->id,
+                'name'         => $p->name,
+                'avatar_url'   => $p->avatar_url,
+                'availability' => $p->effective_availability,
+            ]),
+            'window_url' => route('chat.window', $openConv),
+        ] : null;
+
+        return Inertia::render('Chat/PopupHub', [
+            'conversations' => $conversations->map(fn ($c) => [
+                'id'           => $c->id,
+                'is_group'     => $c->is_group,
+                'name'         => $c->name,
+                'unread_count' => $c->unread_count,
+                'participants' => $c->participants->map(fn ($p) => [
+                    'id'           => $p->id,
+                    'name'         => $p->name,
+                    'avatar_url'   => $p->avatar_url,
+                    'availability' => $p->effective_availability,
+                    'is_online'    => $p->is_online ?? false,
+                ]),
+                'latest_message' => $c->latestMessage ? [
+                    'body'    => $c->latestMessage->body,
+                    'is_mine' => $c->latestMessage->user_id === $user->id,
+                    'sent_at' => $c->latestMessage->created_at->diffForHumans(null, true, true),
+                ] : null,
+                'window_url' => route('chat.window', $c),
+            ]),
+            'users' => $users->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'avatar_url' => $u->avatar_url,
+                'job_title'  => $u->job_title,
+                'is_online'  => $u->is_online ?? false,
+                'availability' => $u->effective_availability,
+                'direct_url' => route('chat.direct', $u),
+            ]),
+            'open_conv'   => $openConvSerialized,
+            'chat_index_url' => route('chat.index'),
+            'groups_store_url' => route('chat.groups.store'),
+        ]);
     }
 
     // Open chat in a standalone popup window (no app chrome)
@@ -141,8 +272,30 @@ class ConversationController extends Controller
         $users = User::where('id', '!=', $user->id)->where('is_active', true)->orderBy('name')
             ->get(['id', 'name', 'avatar', 'job_title']);
 
-        $popup = true;
-        return view('chat.show', compact('conversation', 'messages', 'popup', 'users'));
+        return Inertia::render('Chat/Window', [
+            'conversation' => [
+                'id'           => $conversation->id,
+                'is_group'     => $conversation->is_group,
+                'name'         => $conversation->name,
+                'participants' => $conversation->participants->map(fn ($p) => [
+                    'id'           => $p->id,
+                    'name'         => $p->name,
+                    'avatar_url'   => $p->avatar_url,
+                    'availability' => $p->effective_availability,
+                    'is_online'    => $p->is_online ?? false,
+                ]),
+                'store_url' => route('chat.messages.store', $conversation),
+            ],
+            'messages' => $messages->through(fn ($m) => [
+                'id'          => $m->id,
+                'body'        => $m->body,
+                'deleted_at'  => $m->deleted_at?->diffForHumans(),
+                'user'        => $m->user ? ['id' => $m->user->id, 'name' => $m->user->name, 'avatar_url' => $m->user->avatar_url] : null,
+                'created_at'  => $m->created_at->format('M j, g:i A'),
+                'destroy_url' => route('chat.messages.destroy', $m),
+            ]),
+            'users' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]),
+        ]);
     }
 
     // Rename a group conversation
@@ -190,7 +343,7 @@ class ConversationController extends Controller
         $user = auth()->user();
         $q    = $request->q;
 
-        $isAdmin = $user->hasAnyRole(['admin', 'manager']);
+        $isAdmin = $user->can('tasks.view-all');
 
         // Top-level tasks
         $tasks = Task::whereNull('parent_id')

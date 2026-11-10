@@ -49,7 +49,7 @@ class MessageController extends Controller
 
         $conversation->touch();
 
-        broadcast(new MessageSent($message))->toOthers();
+        try { broadcast(new MessageSent($message))->toOthers(); } catch (\Throwable) {}
 
         return response()->json([
             'id'              => $message->id,
@@ -77,13 +77,13 @@ class MessageController extends Controller
         $user = auth()->user();
 
         abort_unless(
-            $message->user_id === $user->id || $user->hasAnyRole(['admin', 'manager']),
+            $message->user_id === $user->id || $user->can('messages.delete-any'),
             403
         );
 
         $message->delete();
 
-        broadcast(new \App\Events\MessageDeleted($message->id, $message->conversation_id))->toOthers();
+        try { broadcast(new \App\Events\MessageDeleted($message->id, $message->conversation_id))->toOthers(); } catch (\Throwable) {}
 
         return response()->json(['ok' => true]);
     }

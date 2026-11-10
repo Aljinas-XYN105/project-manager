@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 
 class DailyReportController extends Controller
@@ -35,13 +36,44 @@ class DailyReportController extends Controller
             ->with('reportTasks.task')
             ->first();
 
-        return view('daily-reports.index', compact('reports', 'todayReport'));
+        $user = auth()->user();
+
+        return Inertia::render('DailyReports/Index', [
+            'reports'    => $reports->through(fn ($r) => [
+                'id'          => $r->id,
+                'report_date' => $r->report_date->format('l, F j, Y'),
+                'is_today'    => $r->report_date->isToday(),
+                'is_yesterday'=> $r->report_date->isYesterday(),
+                'total_hours' => $r->total_hours,
+                'summary'     => $r->summary,
+                'blockers'    => $r->blockers ? \Illuminate\Support\Str::limit($r->blockers, 100) : null,
+                'task_count'  => $r->reportTasks->count(),
+                'task_snippets'=> $r->reportTasks->take(5)->map(fn ($rt) => [
+                    'description' => \Illuminate\Support\Str::limit($rt->task_description, 30),
+                    'hours'       => $rt->hours_spent,
+                ]),
+                'extra_tasks' => max(0, $r->reportTasks->count() - 5),
+                'can_edit'    => $r->report_date->isToday() || $user->can('daily-reports.view-team'),
+                'show_url'    => route('daily-reports.show', $r),
+                'edit_url'    => route('daily-reports.edit', $r),
+                'destroy_url' => route('daily-reports.destroy', $r),
+            ]),
+            'today_report' => $todayReport ? [
+                'id'          => $todayReport->id,
+                'total_hours' => $todayReport->total_hours,
+                'task_count'  => $todayReport->reportTasks->count(),
+                'show_url'    => route('daily-reports.show', $todayReport),
+                'edit_url'    => route('daily-reports.edit', $todayReport),
+            ] : null,
+            'can_see_team' => $user->can('daily-reports.view-team'),
+            'today_date'   => today()->format('l, F j, Y'),
+        ]);
     }
 
     public function team(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['admin', 'manager'])) {
+        if (!$user->can('daily-reports.view-team')) {
             abort(403, 'Only admins and managers can view team reports.');
         }
 
@@ -63,7 +95,36 @@ class DailyReportController extends Controller
         $reports = $query->paginate(30);
         $users   = User::active()->orderBy('name')->get();
 
-        return view('daily-reports.team', compact('reports', 'users', 'date', 'userId'));
+        return Inertia::render('DailyReports/Team', [
+            'reports' => $reports->through(fn ($r) => [
+                'id'          => $r->id,
+                'report_date' => $r->report_date->format('M j'),
+                'report_date_full' => $r->report_date->format('l, F j, Y'),
+                'total_hours' => $r->total_hours,
+                'summary'     => $r->summary,
+                'plan_for_tomorrow' => $r->plan_for_tomorrow,
+                'blockers'    => $r->blockers,
+                'user'        => $r->user ? [
+                    'id'         => $r->user->id,
+                    'name'       => $r->user->name,
+                    'avatar_url' => $r->user->avatar_url,
+                ] : null,
+                'report_tasks' => $r->reportTasks->map(fn ($rt) => [
+                    'task_description' => $rt->task_description,
+                    'hours_spent'      => $rt->hours_spent,
+                    'notes'            => $rt->notes,
+                    'status_update'    => $rt->status_update,
+                    'is_blocked'       => (bool) $rt->is_blocked,
+                    'task_key'         => $rt->task?->ticket_key,
+                ]),
+                'has_blockers' => $r->blockers || $r->reportTasks->where('is_blocked', true)->count() > 0,
+                'show_url'    => route('daily-reports.show', $r),
+            ]),
+            'users'   => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]),
+            'date'    => $date,
+            'user_id' => $userId,
+            'export_excel_url' => route('daily-reports.export-excel'),
+        ]);
     }
 
     public function create()
@@ -123,7 +184,20 @@ class DailyReportController extends Controller
             ->values()
             ->all();
 
-        return view('daily-reports.create', compact('myTasks', 'today', 'projects', 'timedTaskRows'));
+        $taskOptions = $myTasks->map(fn ($t) => [
+            'id'    => $t->id,
+            'title' => $t->title,
+            'label' => '['.($t->project?->name ?? '?').'] '.($t->parent ? $t->parent->title.' › ' : '').$t->title.($t->ticket_key ? ' ('.$t->ticket_key.')' : '').($t->status === 'done' ? ' ✓' : ''),
+        ])->values();
+
+        return Inertia::render('DailyReports/Create', [
+            'my_tasks'       => $taskOptions,
+            'today'          => $today,
+            'projects'       => $projects->map(fn ($p) => ['id' => $p->id, 'name' => $p->name]),
+            'timed_task_rows' => $timedTaskRows,
+            'store_url'      => route('daily-reports.store'),
+            'index_url'      => route('daily-reports.index'),
+        ]);
     }
 
     public function store(Request $request)
@@ -156,7 +230,39 @@ class DailyReportController extends Controller
     {
         $this->authorizeReport($dailyReport);
         $dailyReport->load(['user', 'reportTasks.task.project']);
-        return view('daily-reports.show', compact('dailyReport'));
+        $user = auth()->user();
+        return Inertia::render('DailyReports/Show', [
+            'daily_report' => [
+                'id'               => $dailyReport->id,
+                'report_date'      => $dailyReport->report_date->format('l, F j, Y'),
+                'created_at_human' => $dailyReport->created_at->diffForHumans(),
+                'total_hours'      => $dailyReport->total_hours,
+                'summary'          => $dailyReport->summary,
+                'plan_for_tomorrow'=> $dailyReport->plan_for_tomorrow,
+                'blockers'         => $dailyReport->blockers,
+                'can_edit'         => $dailyReport->report_date->isToday() || $user->can('daily-reports.view-team'),
+                'user' => [
+                    'id'         => $dailyReport->user->id,
+                    'name'       => $dailyReport->user->name,
+                    'avatar_url' => $dailyReport->user->avatar_url,
+                ],
+                'report_tasks' => $dailyReport->reportTasks->map(fn ($rt) => [
+                    'task_description' => $rt->task_description,
+                    'hours_spent'      => $rt->hours_spent,
+                    'notes'            => $rt->notes,
+                    'status_update'    => $rt->status_update,
+                    'is_blocked'       => (bool) $rt->is_blocked,
+                    'task'             => $rt->task ? [
+                        'ticket_key' => $rt->task->ticket_key ?? '#'.$rt->task->id,
+                        'show_url'   => route('projects.tasks.show', $rt->task),
+                    ] : null,
+                ]),
+                'edit_url'    => route('daily-reports.edit', $dailyReport),
+                'destroy_url' => route('daily-reports.destroy', $dailyReport),
+                'pdf_url'     => route('daily-reports.pdf', $dailyReport),
+                'index_url'   => route('daily-reports.index'),
+            ],
+        ]);
     }
 
     public function edit(DailyReport $dailyReport)
@@ -180,7 +286,37 @@ class DailyReportController extends Controller
         $dailyReport->load('reportTasks.task');
         $projects = $this->reportableProjects($user);
 
-        return view('daily-reports.edit', compact('dailyReport', 'myTasks', 'projects'));
+        $taskOptions = $myTasks->map(fn ($t) => [
+            'id'    => $t->id,
+            'title' => $t->title,
+            'label' => '['.($t->project?->name ?? '?').'] '.($t->parent ? $t->parent->title.' › ' : '').$t->title.($t->ticket_key ? ' ('.$t->ticket_key.')' : '').($t->status === 'done' ? ' ✓' : ''),
+        ])->values();
+
+        $existingTasks = $dailyReport->reportTasks->map(fn ($rt) => [
+            'task_id'       => $rt->task_id ?? '',
+            'task_title'    => $rt->task ? $rt->task->title : null,
+            'description'   => $rt->task_description,
+            'hours'         => $rt->hours_spent,
+            'notes'         => $rt->notes ?? '',
+            'status_update' => $rt->status_update ?? '',
+            'is_blocked'    => (bool) $rt->is_blocked,
+        ])->values();
+
+        return Inertia::render('DailyReports/Edit', [
+            'daily_report'   => [
+                'id'                => $dailyReport->id,
+                'report_date'       => $dailyReport->report_date->format('l, F j, Y'),
+                'summary'           => $dailyReport->summary,
+                'plan_for_tomorrow' => $dailyReport->plan_for_tomorrow,
+                'blockers'          => $dailyReport->blockers,
+                'update_url'        => route('daily-reports.update', $dailyReport),
+                'show_url'          => route('daily-reports.show', $dailyReport),
+                'destroy_url'       => route('daily-reports.destroy', $dailyReport),
+            ],
+            'my_tasks'       => $taskOptions,
+            'existing_tasks' => $existingTasks,
+            'projects'       => $projects->map(fn ($p) => ['id' => $p->id, 'name' => $p->name]),
+        ]);
     }
 
     public function update(Request $request, DailyReport $dailyReport)
@@ -209,7 +345,7 @@ class DailyReportController extends Controller
     public function exportExcel(Request $request)
     {
         $user = auth()->user();
-        if (!$user->hasAnyRole(['admin', 'manager'])) {
+        if (!$user->can('daily-reports.view-team')) {
             abort(403);
         }
 
@@ -323,7 +459,7 @@ class DailyReportController extends Controller
     {
         return Project::query()
             ->where('status', '!=', 'archived')
-            ->when(! $user->hasRole(['admin', 'manager']), fn ($q) => $q->where(fn ($q) => $q
+            ->when(! $user->can('daily-reports.view-team'), fn ($q) => $q->where(fn ($q) => $q
                 ->where('is_public', true)
                 ->orWhere('owner_id', $user->id)
                 ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))
@@ -334,7 +470,7 @@ class DailyReportController extends Controller
     private function authorizeReport(DailyReport $report): void
     {
         $user = auth()->user();
-        if ($report->user_id !== $user->id && !$user->hasAnyRole(['admin', 'manager'])) {
+        if ($report->user_id !== $user->id && !$user->can('daily-reports.view-team')) {
             abort(403);
         }
     }
@@ -344,7 +480,7 @@ class DailyReportController extends Controller
         $this->authorizeReport($report);
 
         $user = auth()->user();
-        if (!$user->hasAnyRole(['admin', 'manager']) && !$report->report_date->isToday()) {
+        if (!$user->can('daily-reports.view-team') && !$report->report_date->isToday()) {
             abort(403, 'You can only edit your report on the day it was submitted.');
         }
     }

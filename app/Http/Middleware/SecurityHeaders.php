@@ -17,11 +17,9 @@ class SecurityHeaders
         $wsScheme     = ($reverbScheme === 'https') ? 'wss' : 'ws';
         $wsOrigin     = $wsScheme . '://' . $reverbHost . ':' . $reverbPort;
 
-        // Also allow the plain-wss variant when on HTTPS (some reverse-proxy setups strip the port).
-        $wsOrigins = [$wsOrigin];
-        if ($wsScheme === 'wss') {
-            $wsOrigins[] = 'wss://' . $reverbHost;
-        }
+        // Always allow both ws:// and wss:// — Echo tries both when upgrading, and CSP must permit both.
+        $wsBase = $reverbHost . ':' . $reverbPort;
+        $wsOrigins = ['ws://' . $wsBase, 'wss://' . $wsBase];
 
         return [
             "default-src 'self'",

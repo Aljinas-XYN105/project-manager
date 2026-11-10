@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
+use Inertia\Inertia;
 
 class NotificationController extends Controller
 {
@@ -21,7 +22,19 @@ class NotificationController extends Controller
         }
 
         $notifications = $request->user()->notifications()->paginate(20);
-        return view('notifications.index', compact('notifications'));
+        return Inertia::render('Notifications/Index', [
+            'notifications' => $notifications->through(fn ($n) => [
+                'id'         => $n->id,
+                'type'       => class_basename($n->type),
+                'data'       => $n->data,
+                'read_at'    => $n->read_at?->diffForHumans(),
+                'is_unread'  => is_null($n->read_at),
+                'created_at' => $n->created_at->diffForHumans(),
+                'read_url'   => route('notifications.read', $n->id),
+                'destroy_url'=> route('notifications.destroy', $n->id),
+            ]),
+            'unread_count' => $request->user()->unreadNotifications()->count(),
+        ]);
     }
 
     public function markRead(Request $request, string $id)

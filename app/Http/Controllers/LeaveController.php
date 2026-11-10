@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class LeaveController extends Controller
 {
@@ -31,13 +32,45 @@ class LeaveController extends Controller
 
         $requests = $user->leaveRequests()->with(['type', 'reviewer'])->latest('start_date')->paginate(15);
 
-        return view('leave.index', [
-            'year'          => $year,
-            'balances'      => $balances,
-            'types'         => $types,
-            'requests'      => $requests,
-            'holidays'      => Holiday::upcoming()->limit(6)->get(),
-            'pendingReview' => $this->reviewableQuery($user)->where('status', 'pending')->count(),
+        return Inertia::render('Leave/Index', [
+            'year'      => $year,
+            'balances'  => $balances->map(fn ($b) => [
+                'type' => [
+                    'id'           => $b->type->id,
+                    'name'         => $b->type->name,
+                    'color'        => $b->type->color,
+                    'is_unlimited' => $b->type->is_unlimited,
+                    'days_per_year'=> $b->type->days_per_year,
+                    'is_paid'      => $b->type->is_paid,
+                ],
+                'approved'  => $b->approved,
+                'pending'   => $b->pending,
+                'remaining' => $b->remaining,
+                'label'     => $b->type->name.' — '.($b->remaining === null ? 'unlimited' : rtrim(rtrim(number_format($b->remaining, 1), '0'), '.').' left'),
+            ]),
+            'types'    => $types->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]),
+            'requests' => $requests->through(fn ($r) => [
+                'id'          => $r->id,
+                'type'        => ['name' => $r->type->name, 'color' => $r->type->color],
+                'days'        => $r->days,
+                'date_range'  => $r->date_range,
+                'reason'      => $r->reason,
+                'status'      => $r->status,
+                'reviewer'    => $r->reviewer ? ['name' => $r->reviewer->name] : null,
+                'reviewed_at' => $r->reviewed_at?->diffForHumans(),
+                'review_note' => $r->review_note,
+                'can_cancel'  => $r->status === 'pending' || ($r->status === 'approved' && ($r->start_date->isFuture() || $r->start_date->isToday())),
+                'cancel_url'  => route('leave.cancel', $r),
+            ]),
+            'holidays'      => Holiday::upcoming()->limit(6)->get()->map(fn ($h) => [
+                'name'       => $h->name,
+                'month'      => $h->date->format('M'),
+                'day'        => $h->date->format('j'),
+                'weekday'    => $h->date->format('l'),
+                'ago'        => $h->date->diffForHumans(),
+            ]),
+            'pending_review' => $this->reviewableQuery($user)->where('status', 'pending')->count(),
+            'manager_name'   => $user->manager?->name,
         ]);
     }
 
@@ -129,7 +162,38 @@ class LeaveController extends Controller
             }
         }
 
-        return view('leave.approvals', compact('requests', 'status', 'overlaps'));
+        $statuses = \App\Models\LeaveRequest::STATUSES;
+        $authUser = $user;
+
+        return Inertia::render('Leave/Approvals', [
+            'requests' => $requests->through(fn ($r) => [
+                'id'          => $r->id,
+                'user'        => [
+                    'name'       => $r->user->name,
+                    'avatar_url' => $r->user->avatar_url,
+                    'department' => $r->user->department,
+                    'job_title'  => $r->user->job_title,
+                    'show_url'   => route('users.show', $r->user),
+                ],
+                'type'        => ['name' => $r->type->name, 'color' => $r->type->color],
+                'days'        => rtrim(rtrim(number_format((float)$r->days, 1), '0'), '.'),
+                'date_range'  => $r->date_range,
+                'reason'      => $r->reason,
+                'status'      => $r->status,
+                'status_label'=> $statuses[$r->status]['label'] ?? $r->status,
+                'status_class'=> $statuses[$r->status]['class'] ?? '',
+                'can_review'  => $r->status === 'pending' && $r->canBeReviewedBy($authUser),
+                'reviewer'    => $r->reviewer ? ['name' => $r->reviewer->name] : null,
+                'reviewed_at' => $r->reviewed_at?->diffForHumans(),
+                'review_note' => $r->review_note,
+                'created_at'  => $r->created_at->diffForHumans(),
+                'review_url'  => route('leave.review', $r),
+                'overlaps'    => array_values(($overlaps[$r->id] ?? collect())->all()),
+            ]),
+            'status'          => $status,
+            'is_global_view'  => $user->hasRole('admin') || $user->can('leave.approve'),
+            'calendar_url'    => route('leave.calendar'),
+        ]);
     }
 
     public function review(Request $request, LeaveRequest $leave)
@@ -172,13 +236,46 @@ class LeaveController extends Controller
         $holidays = Holiday::whereDate('date', '>=', $start->toDateString())->whereDate('date', '<=', $end->toDateString())->get()
             ->keyBy(fn ($h) => $h->date->toDateString());
 
-        return view('leave.calendar', [
-            'month'       => $month,
-            'start'       => $start,
-            'end'         => $end,
-            'leaves'      => $leaves,
-            'holidays'    => $holidays,
-            'departments' => User::active()->whereNotNull('department')->select('department')->distinct()->orderBy('department')->pluck('department'),
+        $departments = User::active()->whereNotNull('department')->select('department')->distinct()->orderBy('department')->pluck('department');
+
+        $calDays = [];
+        for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
+            $date = $day->toDateString();
+            $inMonth = $day->month === $month->month;
+            $holiday = $holidays->get($date);
+            $off = $leaves->filter(fn ($l) => $l->start_date->toDateString() <= $date && $l->end_date->toDateString() >= $date);
+            $calDays[] = [
+                'date'       => $date,
+                'day'        => $day->day,
+                'is_today'   => $day->isToday(),
+                'in_month'   => $inMonth,
+                'is_weekend' => $day->isWeekend(),
+                'holiday'    => $holiday ? ['name' => $holiday->name] : null,
+                'leaves'     => $off->map(fn ($l) => [
+                    'name'       => $l->user->name,
+                    'type_name'  => $l->type->name,
+                    'type_color' => $l->type->color,
+                    'status'     => $l->status,
+                    'is_half_day'=> $l->is_half_day,
+                ])->values()->all(),
+                'total_count' => $off->count(),
+            ];
+        }
+
+        $leaveTypes = $leaves->pluck('type')->unique('id')->map(fn ($t) => ['name' => $t->name, 'color' => $t->color])->values();
+
+        $qs = $request->only('department');
+        return Inertia::render('Leave/Calendar', [
+            'month_label'  => $month->format('F Y'),
+            'month_param'  => $month->format('Y-m'),
+            'cal_days'     => $calDays,
+            'leave_types'  => $leaveTypes,
+            'departments'  => $departments,
+            'filters'      => ['department' => $request->input('department', '')],
+            'prev_url'     => route('leave.calendar', array_merge(['month' => $month->copy()->subMonth()->format('Y-m')], $qs)),
+            'next_url'     => route('leave.calendar', array_merge(['month' => $month->copy()->addMonth()->format('Y-m')], $qs)),
+            'this_month_url' => route('leave.calendar', $qs),
+            'leave_index_url' => route('leave.index'),
         ]);
     }
 

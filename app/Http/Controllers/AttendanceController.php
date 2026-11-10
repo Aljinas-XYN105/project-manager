@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class AttendanceController extends Controller
 {
@@ -33,11 +34,33 @@ class AttendanceController extends Controller
                 : '—',
         ];
 
-        return view('attendance.index', [
-            'byDay'   => $byDay,
-            'month'   => $month,
-            'summary' => $summary,
-            'open'    => $user->openAttendance(),
+        $open = $user->openAttendance();
+
+        $byDayArray = $byDay->map(fn ($sessions) => $sessions->sortBy('clock_in_at')->map(fn ($s) => [
+            'id'          => $s->id,
+            'clock_in_at' => $s->clock_in_at->inUserTz()->format('g:i A'),
+            'clock_out_at'=> $s->clock_out_at?->inUserTz()->format('g:i A'),
+            'duration_minutes' => $s->duration_minutes,
+            'source'      => $s->source,
+        ])->values())->toArray();
+
+        return Inertia::render('Attendance/Index', [
+            'byDay'      => $byDayArray,
+            'month'      => $month->format('Y-m'),
+            'month_label'=> $month->format('F Y'),
+            'prev_month' => $month->copy()->subMonth()->format('Y-m'),
+            'next_month' => $month->copy()->addMonth()->format('Y-m'),
+            'summary'    => array_merge($summary, [
+                'total_formatted' => sprintf('%dh %02dm', intdiv($summary['total_minutes'], 60), $summary['total_minutes'] % 60),
+                'avg_formatted'   => sprintf('%dh %02dm', intdiv($summary['avg_minutes'], 60), $summary['avg_minutes'] % 60),
+            ]),
+            'open'       => $open ? [
+                'clock_in_at'       => $open->clock_in_at->inUserTz()->format('g:i A'),
+                'duration_formatted'=> $open->duration_formatted,
+            ] : null,
+            'clock_in_url'  => route('attendance.clock-in'),
+            'clock_out_url' => route('attendance.clock-out'),
+            'timezone'      => $user->timezone,
         ]);
     }
 

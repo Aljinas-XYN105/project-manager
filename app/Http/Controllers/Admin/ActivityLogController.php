@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ActivityLogController extends Controller
@@ -18,8 +19,8 @@ class ActivityLogController extends Controller
 
     public function index(Request $request)
     {
+        $tz   = $request->user()->timezone ?: config('app.timezone');
         $logs = $this->query($request)->paginate(50)->withQueryString();
-
         $users = User::withTrashed()->orderBy('name')->get(['id', 'name']);
 
         $stats = [
@@ -29,11 +30,27 @@ class ActivityLogController extends Controller
             'active_users'  => ActivityLog::whereDate('created_at', today())->whereNotNull('causer_id')->distinct('causer_id')->count('causer_id'),
         ];
 
-        return view('admin.activity.index', [
-            'logs'       => $logs,
-            'users'      => $users,
+        return Inertia::render('Admin/Activity/Index', [
+            'logs' => $logs->through(fn ($log) => [
+                'id'          => $log->id,
+                'description' => $log->description,
+                'log_name'    => $log->log_name,
+                'category'    => self::CATEGORIES[$log->log_name] ?? $log->log_name,
+                'user_name'   => $log->causer?->name ?? ($log->properties['email'] ?? 'Unknown user'),
+                'user_email'  => $log->causer?->email ?? '',
+                'time_local'  => $log->created_at->setTimezone($tz)->format('g:i:s A'),
+                'date_string' => $log->created_at->setTimezone($tz)->toDateString(),
+                'date_label'  => $log->created_at->setTimezone($tz)->isToday() ? 'Today'
+                    : ($log->created_at->setTimezone($tz)->isYesterday() ? 'Yesterday'
+                        : $log->created_at->setTimezone($tz)->format('l, M j, Y')),
+                'properties'  => $log->properties ?? [],
+            ]),
+            'users'      => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]),
             'stats'      => $stats,
             'categories' => self::CATEGORIES,
+            'filters'    => $request->only(['q', 'user_id', 'category', 'from', 'to']),
+            'export_url' => route('admin.activity.export', $request->query()),
+            'timezone'   => $tz,
         ]);
     }
 

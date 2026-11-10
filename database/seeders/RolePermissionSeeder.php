@@ -33,6 +33,13 @@ class RolePermissionSeeder extends Seeder
             'leave.view', 'leave.approve', 'leave.manage', 'announcements.manage', 'employees.view-private',
             // Expenses
             'expenses.view', 'expenses.submit', 'expenses.review', 'expenses.manage',
+            // Standups / daily reports (team-level access)
+            'standups.view-team', 'standups.manage',
+            'daily-reports.view-team',
+            // Tasks (cross-user visibility)
+            'tasks.view-all',
+            // Chat moderation
+            'messages.delete-any',
         ];
 
         foreach ($permissions as $perm) {
@@ -55,6 +62,11 @@ class RolePermissionSeeder extends Seeder
             'comments.create', 'comments.update', 'comments.delete', 'comments.pin',
             'attendance.view', 'activity.view', 'leave.view', 'leave.approve',
             'expenses.view', 'expenses.submit', 'expenses.review',
+            // Team-level access (previously hardcoded to manager role)
+            'standups.view-team', 'standups.manage',
+            'daily-reports.view-team',
+            'tasks.view-all',
+            'messages.delete-any',
         ]);
 
         // HR Manager

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class PeopleController extends Controller
 {
@@ -20,10 +21,27 @@ class PeopleController extends Controller
 
         $onLeaveToday = LeaveRequest::where('status', 'approved')->onDate(today()->toDateString())->pluck('user_id')->all();
 
-        return view('people.index', [
-            'people'       => $people,
+        $statuses = User::AVAILABILITY;
+
+        return Inertia::render('People/Index', [
+            'people'       => $people->map(fn ($u) => [
+                'id'               => $u->id,
+                'name'             => $u->name,
+                'email'            => $u->email,
+                'phone'            => $u->phone,
+                'job_title'        => $u->job_title,
+                'department'       => $u->department,
+                'avatar_url'       => $u->avatar_url,
+                'direct_reports_count' => $u->direct_reports_count,
+                'manager'          => $u->manager ? ['id' => $u->manager->id, 'name' => $u->manager->name] : null,
+                'is_on_leave'      => in_array($u->id, $onLeaveToday),
+                'dot_class'        => ($statuses[$u->effective_availability] ?? $statuses['offline'])['dot'],
+                'show_url'         => route('users.show', $u),
+            ]),
             'departments'  => User::active()->whereNotNull('department')->select('department')->distinct()->orderBy('department')->pluck('department'),
-            'onLeaveToday' => $onLeaveToday,
+            'on_leave_today' => $onLeaveToday,
+            'filters'      => ['department' => $request->input('department'), 'q' => $request->input('q')],
+            'org_chart_url'=> route('people.org-chart'),
         ]);
     }
 
@@ -36,6 +54,23 @@ class PeopleController extends Controller
         // Roots: nobody above them, or their manager is inactive/removed.
         $roots = $people->filter(fn ($u) => ! $u->manager_id || ! in_array($u->manager_id, $ids))->sortBy('name')->values();
 
-        return view('people.org-chart', compact('roots', 'byManager'));
+        $serializeNode = null;
+        $serializeNode = function ($u) use ($byManager, &$serializeNode) {
+            return [
+                'id'          => $u->id,
+                'name'        => $u->name,
+                'job_title'   => $u->job_title,
+                'department'  => $u->department,
+                'avatar_url'  => $u->avatar ?? null,
+                'email'       => $u->email,
+                'show_url'    => route('users.show', $u),
+                'children'    => ($byManager->get($u->id) ?? collect())->sortBy('name')->map($serializeNode)->values(),
+            ];
+        };
+
+        return Inertia::render('People/OrgChart', [
+            'tree'       => $roots->map($serializeNode)->values(),
+            'index_url'  => route('people.index'),
+        ]);
     }
 }

@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Projects
+    Route::get('projects/list', [ProjectController::class, 'list'])->name('projects.list');
     Route::resource('projects', ProjectController::class);
     Route::patch('projects/{project}/archive', [ProjectController::class, 'archive'])->name('projects.archive');
     Route::patch('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
@@ -169,10 +170,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/calendar', [StandupController::class, 'calendar'])->name('calendar');
         Route::get('/export-excel', [StandupController::class, 'exportExcel'])->name('export-excel');
         Route::get('/export-pdf', [StandupController::class, 'exportPdf'])->name('export-pdf');
+        Route::get('/export-excel-range', [StandupController::class, 'exportExcelRange'])->name('export-excel-range');
+        Route::get('/export-pdf-range', [StandupController::class, 'exportPdfRange'])->name('export-pdf-range');
         Route::get('/tasks/search', [StandupController::class, 'taskSearch'])->name('tasks.search');
+        Route::get('/my/history', [StandupController::class, 'history'])->name('history');
         Route::get('/my/{date}', [StandupController::class, 'show'])->name('show');
+        Route::get('/summary', [StandupController::class, 'summary'])->name('summary');
         Route::get('/{date}', [StandupController::class, 'day'])->name('day');
         Route::get('/{date}/{user}', [StandupController::class, 'memberDay'])->name('member-day');
+        Route::delete('/{standup}', [StandupController::class, 'destroy'])->name('destroy');
     });
 
     // People
@@ -275,6 +281,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Help / Documentation
     Route::get('help', fn() => view('help.index'))->name('help');
+
+    // PWA offline fallback
+    Route::get('offline', fn() => view('offline'))->name('offline');
 
     // Settings
     Route::prefix('settings')->name('settings.')->group(function () {

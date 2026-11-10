@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -18,15 +20,40 @@ class RoleController extends Controller
         $roles = Role::withCount(['users', 'permissions'])->orderBy('name')->get();
         $permissionGroups = $this->groupedPermissions();
 
-        return view('admin.roles.index', compact('roles', 'permissionGroups'));
+        return Inertia::render('Admin/Roles/Index', [
+            'roles' => $roles->map(fn ($r) => [
+                'id' => $r->id, 'name' => $r->name, 'headline' => Str::headline($r->name),
+                'users_count' => $r->users_count, 'permissions_count' => $r->permissions_count,
+                'is_admin' => $r->name === 'admin',
+                'edit_url' => route('admin.roles.edit', $r),
+                'destroy_url' => route('admin.roles.destroy', $r),
+                'users_url' => route('users.index', ['role' => $r->name]),
+            ]),
+            'permission_groups' => $permissionGroups->map(fn ($perms, $group) => [
+                'group' => $group, 'headline' => Str::headline($group),
+                'perms' => $perms->map(fn ($p) => [
+                    'id' => $p->id, 'name' => $p->name,
+                    'action_headline' => Str::headline(Str::after($p->name, '.')),
+                    'destroy_url' => route('admin.permissions.destroy', $p),
+                ])->values(),
+            ])->values(),
+            'store_permission_url' => route('admin.permissions.store'),
+            'create_url' => route('admin.roles.create'),
+        ]);
     }
 
     public function create()
     {
-        return view('admin.roles.form', [
-            'role'             => new Role(),
-            'permissionGroups' => $this->groupedPermissions(),
-            'selected'         => [],
+        return Inertia::render('Admin/Roles/Form', [
+            'role' => null,
+            'permission_groups' => $this->groupedPermissions()->map(fn ($perms, $group) => [
+                'group' => $group, 'headline' => Str::headline($group),
+                'perms' => $perms->map(fn ($p) => ['name' => $p->name, 'action_headline' => Str::headline(Str::after($p->name, '.'))])->values(),
+            ])->values(),
+            'selected' => [],
+            'is_admin_role' => false,
+            'store_url' => route('admin.roles.store'),
+            'back_url' => route('admin.roles.index'),
         ]);
     }
 
@@ -42,10 +69,16 @@ class RoleController extends Controller
 
     public function edit(Role $role)
     {
-        return view('admin.roles.form', [
-            'role'             => $role,
-            'permissionGroups' => $this->groupedPermissions(),
-            'selected'         => $role->permissions->pluck('name')->all(),
+        return Inertia::render('Admin/Roles/Form', [
+            'role' => ['id' => $role->id, 'name' => $role->name, 'headline' => Str::headline($role->name)],
+            'permission_groups' => $this->groupedPermissions()->map(fn ($perms, $group) => [
+                'group' => $group, 'headline' => Str::headline($group),
+                'perms' => $perms->map(fn ($p) => ['name' => $p->name, 'action_headline' => Str::headline(Str::after($p->name, '.'))])->values(),
+            ])->values(),
+            'selected' => $role->permissions->pluck('name')->all(),
+            'is_admin_role' => $role->name === 'admin',
+            'update_url' => route('admin.roles.update', $role),
+            'back_url' => route('admin.roles.index'),
         ]);
     }
 
