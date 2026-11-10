@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE  = `workzen-static-${CACHE_VERSION}`;
 const ASSET_CACHE   = `workzen-assets-${CACHE_VERSION}`;
 
@@ -91,24 +91,11 @@ async function networkFirstWithOffline(req) {
     try {
         return await fetchWithTimeout(req);
     } catch {
-        // Only show the offline page when the user is genuinely offline.
-        // If they are online but the server is slow/down, let the browser show
-        // its own error rather than a misleading "You're offline" page.
-        if (!self.navigator.onLine) {
-            const cached = await caches.match(req);
-            if (cached) return cached;
-
-            const offline = await caches.match('/offline');
-            if (offline) return offline;
-        }
-
-        // Online but server unreachable — serve stale cache if available,
-        // otherwise propagate the error (browser error page).
+        // Serve stale cache if available, then let the browser handle the error.
         const cached = await caches.match(req);
         if (cached) return cached;
 
-        return new Response('<h1>Server unreachable</h1>', {
-            headers: { 'Content-Type': 'text/html' },
-        });
+        // Nothing cached — propagate so the browser shows its native error page.
+        return fetch(req);
     }
 }
