@@ -289,6 +289,16 @@ function typeBg(type) {
             <span class="font-mono text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-slate-500">{{ task.ticket_key }}</span>
         </div>
 
+        <!-- Parent task reference (subtask only) -->
+        <div v-if="task.parent" class="flex items-center gap-2 mb-4 text-sm">
+            <i class="bi bi-diagram-2 text-slate-400"></i>
+            <span class="text-slate-500">Part of:</span>
+            <Link :href="task.parent.show_url" class="inline-flex items-center gap-1.5 font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">
+                <span class="font-mono text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-1.5 py-0.5 rounded">{{ task.parent.ticket_key }}</span>
+                {{ task.parent.title }}
+            </Link>
+        </div>
+
         <div class="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
 
             <!-- MAIN COLUMN -->

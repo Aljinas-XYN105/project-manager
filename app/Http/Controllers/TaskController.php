@@ -241,6 +241,12 @@ class TaskController extends Controller
                 'total_logged_minutes' => $timeEntries->sum('duration_minutes'),
                 'column_id' => $task->column_id,
                 'parent_id' => $task->parent_id,
+                'parent' => $task->parent ? [
+                    'id'         => $task->parent->id,
+                    'title'      => $task->parent->title,
+                    'ticket_key' => $task->parent->ticket_key,
+                    'show_url'   => route('projects.tasks.show', $task->parent),
+                ] : null,
                 // URLs
                 'update_url'           => route('tasks.update', $task),
                 'destroy_url'          => route('tasks.destroy', $task),
