@@ -319,7 +319,7 @@ async function createGroup() {
 
 <style>
 :root {
-    --ci-bg: #f8fafc; --ci-header-bg: #ffffff; --ci-header-border: #e2e8f0;
+    --ci-bg: #ffffff; --ci-header-bg: #ffffff; --ci-header-border: #e2e8f0;
     --ci-row-hover: #f1f5f9; --ci-row-active: #ede9fe; --ci-row-active-border: #7c3aed;
     --ci-name: #1e293b; --ci-preview: #64748b; --ci-time: #94a3b8;
     --ci-avatar-bg: #ede9fe; --ci-avatar-fg: #7c3aed;
