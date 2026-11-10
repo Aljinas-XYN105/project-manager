@@ -13,9 +13,9 @@ const props = defineProps({
 const page   = usePage()
 const authId = computed(() => page.props.auth?.user?.id)
 
-// ── Message list (reverse for chrono order) ───────────────────
+// ── Message list — API returns oldest-first; newest is last in the array (bottom)
 const messages = ref(
-    [...(props.messages.data ?? [])].reverse()
+    (props.messages.data ?? [])
         .map(m => ({ ...m, deleted: !!(m.deleted_at || m.is_deleted) }))
 )
 
@@ -412,6 +412,7 @@ function handleDocKeydown(e) {
 // ── Lifecycle ─────────────────────────────────────────────────
 onMounted(() => {
     scrollToBottom(false)
+    setTimeout(() => scrollToBottom(false), 80)
     nextTick(() => compose.value?.focus())
 
     // Load mention targets
@@ -884,10 +885,10 @@ onBeforeUnmount(() => {
 .ct-sep span { font-size: 11px; font-weight: 600; color: var(--ct-sep-text); padding: 2px 10px; white-space: nowrap; background: var(--ct-bg); border-radius: 10px; border: 1px solid var(--ct-sep-line); }
 .ct-row { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 1px; }
 .ct-row.out { flex-direction: row-reverse; }
-.ct-bubble { max-width: 68%; padding: 10px 13px 7px; line-height: 1.5; font-size: 14px; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,.08); position: relative; }
+.ct-bubble { max-width: 68%; min-width: 90px; padding: 7px 13px 24px; line-height: 1.5; font-size: 14px; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,.08); position: relative; }
 .ct-bubble.out { background: var(--ct-bubble-out-bg); color: var(--ct-bubble-out-fg); border-radius: 18px 18px 4px 18px; }
 .ct-bubble.in { background: var(--ct-bubble-in-bg); color: var(--ct-bubble-in-fg); border-radius: 18px 18px 18px 4px; border: 1px solid var(--ct-bubble-in-border); }
-.ct-bubble-time { font-size: 10px; opacity: .65; white-space: nowrap; display: flex; align-items: center; gap: 4px; justify-content: flex-end; margin-top: 3px; }
+.ct-bubble-time { font-size: 10px; opacity: .65; white-space: nowrap; display: flex; align-items: center; gap: 4px; position: absolute; bottom: 6px; right: 11px; }
 .ct-bubble.out .ct-bubble-time { color: rgba(255,255,255,.8); }
 .ct-bubble.in .ct-bubble-time { color: var(--ct-time); }
 .ct-sender-name { font-size: 11px; font-weight: 700; margin-bottom: 2px; margin-left: 2px; }
