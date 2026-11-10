@@ -54,7 +54,6 @@ const editingDesc  = ref(false)
 const statusOpen   = ref(false)
 const priorityOpen = ref(false)
 const typeOpen     = ref(false)
-const editingDue   = ref(false)
 const assigneeOpen = ref(false)
 const addingSubtask = ref(false)
 const newSubtaskTitle = ref('')
@@ -123,7 +122,6 @@ async function setType(val) {
 }
 
 async function saveDue() {
-    editingDue.value = false
     await patch({ due_date: dueDate.value || null })
 }
 
@@ -673,25 +671,9 @@ function typeBg(type) {
                         <i class="bi bi-calendar3 text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
                         <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Due</span>
                         <div class="flex-1">
-                            <div v-if="!editingDue">
-                                <button v-if="dueDateDisplay" @click="can_update && (editingDue = true)"
-                                        class="inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
-                                        :class="[task.is_overdue ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200', can_update ? 'hover:text-violet-600 cursor-pointer' : 'cursor-default']">
-                                    <span>{{ dueDateDisplay }}</span>
-                                    <span v-if="task.is_overdue" class="text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 px-1.5 py-0.5 rounded">Overdue</span>
-                                </button>
-                                <button v-else @click="can_update && (editingDue = true)"
-                                        class="text-xs text-slate-400 italic"
-                                        :class="can_update ? 'hover:text-violet-500 cursor-pointer' : 'cursor-default'">
-                                    {{ can_update ? 'Set date' : '—' }}
-                                </button>
-                            </div>
-                            <div v-else class="flex items-center gap-1.5">
-                                <DatePicker v-model="dueDate" @update:modelValue="saveDue" />
-                                <button v-if="dueDate" @click="dueDate=''; saveDue()" class="text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0">
-                                    <i class="bi bi-x-circle text-xs"></i>
-                                </button>
-                            </div>
+                            <DatePicker v-model="dueDate" @update:modelValue="saveDue"
+                                        compact :overdue="task.is_overdue" :disabled="!can_update"
+                                        :placeholder="can_update ? 'Set date' : '—'" />
                         </div>
                     </div>
 

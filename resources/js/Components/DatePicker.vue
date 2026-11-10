@@ -8,6 +8,9 @@ const props = defineProps({
     id:          { type: String, default: null },
     min:         { type: String, default: '' },
     max:         { type: String, default: '' },
+    compact:     { type: Boolean, default: false },
+    overdue:     { type: Boolean, default: false },
+    disabled:    { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -26,6 +29,7 @@ function initView() {
 initView()
 
 function toggleOpen() {
+    if (props.disabled) return
     open.value = !open.value
     if (open.value) {
         setTimeout(() => {
@@ -114,8 +118,29 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleOutsideCli
         <!-- Hidden real input for form submission -->
         <input type="hidden" :name="name" :value="modelValue" :id="id ?? undefined">
 
-        <!-- Trigger button -->
-        <button type="button"
+        <!-- Compact chip trigger (sidebar dropdowns) -->
+        <button v-if="compact"
+                type="button"
+                @click="toggleOpen"
+                :disabled="disabled"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                :class="[
+                    disabled ? 'cursor-default' : 'cursor-pointer',
+                    modelValue && overdue
+                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:opacity-90'
+                        : modelValue
+                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                            : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300',
+                ]">
+            <i class="bi bi-calendar3 text-[10px] flex-shrink-0"></i>
+            <span>{{ modelValue ? formatDisplay(modelValue) : placeholder }}</span>
+            <span v-if="modelValue && overdue" class="text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 px-1.5 py-0.5 rounded ml-0.5">Overdue</span>
+            <i v-if="!disabled" class="bi bi-chevron-down text-[9px] opacity-50 ml-0.5"></i>
+        </button>
+
+        <!-- Full-width form trigger (forms / create pages) -->
+        <button v-else
+                type="button"
                 @click="toggleOpen"
                 :class="open ? 'ring-2 ring-violet-500/30 border-violet-500 dark:border-violet-400' : ''"
                 class="form-input text-left flex items-center gap-2 w-full">
