@@ -214,7 +214,7 @@
         </button>
 
         <!-- Global search -->
-        <div class="relative flex-1 max-w-sm" @click.outside="searchOpen = false">
+        <div ref="searchContainerRef" class="relative flex-1 max-w-sm">
           <i class="bi absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 text-xs pointer-events-none"
              :class="searchLoading ? 'bi-arrow-repeat animate-spin' : 'bi-search'"></i>
           <input
@@ -278,7 +278,7 @@
           </button>
 
           <!-- Presence widget -->
-          <div class="relative" @click.outside="presenceOpen = false">
+          <div ref="presenceContainerRef" class="relative">
             <button @click.stop="togglePresence" :disabled="presenceBusy"
                     class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-150
                            text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -328,7 +328,7 @@
           </div>
 
           <!-- Multi-timer widget -->
-          <div class="relative" @click.outside="timerOpen = false">
+          <div ref="timerContainerRef" class="relative">
             <button @click.stop="timerOpen = !timerOpen"
                     class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-150 relative"
                     :class="timerHasActive
@@ -426,7 +426,7 @@
           </Link>
 
           <!-- Notifications -->
-          <div class="relative" @click.outside="notifOpen = false">
+          <div ref="notifContainerRef" class="relative">
             <button @click.stop="toggleNotif"
                     class="btn-icon btn-ghost relative"
                     :class="notifOpen ? 'bg-slate-100 dark:bg-slate-800' : ''">
@@ -491,7 +491,7 @@
           </div>
 
           <!-- User menu -->
-          <div class="relative" @click.outside="userMenuOpen = false">
+          <div ref="userMenuContainerRef" class="relative">
             <button @click.stop="userMenuOpen = !userMenuOpen"
                     class="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-xl
                            hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150"
@@ -659,6 +659,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import ProjectSelect from '@/Components/ProjectSelect.vue';
+import { useClickOutside } from '@/Composables/useClickOutside';
 
 const page = usePage();
 
@@ -804,6 +805,21 @@ const adminLinks = computed(() => {
 
 // ── User menu ──────────────────────────────────────────────────
 const userMenuOpen = ref(false);
+
+// ── Dropdown container refs (click-outside) ────────────────────
+const searchContainerRef   = ref(null);
+const presenceContainerRef = ref(null);
+const timerContainerRef    = ref(null);
+const notifContainerRef    = ref(null);
+const userMenuContainerRef = ref(null);
+
+useClickOutside([
+    { elRef: searchContainerRef,   close: () => { searchOpen.value   = false } },
+    { elRef: presenceContainerRef, close: () => { presenceOpen.value = false } },
+    { elRef: timerContainerRef,    close: () => { timerOpen.value    = false } },
+    { elRef: notifContainerRef,    close: () => { notifOpen.value    = false } },
+    { elRef: userMenuContainerRef, close: () => { userMenuOpen.value = false } },
+]);
 const userInitials = computed(() => {
   const name = authUser.value?.name ?? '';
   const parts = name.trim().split(' ');
