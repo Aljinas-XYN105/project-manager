@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
+import { useClickOutside } from '@/Composables/useClickOutside'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 
@@ -57,9 +58,16 @@ const form = useForm({
 
 const statusOpen   = ref(false)
 const priorityOpen = ref(false)
+const statusDropRef   = ref(null)
+const priorityDropRef = ref(null)
 
 const curStatus   = () => statusOpts.find(o => o.val === form.status) ?? statusOpts[0]
 const curPriority = () => priorityOpts.find(o => o.val === form.priority) ?? priorityOpts[1]
+
+useClickOutside([
+    { elRef: statusDropRef,   close: () => { statusOpen.value   = false } },
+    { elRef: priorityDropRef, close: () => { priorityOpen.value = false } },
+])
 
 function toggleAssignee(id) {
     const i = form.assignee_ids.indexOf(id)
@@ -122,7 +130,7 @@ function submit() {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="form-label">Status</label>
-                            <div class="relative">
+                            <div ref="statusDropRef" class="relative">
                                 <button type="button" @click="statusOpen = !statusOpen"
                                         class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold w-full hover:opacity-90 transition-colors"
                                         :class="curStatus().chip">
@@ -145,7 +153,7 @@ function submit() {
                         </div>
                         <div>
                             <label class="form-label">Priority</label>
-                            <div class="relative">
+                            <div ref="priorityDropRef" class="relative">
                                 <button type="button" @click="priorityOpen = !priorityOpen"
                                         class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold w-full hover:opacity-90 transition-colors"
                                         :class="curPriority().chip">

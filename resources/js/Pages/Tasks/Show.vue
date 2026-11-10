@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import { useClickOutside } from '@/Composables/useClickOutside'
 
 const props = defineProps({
     task: Object,
@@ -57,6 +58,19 @@ const editingDue   = ref(false)
 const assigneeOpen = ref(false)
 const addingSubtask = ref(false)
 const newSubtaskTitle = ref('')
+
+// Dropdown refs for click-outside handling
+const statusDropRef   = ref(null)
+const priorityDropRef = ref(null)
+const typeDropRef     = ref(null)
+const assigneeDropRef = ref(null)
+
+useClickOutside([
+    { elRef: statusDropRef,   close: () => { statusOpen.value   = false } },
+    { elRef: priorityDropRef, close: () => { priorityOpen.value = false } },
+    { elRef: typeDropRef,     close: () => { typeOpen.value     = false } },
+    { elRef: assigneeDropRef, close: () => { assigneeOpen.value = false } },
+])
 
 // Computed current option
 const currentStatus   = computed(() => statusOptions.find(o => o.val === status.value) ?? statusOptions[0])
@@ -182,7 +196,6 @@ const dueDateDisplay = computed(() => {
 })
 
 // Time tracker
-import { onMounted, onUnmounted } from 'vue'
 const timerRunning  = ref(false)
 const timerElapsed  = ref('00:00:00')
 const timerEntryId  = ref(null)
@@ -213,6 +226,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
+
 
 const totalFormatted = computed(() => {
     const h = Math.floor(totalLogged.value / 60), m = totalLogged.value % 60
@@ -580,9 +594,8 @@ function typeBg(type) {
                     <div class="px-4 py-2.5 flex items-center gap-3">
                         <i class="bi bi-circle-half text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
                         <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Status</span>
-                        <div class="relative flex-1">
+                        <div ref="statusDropRef" class="relative flex-1">
                             <button @click="can_update && (statusOpen = !statusOpen)"
-                                    @click.outside="statusOpen = false"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors max-w-full"
                                     :class="[currentStatus.chip, can_update ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
                                 <i class="bi text-[10px] flex-shrink-0" :class="currentStatus.icon"></i>
@@ -607,9 +620,8 @@ function typeBg(type) {
                     <div class="px-4 py-2.5 flex items-center gap-3">
                         <i class="bi bi-flag text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
                         <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Priority</span>
-                        <div class="relative flex-1">
+                        <div ref="priorityDropRef" class="relative flex-1">
                             <button @click="can_update && (priorityOpen = !priorityOpen)"
-                                    @click.outside="priorityOpen = false"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
                                     :class="[currentPriority.chip, can_update ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
                                 <i class="bi text-[10px]" :class="currentPriority.icon"></i>
@@ -634,9 +646,8 @@ function typeBg(type) {
                     <div class="px-4 py-2.5 flex items-center gap-3">
                         <i class="bi bi-tag text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
                         <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Type</span>
-                        <div class="relative flex-1">
+                        <div ref="typeDropRef" class="relative flex-1">
                             <button @click="can_update && (typeOpen = !typeOpen)"
-                                    @click.outside="typeOpen = false"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
                                     :class="[currentType.chip, can_update ? 'hover:opacity-90 cursor-pointer' : 'cursor-default']">
                                 <i class="bi text-[10px]" :class="currentType.icon"></i>
@@ -699,13 +710,13 @@ function typeBg(type) {
                                     </button>
                                 </div>
                             </div>
-                            <div v-if="can_update" class="relative inline-block">
-                                <button @click="assigneeOpen = !assigneeOpen" @click.outside="assigneeOpen = false"
+                            <div v-if="can_update" ref="assigneeDropRef" class="relative inline-block">
+                                <button @click="assigneeOpen = !assigneeOpen"
                                         class="text-[10px] font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-0.5">
                                     <i class="bi bi-plus-circle text-xs"></i> Add
                                 </button>
                                 <div v-if="assigneeOpen"
-                                     class="absolute left-0 top-5 z-30 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 max-h-48 overflow-y-auto">
+                                     class="absolute left-0 top-5 z-50 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 max-h-48 overflow-y-auto">
                                     <p v-if="!availableMembers.length" class="text-xs text-slate-400 text-center py-3">All members assigned</p>
                                     <button v-for="u in availableMembers" :key="u.id" @click="addAssignee(u)"
                                             class="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
