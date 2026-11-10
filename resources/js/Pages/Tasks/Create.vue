@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import { useClickOutside } from '@/Composables/useClickOutside'
 
 const props = defineProps({
     project: Object,
@@ -53,6 +54,12 @@ const form = useForm({
 
 const statusOpen   = ref(false)
 const priorityOpen = ref(false)
+const statusContainerRef   = ref(null)
+const priorityContainerRef = ref(null)
+useClickOutside([
+    { elRef: statusContainerRef,   close: () => { statusOpen.value   = false } },
+    { elRef: priorityContainerRef, close: () => { priorityOpen.value = false } },
+])
 const bugFields    = ref(false)
 
 const curStatus   = () => statusOpts.find(o => o.val === form.status) ?? statusOpts[0]
@@ -118,7 +125,7 @@ function submit() {
                         <!-- Status -->
                         <div>
                             <label class="form-label">Status</label>
-                            <div class="relative">
+                            <div ref="statusContainerRef" class="relative">
                                 <button type="button" @click="statusOpen = !statusOpen"
                                         class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold w-full hover:opacity-90 transition-colors"
                                         :class="curStatus().chip">
@@ -126,7 +133,7 @@ function submit() {
                                     <span class="flex-1 text-left">{{ curStatus().label }}</span>
                                     <i class="bi bi-chevron-down text-[10px] opacity-50"></i>
                                 </button>
-                                <div v-if="statusOpen" @click.outside="statusOpen=false"
+                                <div v-if="statusOpen"
                                      class="absolute left-0 top-full mt-1 z-50 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
                                     <button v-for="o in statusOpts" :key="o.val" type="button" @click="form.status = o.val; statusOpen = false"
                                             class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
@@ -142,7 +149,7 @@ function submit() {
                         <!-- Priority -->
                         <div>
                             <label class="form-label">Priority</label>
-                            <div class="relative">
+                            <div ref="priorityContainerRef" class="relative">
                                 <button type="button" @click="priorityOpen = !priorityOpen"
                                         class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold w-full hover:opacity-90 transition-colors"
                                         :class="curPriority().chip">
@@ -150,7 +157,7 @@ function submit() {
                                     <span class="flex-1 text-left">{{ curPriority().label }}</span>
                                     <i class="bi bi-chevron-down text-[10px] opacity-50"></i>
                                 </button>
-                                <div v-if="priorityOpen" @click.outside="priorityOpen=false"
+                                <div v-if="priorityOpen"
                                      class="absolute left-0 top-full mt-1 z-50 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5">
                                     <button v-for="o in priorityOpts" :key="o.val" type="button" @click="form.priority = o.val; priorityOpen = false"
                                             class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">

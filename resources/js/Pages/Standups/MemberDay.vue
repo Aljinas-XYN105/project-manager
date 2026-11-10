@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import { useClickOutside } from '@/Composables/useClickOutside'
 
 const props = defineProps({
     date: String,
@@ -162,6 +163,8 @@ const priorityOpts = [
 ]
 
 const typeDdOpen = ref(false)
+const typeDdContainerRef = ref(null)
+useClickOutside([{ elRef: typeDdContainerRef, close: () => { typeDdOpen.value = false } }])
 const priorityDdOpen = ref(false)
 const columnDdOpen = ref(false)
 
@@ -360,7 +363,7 @@ function toggleLabel(lblId) {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="form-label">Type</label>
-                                <div class="relative">
+                                <div ref="typeDdContainerRef" class="relative">
                                     <button type="button" @click="typeDdOpen = !typeDdOpen; priorityDdOpen = false; columnDdOpen = false"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold w-full hover:opacity-90 transition-colors"
                                             :class="curType().chip">
@@ -368,7 +371,7 @@ function toggleLabel(lblId) {
                                         <span class="flex-1 text-left">{{ curType().label }}</span>
                                         <i class="bi bi-chevron-down text-[9px] opacity-50"></i>
                                     </button>
-                                    <div v-if="typeDdOpen" @click.outside="typeDdOpen = false"
+                                    <div v-if="typeDdOpen"
                                          class="absolute left-0 top-full mt-1 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5"
                                          style="z-index:400">
                                         <button v-for="o in typeOpts" :key="o.val" type="button" @click="pickType(o.val)"
