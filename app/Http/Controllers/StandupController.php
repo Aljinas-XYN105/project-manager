@@ -61,18 +61,16 @@ class StandupController extends Controller
                 'done_count'      => $standups->has($u->id) ? $standups[$u->id]->items->where('status', 'done')->count() : 0,
                 'standup'         => $standups->has($u->id) ? [
                     'id'       => $standups[$u->id]->id,
-                    'summary'  => $standups[$u->id]->summary,
                     'blockers' => $standups[$u->id]->blockers,
                     'items'    => $standups[$u->id]->items->map(fn ($item) => [
                         'id'          => $item->id,
-                        'type'        => $item->type,
+                        'task_id'     => $item->task_id,
                         'status'      => $item->status,
                         'description' => $item->description,
-                        'hours'       => $item->hours,
                     ]),
                 ] : null,
                 'member_day_url'  => route('standups.member-day', [$date->toDateString(), $u->id]),
-                'show_url'        => route('standups.show', $date->toDateString()).'?user='.$u->id,
+                'show_url'        => route('standups.member-day', [$date->toDateString(), $u->id]),
             ]),
             'can_export'             => auth()->user()->can('standups.view-team'),
             'export_excel_url'       => route('standups.export-excel', ['date' => $date->toDateString()]),
@@ -158,7 +156,7 @@ class StandupController extends Controller
                     'id'          => null,
                     'task_id'     => $t->id,
                     'description' => "[{$t->ticket_key}] {$t->title}",
-                    'status'      => in_array($t->status, ['todo', 'in_progress', 'in_review']) ? $t->status : 'todo',
+                    'status'      => in_array($t->status, ['todo', 'in_progress', 'in_review', 'qa_testing']) ? $t->status : 'todo',
                 ]);
         }
 
@@ -293,7 +291,7 @@ class StandupController extends Controller
 
         $tasks = Task::with('project')
             ->whereIn('project_id', $accessibleIds)
-            ->whereNotIn('status', ['done', 'cancelled'])
+            ->whereNotIn('status', ['done', 'cancelled', 'archived'])
             ->when(mb_strlen($term) >= 2, fn ($q) => $q->where('title', 'like', "%{$term}%"))
             ->when(mb_strlen($term) < 2, fn ($q) => $q->whereHas('assignees', fn ($a) => $a->where('users.id', $user->id)))
             ->orderByRaw("case when status = 'in_progress' then 0 when status = 'todo' then 1 else 2 end")

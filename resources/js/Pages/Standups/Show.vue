@@ -54,7 +54,7 @@ const columns = [
 function itemsFor(status) { return items.value.filter(i => i.status === status) }
 
 function statusDot(status) {
-    return { todo: 'bg-slate-400', in_progress: 'bg-blue-500', in_review: 'bg-amber-400', done: 'bg-green-500' }[status] ?? 'bg-slate-300'
+    return { todo: 'bg-slate-400', in_progress: 'bg-blue-500', in_review: 'bg-amber-400', qa_testing: 'bg-cyan-500', done: 'bg-green-500' }[status] ?? 'bg-slate-300'
 }
 
 function ticketKey(desc) {
