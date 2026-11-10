@@ -724,7 +724,6 @@ async function submitQuickAdd() {
       type: quickAddType.value,
       project_id: quickAddProject.value,
       priority: quickAddPriority.value,
-      _token: document.querySelector('meta[name=csrf-token]')?.content,
     });
     quickAdd.value = false;
     quickAddTitle.value = '';
