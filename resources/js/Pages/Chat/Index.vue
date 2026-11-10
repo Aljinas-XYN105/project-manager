@@ -345,12 +345,12 @@ async function createGroup() {
     padding: 11px 16px; cursor: pointer;
     text-decoration: none; color: inherit;
     transition: background .12s;
-    border-left: 3px solid transparent;
+    border-left: 3px solid var(--ci-bg);
     position: relative;
 }
-.conv-row-ci:hover { background: var(--ci-row-hover); }
+.conv-row-ci:hover { background: var(--ci-row-hover); border-left-color: var(--ci-row-hover); }
 .conv-row-ci.ci-active { background: var(--ci-row-active); border-left-color: var(--ci-row-active-border); }
-.conv-sep-ci { height: 1px; background: var(--ci-sep); margin: 0 16px; }
+.conv-sep-ci { height: 1px; background: var(--ci-sep); margin: 0; }
 .conv-name-ci { font-weight: 600; font-size: 14px; color: var(--ci-name); line-height: 1.2; }
 .conv-preview-ci { font-size: 12.5px; color: var(--ci-preview); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .conv-time-ci { font-size: 11px; color: var(--ci-time); white-space: nowrap; }
