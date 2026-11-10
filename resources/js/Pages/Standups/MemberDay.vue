@@ -11,7 +11,23 @@ const props = defineProps({
     standup: Object,
     member_items: Array,
     index_url: String,
+    delete_url: String,
 })
+
+async function deleteStandup() {
+    if (!confirm(`Delete ${props.user.name}'s standup for ${props.date_label}? This cannot be undone.`)) return
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = props.delete_url
+    const method = document.createElement('input')
+    method.name = '_method'; method.value = 'DELETE'
+    form.appendChild(method)
+    const csrf = document.createElement('input')
+    csrf.name = '_token'; csrf.value = document.querySelector('meta[name=csrf-token]')?.content
+    form.appendChild(csrf)
+    document.body.appendChild(form)
+    form.submit()
+}
 
 let nextId = 0
 const items = ref((props.member_items ?? []).map(item => ({ ...item, _id: nextId++ })))
@@ -204,6 +220,10 @@ function toggleLabel(lblId) {
                 </p>
 
                 <div class="flex items-center gap-2 flex-shrink-0">
+                    <button v-if="standup && delete_url" @click="deleteStandup()"
+                            class="btn-ghost btn-sm text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20">
+                        <i class="bi bi-trash3 text-xs"></i> Delete standup
+                    </button>
                     <span v-if="saving" class="text-xs text-slate-400 flex items-center gap-1">
                         <i class="bi bi-arrow-repeat animate-spin text-xs"></i> Saving…
                     </span>
