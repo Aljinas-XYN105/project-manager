@@ -36,7 +36,16 @@ class TaskService
 
             $task = $this->taskRepository->create($data);
 
-            $assigneeIds = !empty($data['assignee_ids']) ? $data['assignee_ids'] : [$creator->id];
+            // For subtasks, inherit parent assignees (merged with any explicitly chosen)
+            $parentAssigneeIds = [];
+            if (!empty($data['parent_id'])) {
+                $parent = Task::find($data['parent_id']);
+                if ($parent) {
+                    $parentAssigneeIds = $parent->assignees()->pluck('users.id')->toArray();
+                }
+            }
+            $explicitIds  = !empty($data['assignee_ids']) ? $data['assignee_ids'] : [$creator->id];
+            $assigneeIds  = array_unique(array_merge($parentAssigneeIds, $explicitIds));
             $this->assignUsers($task, $assigneeIds, $creator);
 
             if (!empty($data['label_ids'])) {
