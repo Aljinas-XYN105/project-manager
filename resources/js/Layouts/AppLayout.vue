@@ -880,6 +880,22 @@ const notifCount = ref(0);
 const notifItems = ref([]);
 let notifPoll    = null;
 
+function playNotifSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[660, 0, 0.1], [880, 0.12, 0.12]].forEach(([freq, start, dur]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, ctx.currentTime + start);
+      g.gain.linearRampToValueAtTime(0.15, ctx.currentTime + start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      o.start(ctx.currentTime + start);
+      o.stop(ctx.currentTime + start + dur + 0.05);
+    });
+  } catch (_) {}
+}
+
 function toggleNotif() {
   notifOpen.value = !notifOpen.value;
   if (notifOpen.value) fetchNotifs();
@@ -888,7 +904,9 @@ function toggleNotif() {
 async function fetchNotifs() {
   try {
     const r = await window.axios.get(route('notifications.index'), { headers: { Accept: 'application/json' } });
-    notifCount.value = r.data.unread_count ?? 0;
+    const newCount = r.data.unread_count ?? 0;
+    if (newCount > notifCount.value) playNotifSound();
+    notifCount.value = newCount;
     notifItems.value = r.data.items ?? [];
   } catch (_) {}
 }
