@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     user: Object,
@@ -134,9 +135,7 @@ function directPermCount(group) {
                         </div>
                         <div>
                             <label class="form-label">Timezone</label>
-                            <select v-model="form.timezone" class="form-input">
-                                <option v-for="tz in Intl.supportedValuesOf('timeZone')" :key="tz" :value="tz">{{ tz }}</option>
-                            </select>
+                            <SearchSelect v-model="form.timezone" :options="Intl.supportedValuesOf('timeZone')" placeholder="Select timezone…" />
                             <p class="form-hint">Used to show this member's attendance times.</p>
                         </div>
                         <div v-if="!is_edit">

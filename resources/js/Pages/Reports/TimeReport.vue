@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import ProjectSelect from '@/Components/ProjectSelect.vue'
 
 const props = defineProps({
     from: String,
@@ -68,10 +69,7 @@ function exportPdf() {
                     </div>
                     <div>
                         <label class="form-label">Project</label>
-                        <select v-model="form.project_id" class="form-input">
-                            <option value="">All Projects</option>
-                            <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-                        </select>
+                        <ProjectSelect v-model="form.project_id" :projects="projects" placeholder="All Projects" :clearable="true" />
                     </div>
                     <div>
                         <label class="form-label">User</label>

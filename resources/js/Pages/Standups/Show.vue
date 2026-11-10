@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import ProjectSelect from '@/Components/ProjectSelect.vue'
 
 const props = defineProps({
     date: String,
@@ -459,10 +460,7 @@ const taskTypes = [
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Project *</p>
-                                    <select v-model="newTaskProject" class="form-input text-sm">
-                                        <option value="">Select…</option>
-                                        <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-                                    </select>
+                                    <ProjectSelect v-model="newTaskProject" :projects="projects" placeholder="Select…" size="sm" />
                                 </div>
                                 <div>
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Priority</p>

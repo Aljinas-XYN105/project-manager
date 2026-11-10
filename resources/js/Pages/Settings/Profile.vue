@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     user: Object,
@@ -175,9 +176,7 @@ function toggleDark() {
                             </div>
                             <div>
                                 <label class="form-label">Timezone</label>
-                                <select v-model="profileForm.timezone" class="form-input">
-                                    <option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
-                                </select>
+                                <SearchSelect v-model="profileForm.timezone" :options="timezones" placeholder="Select timezone…" />
                             </div>
                         </div>
 

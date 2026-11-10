@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import ProjectSelect from '@/Components/ProjectSelect.vue'
 
 const props = defineProps({
     daily_report: Object,
@@ -193,10 +194,7 @@ function deleteReport() {
                                             </div>
                                             <div class="sm:col-span-2">
                                                 <label class="form-label">Project *</label>
-                                                <select v-model="task.new_task.project_id" class="form-input text-sm">
-                                                    <option value="">Select a project…</option>
-                                                    <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-                                                </select>
+                                                <ProjectSelect v-model="task.new_task.project_id" :projects="projects" placeholder="Select a project…" size="sm" />
                                             </div>
                                             <div>
                                                 <label class="form-label">Type</label>
