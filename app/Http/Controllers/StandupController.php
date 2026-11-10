@@ -61,18 +61,16 @@ class StandupController extends Controller
                 'done_count'      => $standups->has($u->id) ? $standups[$u->id]->items->where('status', 'done')->count() : 0,
                 'standup'         => $standups->has($u->id) ? [
                     'id'       => $standups[$u->id]->id,
-                    'summary'  => $standups[$u->id]->summary,
                     'blockers' => $standups[$u->id]->blockers,
                     'items'    => $standups[$u->id]->items->map(fn ($item) => [
                         'id'          => $item->id,
-                        'type'        => $item->type,
+                        'task_id'     => $item->task_id,
                         'status'      => $item->status,
                         'description' => $item->description,
-                        'hours'       => $item->hours,
                     ]),
                 ] : null,
                 'member_day_url'  => route('standups.member-day', [$date->toDateString(), $u->id]),
-                'show_url'        => route('standups.show', $date->toDateString()).'?user='.$u->id,
+                'show_url'        => route('standups.member-day', [$date->toDateString(), $u->id]),
             ]),
             'can_export'             => auth()->user()->can('standups.view-team'),
             'export_excel_url'       => route('standups.export-excel', ['date' => $date->toDateString()]),
@@ -81,6 +79,7 @@ class StandupController extends Controller
             'export_pdf_range_url'   => route('standups.export-pdf-range'),
             'my_standup_url'   => route('standups.show', today()->toDateString()),
             'calendar_url'     => route('standups.calendar'),
+            'summary_url'      => route('standups.summary'),
         ]);
     }
 
@@ -158,7 +157,7 @@ class StandupController extends Controller
                     'id'          => null,
                     'task_id'     => $t->id,
                     'description' => "[{$t->ticket_key}] {$t->title}",
-                    'status'      => in_array($t->status, ['todo', 'in_progress', 'in_review']) ? $t->status : 'todo',
+                    'status'      => in_array($t->status, ['todo', 'in_progress', 'in_review', 'qa_testing']) ? $t->status : 'todo',
                 ]);
         }
 
@@ -171,27 +170,148 @@ class StandupController extends Controller
             ? $standup->items->map(fn($i) => ['id' => $i->id, 'task_id' => $i->task_id, 'description' => $i->description, 'status' => $i->status])->values()
             : $defaultItems;
 
+        // Carry-over: yesterday's unfinished items (only surfaced when today has no standup)
+        $carryoverItems = collect();
+        if (!$standup && $day->isToday()) {
+            $yesterday = Standup::whereDate('standup_date', $day->copy()->subDay())
+                ->where('user_id', $user->id)
+                ->with('items')
+                ->first();
+            if ($yesterday) {
+                $carryoverItems = $yesterday->items
+                    ->whereNotIn('status', ['done'])
+                    ->map(fn($i) => ['task_id' => $i->task_id, 'description' => $i->description, 'status' => $i->status])
+                    ->values();
+            }
+        }
+
         $members = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Standups/Show', [
-            'date'       => $day->toDateString(),
-            'date_label' => $day->format('l, F j'),
-            'is_today'   => $day->isToday(),
-            'user'       => [
+            'date'            => $day->toDateString(),
+            'date_label'      => $day->format('l, F j'),
+            'is_today'        => $day->isToday(),
+            'user'            => [
                 'id'        => $user->id,
                 'name'      => $user->name,
                 'initials'  => strtoupper(substr($user->name, 0, 2)),
                 'job_title' => $user->job_title ?? $user->department ?? '',
             ],
-            'standup'    => $standup ? [
+            'standup'         => $standup ? [
                 'id'       => $standup->id,
                 'blockers' => $standup->blockers,
             ] : null,
-            'seed_items' => $seedItems->values(),
-            'projects'   => $projects->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values(),
-            'members'    => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name])->values(),
-            'store_url'  => route('standups.store'),
-            'index_url'  => route('standups.index'),
+            'seed_items'      => $seedItems->values(),
+            'carryover_items' => $carryoverItems,
+            'projects'        => $projects->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values(),
+            'members'         => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name])->values(),
+            'store_url'       => route('standups.store'),
+            'index_url'       => route('standups.index'),
+            'history_url'     => route('standups.history'),
+        ]);
+    }
+
+    // Member: paginated history of their own past standups
+    public function history(Request $request)
+    {
+        $user    = auth()->user();
+        $perPage = 10;
+
+        $standups = Standup::where('user_id', $user->id)
+            ->with('items')
+            ->orderByDesc('standup_date')
+            ->paginate($perPage);
+
+        $rows = $standups->getCollection()->map(fn ($s) => [
+            'id'         => $s->id,
+            'date'       => Carbon::parse($s->standup_date)->toDateString(),
+            'date_label' => Carbon::parse($s->standup_date)->format('l, F j, Y'),
+            'blockers'   => $s->blockers,
+            'items'      => $s->items->map(fn ($i) => [
+                'id'          => $i->id,
+                'description' => $i->description,
+                'status'      => $i->status,
+                'task_id'     => $i->task_id,
+            ])->values(),
+            'show_url'   => route('standups.show', Carbon::parse($s->standup_date)->toDateString()),
+        ]);
+
+        return Inertia::render('Standups/History', [
+            'standups'  => [
+                'data'          => $rows,
+                'current_page'  => $standups->currentPage(),
+                'last_page'     => $standups->lastPage(),
+                'total'         => $standups->total(),
+                'per_page'      => $standups->perPage(),
+            ],
+            'index_url' => route('standups.index'),
+            'my_today_url' => route('standups.show', today()->toDateString()),
+        ]);
+    }
+
+    // Admin/manager: team summary digest for a date range
+    public function summary(Request $request)
+    {
+        abort_unless(auth()->user()->can('standups.view-team'), 403);
+
+        $preset = $request->input('preset', 'today');
+        [$from, $to] = match ($preset) {
+            'yesterday'  => [Carbon::yesterday(), Carbon::yesterday()],
+            'this_week'  => [Carbon::now()->startOfWeek(Carbon::MONDAY), Carbon::now()],
+            'last_week'  => [Carbon::now()->subWeek()->startOfWeek(Carbon::MONDAY), Carbon::now()->subWeek()->endOfWeek(Carbon::SUNDAY)],
+            default      => [Carbon::today(), Carbon::today()], // today
+        };
+
+        if ($request->filled('from')) $from = Carbon::parse($request->input('from'))->startOfDay();
+        if ($request->filled('to'))   $to   = Carbon::parse($request->input('to'))->endOfDay();
+
+        $standups = Standup::whereBetween('standup_date', [$from->startOfDay(), $to->endOfDay()])
+            ->with(['user:id,name,avatar_url', 'items'])
+            ->orderByDesc('standup_date')
+            ->orderBy('user_id')
+            ->get();
+
+        $users = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $submittedIds = $standups->pluck('user_id')->unique();
+        $missingUsers = $users->whereNotIn('id', $submittedIds)->map(fn ($u) => [
+            'id'   => $u->id,
+            'name' => $u->name,
+        ])->values();
+
+        $digest = $standups->groupBy(fn ($s) => Carbon::parse($s->standup_date)->toDateString())
+            ->map(fn ($dayStandups, $date) => [
+                'date'       => $date,
+                'date_label' => Carbon::parse($date)->format('l, F j'),
+                'entries'    => $dayStandups->map(fn ($s) => [
+                    'user_name'  => $s->user->name ?? 'Unknown',
+                    'avatar_url' => $s->user->avatar_url ?? null,
+                    'blockers'   => $s->blockers,
+                    'items'      => $s->items->map(fn ($i) => [
+                        'description' => $i->description,
+                        'status'      => $i->status,
+                    ])->values(),
+                    'member_day_url' => route('standups.member-day', [Carbon::parse($s->standup_date)->toDateString(), $s->user_id]),
+                ])->values(),
+            ])->values();
+
+        $statusTotals = [
+            'todo'        => $standups->sum(fn ($s) => $s->items->where('status', 'todo')->count()),
+            'in_progress' => $standups->sum(fn ($s) => $s->items->where('status', 'in_progress')->count()),
+            'in_review'   => $standups->sum(fn ($s) => $s->items->where('status', 'in_review')->count()),
+            'qa_testing'  => $standups->sum(fn ($s) => $s->items->where('status', 'qa_testing')->count()),
+            'done'        => $standups->sum(fn ($s) => $s->items->where('status', 'done')->count()),
+        ];
+
+        return Inertia::render('Standups/Summary', [
+            'preset'        => $preset,
+            'from'          => $from->toDateString(),
+            'to'            => $to->toDateString(),
+            'digest'        => $digest,
+            'status_totals' => $statusTotals,
+            'missing_users' => $missingUsers,
+            'total_submitted' => $submittedIds->count(),
+            'total_members'   => $users->count(),
+            'index_url'     => route('standups.index'),
         ]);
     }
 
@@ -224,6 +344,7 @@ class StandupController extends Controller
             ] : null,
             'member_items' => $memberItems->values(),
             'index_url'    => route('standups.index'),
+            'delete_url'   => $standup ? route('standups.destroy', $standup->id) : null,
         ]);
     }
 
@@ -279,6 +400,16 @@ class StandupController extends Controller
             ->with('success', 'Standup saved!');
     }
 
+    // Admin/manager: delete a submitted standup
+    public function destroy(Standup $standup)
+    {
+        abort_unless(auth()->user()->can('standups.manage'), 403);
+        $date = Carbon::parse($standup->standup_date)->toDateString();
+        $standup->delete(); // items cascade via FK
+        return redirect()->route('standups.member-day', [$date, $standup->user_id])
+            ->with('success', 'Standup deleted.');
+    }
+
     public function taskSearch(Request $request)
     {
         $user  = auth()->user();
@@ -293,7 +424,7 @@ class StandupController extends Controller
 
         $tasks = Task::with('project')
             ->whereIn('project_id', $accessibleIds)
-            ->whereNotIn('status', ['done', 'cancelled'])
+            ->whereNotIn('status', ['done', 'cancelled', 'archived'])
             ->when(mb_strlen($term) >= 2, fn ($q) => $q->where('title', 'like', "%{$term}%"))
             ->when(mb_strlen($term) < 2, fn ($q) => $q->whereHas('assignees', fn ($a) => $a->where('users.id', $user->id)))
             ->orderByRaw("case when status = 'in_progress' then 0 when status = 'todo' then 1 else 2 end")

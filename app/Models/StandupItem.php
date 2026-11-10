@@ -14,5 +14,5 @@ class StandupItem extends Model
         return $this->belongsTo(Standup::class);
     }
 
-    public static array $statuses = ['todo', 'in_progress', 'in_review', 'done'];
+    public static array $statuses = ['todo', 'in_progress', 'in_review', 'qa_testing', 'done'];
 }

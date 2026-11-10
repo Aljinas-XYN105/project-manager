@@ -16,6 +16,7 @@ const props = defineProps({
     export_pdf_range_url: String,
     my_standup_url: String,
     calendar_url: String,
+    summary_url: String,
 })
 
 const exportOpen = ref(false)
@@ -91,6 +92,13 @@ const pendingCount   = computed(() => props.users.length - submittedCount.value)
                     <Link v-if="!is_today" :href="route('standups.index')"
                           class="btn-ghost btn-sm text-violet-600 dark:text-violet-400">
                         Today
+                    </Link>
+
+                    <!-- Summary button -->
+                    <Link v-if="can_export && summary_url" :href="summary_url"
+                          class="btn-ghost btn-sm flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                        <i class="bi bi-bar-chart-line text-sm"></i>
+                        Summary
                     </Link>
 
                     <!-- Export dropdown -->

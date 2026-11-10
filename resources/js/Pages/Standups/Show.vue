@@ -11,14 +11,26 @@ const props = defineProps({
     user: Object,
     standup: Object,
     seed_items: Array,
+    carryover_items: { type: Array, default: () => [] },
     projects: Array,
     members: Array,
     store_url: String,
     index_url: String,
+    history_url: String,
 })
 
 let nextId = 0
 const items = ref((props.seed_items ?? []).map((item, i) => ({ ...item, _id: nextId++ })))
+const carryoverDismissed = ref(false)
+
+function applyCarryover() {
+    for (const c of (props.carryover_items ?? [])) {
+        if (items.value.some(i => i.task_id && i.task_id === c.task_id)) continue
+        items.value.push({ _id: nextId++, task_id: c.task_id ?? null, description: c.description, status: c.status })
+    }
+    carryoverDismissed.value = true
+    autoSave()
+}
 const blockers = ref(props.standup?.blockers ?? '')
 const saving = ref(false)
 const saved = ref(false)
@@ -54,7 +66,7 @@ const columns = [
 function itemsFor(status) { return items.value.filter(i => i.status === status) }
 
 function statusDot(status) {
-    return { todo: 'bg-slate-400', in_progress: 'bg-blue-500', in_review: 'bg-amber-400', done: 'bg-green-500' }[status] ?? 'bg-slate-300'
+    return { todo: 'bg-slate-400', in_progress: 'bg-blue-500', in_review: 'bg-amber-400', qa_testing: 'bg-cyan-500', done: 'bg-green-500' }[status] ?? 'bg-slate-300'
 }
 
 function ticketKey(desc) {
@@ -244,6 +256,10 @@ const taskTypes = [
                 </p>
 
                 <div class="flex items-center gap-2 flex-shrink-0">
+                    <a v-if="history_url" :href="history_url"
+                       class="btn-ghost btn-sm hidden sm:inline-flex">
+                        <i class="bi bi-clock-history text-xs"></i> History
+                    </a>
                     <span v-if="saving" class="text-xs text-slate-400 flex items-center gap-1">
                         <i class="bi bi-arrow-repeat animate-spin text-xs"></i> Saving…
                     </span>
@@ -269,6 +285,22 @@ const taskTypes = [
                     Standup submitted for {{ date_label }}. Nice work!
                 </p>
                 <button @click="justSubmitted = false" class="ml-auto text-green-400 hover:text-green-600 flex-shrink-0">
+                    <i class="bi bi-x text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Carry-over banner -->
+            <div v-if="!submitted && !carryoverDismissed && carryover_items?.length"
+                 class="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/50">
+                <i class="bi bi-arrow-clockwise text-violet-500 flex-shrink-0"></i>
+                <p class="text-sm text-violet-700 dark:text-violet-300 flex-1">
+                    You have <strong>{{ carryover_items.length }} unfinished item{{ carryover_items.length !== 1 ? 's' : '' }}</strong> from yesterday.
+                </p>
+                <button @click="applyCarryover()"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white transition-colors flex-shrink-0">
+                    Carry over
+                </button>
+                <button @click="carryoverDismissed = true" class="ml-1 text-violet-400 hover:text-violet-600 flex-shrink-0">
                     <i class="bi bi-x text-sm"></i>
                 </button>
             </div>

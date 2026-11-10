@@ -173,9 +173,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/export-excel-range', [StandupController::class, 'exportExcelRange'])->name('export-excel-range');
         Route::get('/export-pdf-range', [StandupController::class, 'exportPdfRange'])->name('export-pdf-range');
         Route::get('/tasks/search', [StandupController::class, 'taskSearch'])->name('tasks.search');
+        Route::get('/my/history', [StandupController::class, 'history'])->name('history');
         Route::get('/my/{date}', [StandupController::class, 'show'])->name('show');
+        Route::get('/summary', [StandupController::class, 'summary'])->name('summary');
         Route::get('/{date}', [StandupController::class, 'day'])->name('day');
         Route::get('/{date}/{user}', [StandupController::class, 'memberDay'])->name('member-day');
+        Route::delete('/{standup}', [StandupController::class, 'destroy'])->name('destroy');
     });
 
     // People
