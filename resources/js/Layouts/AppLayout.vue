@@ -609,10 +609,7 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="form-label">Project</label>
-                <select v-model="quickAddProject" name="project_id" required class="form-input text-sm">
-                  <option value="" disabled>Select project…</option>
-                  <option v-for="p in quickAddProjects" :key="p.id" :value="p.id">{{ p.name }}</option>
-                </select>
+                <ProjectSelect v-model="quickAddProject" :projects="quickAddProjects" placeholder="Select project…" size="sm" />
               </div>
               <div>
                 <label class="form-label">Priority</label>
@@ -661,6 +658,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
+import ProjectSelect from '@/Components/ProjectSelect.vue';
 
 const page = usePage();
 

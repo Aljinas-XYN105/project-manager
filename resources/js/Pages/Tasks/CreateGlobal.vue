@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import ProjectSelect from '@/Components/ProjectSelect.vue'
 
 const props = defineProps({
     projects: Array,
@@ -104,9 +105,7 @@ function submit() {
                     <!-- Project selector -->
                     <div>
                         <label class="form-label">Project *</label>
-                        <select v-model="form.project_id" class="form-input" @change="onProjectChange">
-                            <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-                        </select>
+                        <ProjectSelect v-model="form.project_id" :projects="projects" placeholder="Select project…" @update:modelValue="onProjectChange" />
                     </div>
 
                     <!-- Type selector -->

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
+import ProjectSelect from '@/Components/ProjectSelect.vue'
 
 const props = defineProps({
     groups: Object,
@@ -118,10 +119,7 @@ const priorityBadge = {
         <div class="flex flex-wrap gap-2 mb-5">
             <input type="hidden" :value="view">
             <input type="hidden" :value="scope">
-            <select v-model="projectId" @change="changeFilter" class="form-input text-sm w-auto">
-                <option value="">All projects</option>
-                <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-            </select>
+            <ProjectSelect v-model="projectId" :projects="projects" placeholder="All projects" :clearable="true" size="sm" class="w-auto min-w-[160px]" @update:modelValue="changeFilter" />
             <select v-model="priority" @change="changeFilter" class="form-input text-sm w-auto">
                 <option value="">Any priority</option>
                 <option value="critical">Critical</option>

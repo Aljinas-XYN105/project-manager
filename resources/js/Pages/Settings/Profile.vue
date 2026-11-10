@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     user: Object,
@@ -24,6 +25,7 @@ const profileForm = ref({
 const avatarPreview = ref(props.user.avatar_url)
 const avatarError = ref('')
 const isDragging = ref(false)
+const avatarInput = ref(null)
 const profileErrors = ref({})
 const timezones = Intl.supportedValuesOf('timeZone')
 
@@ -134,8 +136,8 @@ function toggleDark() {
                         <div class="flex items-start gap-5 mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
                             <img :src="avatarPreview" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-slate-200 dark:ring-slate-700 flex-shrink-0" alt="">
                             <div class="flex-1">
-                                <input type="file" id="avatarInput" accept="image/*" class="sr-only" @change="pickFile($event.target.files[0])">
-                                <div @click="document.getElementById('avatarInput').click()"
+                                <input ref="avatarInput" type="file" accept="image/*" class="sr-only" @change="pickFile($event.target.files[0])">
+                                <label @click.prevent="avatarInput.click()"
                                      @dragover.prevent="isDragging = true"
                                      @dragleave.prevent="isDragging = false"
                                      @drop.prevent="isDragging = false; pickFile($event.dataTransfer?.files?.[0])"
@@ -152,7 +154,7 @@ function toggleDark() {
                                         </p>
                                         <p class="text-xs text-slate-400 mt-0.5">JPG, PNG, GIF, WEBP — max 2 MB</p>
                                     </div>
-                                </div>
+                                </label>
                                 <p v-if="avatarError" class="mt-1.5 text-xs text-rose-500">{{ avatarError }}</p>
                                 <p v-if="profileErrors.avatar" class="mt-1.5 text-xs text-rose-500">{{ profileErrors.avatar }}</p>
                             </div>
@@ -175,9 +177,7 @@ function toggleDark() {
                             </div>
                             <div>
                                 <label class="form-label">Timezone</label>
-                                <select v-model="profileForm.timezone" class="form-input">
-                                    <option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
-                                </select>
+                                <SearchSelect v-model="profileForm.timezone" :options="timezones" placeholder="Select timezone…" />
                             </div>
                         </div>
 

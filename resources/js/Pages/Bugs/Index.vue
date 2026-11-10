@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import ProjectSelect from '@/Components/ProjectSelect.vue'
 
 const props = defineProps({
     bugs: Object,
@@ -133,10 +134,7 @@ const hasFilters = () => f.value.status || f.value.severity || f.value.priority 
                 </div>
                 <div class="min-w-[160px]">
                     <label class="form-label">Project</label>
-                    <select v-model="f.project_id" class="form-input text-sm">
-                        <option value="">All Projects</option>
-                        <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
-                    </select>
+                    <ProjectSelect v-model="f.project_id" :projects="projects" placeholder="All Projects" :clearable="true" size="sm" />
                 </div>
                 <div class="flex gap-2">
                     <button @click="applyFilters" class="btn-primary btn-sm"><i class="bi bi-funnel"></i> Filter</button>
