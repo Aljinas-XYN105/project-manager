@@ -4,6 +4,7 @@ import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ProjectSelect from '@/Components/ProjectSelect.vue'
 import TaskPicker from '@/Components/TaskPicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     daily_report: Object,
@@ -196,15 +197,15 @@ function deleteReport() {
                                             </div>
                                             <div>
                                                 <label class="form-label">Type</label>
-                                                <select v-model="task.new_task.type" class="form-input text-sm">
-                                                    <option v-for="t in typeOpts" :key="t.val" :value="t.val">{{ t.label }}</option>
-                                                </select>
+                                                <SearchSelect v-model="task.new_task.type" size="sm"
+                                                    :options="typeOpts.map(o => ({value: o.val, label: o.label}))"
+                                                    placeholder="Select type…" />
                                             </div>
                                             <div>
                                                 <label class="form-label">Priority</label>
-                                                <select v-model="task.new_task.priority" class="form-input text-sm">
-                                                    <option v-for="p in priorityOpts" :key="p.val" :value="p.val">{{ p.label }}</option>
-                                                </select>
+                                                <SearchSelect v-model="task.new_task.priority" size="sm"
+                                                    :options="priorityOpts.map(o => ({value: o.val, label: o.label}))"
+                                                    placeholder="Select priority…" />
                                             </div>
                                         </div>
                                     </div>
@@ -226,9 +227,9 @@ function deleteReport() {
                                         </div>
                                         <div class="sm:col-span-2">
                                             <label class="form-label">Status After Today</label>
-                                            <select v-model="task.status_update" class="form-input text-sm">
-                                                <option v-for="o in statusOpts" :key="o.val" :value="o.val">{{ o.label }}</option>
-                                            </select>
+                                            <SearchSelect v-model="task.status_update" size="sm"
+                                                :options="statusOpts.map(o => ({value: o.val, label: o.label}))"
+                                                placeholder="Select status…" />
                                         </div>
                                         <div class="flex items-end">
                                             <label class="flex items-center gap-2 cursor-pointer py-2">

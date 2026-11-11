@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
-    modelValue: { type: String, default: '' },
-    options: { type: Array, default: () => [] }, // string[] or {value, label}[]
+    modelValue: { type: [String, Number], default: '' },
+    options: { type: Array, default: () => [] }, // string[] or {value, label, avatar?}[]
     placeholder: { type: String, default: 'Select…' },
     clearable: { type: Boolean, default: false },
     clearLabel: { type: String, default: 'None' },
@@ -19,11 +20,20 @@ const wrapper = ref(null)
 
 function optVal(o) { return typeof o === 'string' ? o : o.value }
 function optLabel(o) { return typeof o === 'string' ? o : o.label }
+function optAvatar(o) { return typeof o === 'string' ? null : (o.avatar ?? null) }
 
-const selectedLabel = computed(() => {
-    const match = props.options.find(o => optVal(o) === props.modelValue)
-    return match ? optLabel(match) : props.modelValue
-})
+function valMatch(a, b) {
+    if (a === null || a === undefined || a === '') return false
+    return String(a) === String(b)
+}
+
+const selectedOption = computed(() =>
+    props.options.find(o => valMatch(props.modelValue, optVal(o))) ?? null
+)
+
+const selectedLabel = computed(() =>
+    selectedOption.value ? optLabel(selectedOption.value) : ''
+)
 
 const filtered = computed(() => {
     const q = query.value.toLowerCase().trim()
@@ -69,8 +79,15 @@ function onKeydown(e) {
             @click="open ? closeDropdown() : openDropdown()"
             @blur="handleBlur"
         >
-            <span :class="selectedLabel ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'">
-                {{ selectedLabel || placeholder }}
+            <span class="flex items-center gap-2 min-w-0 flex-1">
+                <UserAvatar v-if="selectedOption && optAvatar(selectedOption)"
+                            :src="optAvatar(selectedOption)"
+                            :name="selectedLabel"
+                            size="xs" />
+                <span :class="selectedLabel ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'"
+                      class="truncate">
+                    {{ selectedLabel || placeholder }}
+                </span>
             </span>
             <i class="bi bi-chevron-down text-slate-400 text-xs flex-shrink-0 transition-transform"
                :class="open ? 'rotate-180' : ''"></i>
@@ -85,7 +102,7 @@ function onKeydown(e) {
                     ref="searchInput"
                     v-model="query"
                     type="text"
-                    :placeholder="`Search…`"
+                    placeholder="Search…"
                     class="w-full pl-8 pr-3 py-2 text-sm bg-transparent outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                     @blur="handleBlur"
                 />
@@ -108,12 +125,13 @@ function onKeydown(e) {
                 <li v-for="o in filtered" :key="optVal(o)">
                     <button
                         type="button"
-                        class="w-full text-left px-3 py-2 text-sm transition-colors"
-                        :class="modelValue === optVal(o)
+                        class="w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2"
+                        :class="valMatch(modelValue, optVal(o))
                             ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium'
                             : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'"
                         @mousedown.prevent="pick(optVal(o))"
                     >
+                        <UserAvatar v-if="optAvatar(o)" :src="optAvatar(o)" :name="optLabel(o)" size="xs" />
                         {{ optLabel(o) }}
                     </button>
                 </li>

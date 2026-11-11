@@ -4,6 +4,7 @@ import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
 import ProjectSelect from '@/Components/ProjectSelect.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     groups: Object,
@@ -120,26 +121,16 @@ const priorityBadge = {
             <input type="hidden" :value="view">
             <input type="hidden" :value="scope">
             <ProjectSelect v-model="projectId" :projects="projects" placeholder="All projects" :clearable="true" size="sm" class="w-auto min-w-[160px]" @update:modelValue="changeFilter" />
-            <select v-model="priority" @change="changeFilter" class="form-input text-sm w-auto">
-                <option value="">Any priority</option>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-            </select>
+            <SearchSelect v-model="priority" @update:modelValue="changeFilter" size="sm"
+                :options="[{value:'critical',label:'Critical'},{value:'high',label:'High'},{value:'medium',label:'Medium'},{value:'low',label:'Low'}]"
+                :clearable="true" clearLabel="Any priority" placeholder="Any priority" />
             <template v-if="isManager">
-                <select v-model="type" @change="changeFilter" class="form-input text-sm w-auto">
-                    <option value="">Any type</option>
-                    <option value="bug">Bug</option>
-                    <option value="feature">Feature</option>
-                    <option value="task">Task</option>
-                    <option value="improvement">Improvement</option>
-                    <option value="chore">Chore</option>
-                </select>
-                <select v-model="assigneeId" @change="changeFilter" class="form-input text-sm w-auto">
-                    <option value="">Any person</option>
-                    <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}</option>
-                </select>
+                <SearchSelect v-model="type" @update:modelValue="changeFilter" size="sm"
+                    :options="[{value:'bug',label:'Bug'},{value:'feature',label:'Feature'},{value:'task',label:'Task'},{value:'improvement',label:'Improvement'},{value:'chore',label:'Chore'}]"
+                    :clearable="true" clearLabel="Any type" placeholder="Any type" />
+                <SearchSelect v-model="assigneeId" @update:modelValue="changeFilter" size="sm"
+                    :options="members.map(m => ({value: m.id, label: m.name, avatar: m.avatar_url}))"
+                    :clearable="true" clearLabel="Any person" placeholder="Any person" />
             </template>
             <Link v-if="hasFilters()" :href="route('my-tasks', { view, scope })" class="btn-ghost btn-sm">Clear</Link>
         </div>

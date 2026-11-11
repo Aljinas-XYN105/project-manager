@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     users: Object,
@@ -63,18 +65,15 @@ function toggleActive(user) {
             </div>
             <div>
                 <label class="form-label">Role</label>
-                <select v-model="role" class="form-input">
-                    <option value="">All roles</option>
-                    <option v-for="r in roles" :key="r.name" :value="r.name">{{ r.headline }} ({{ r.count }})</option>
-                </select>
+                <SearchSelect v-model="role"
+                    :options="roles.map(r => ({value: r.name, label: r.headline + ' (' + r.count + ')'}))"
+                    :clearable="true" clearLabel="All roles" placeholder="All roles" />
             </div>
             <div>
                 <label class="form-label">Status</label>
-                <select v-model="active" class="form-input">
-                    <option value="">All ({{ counts.total }})</option>
-                    <option value="1">Active ({{ counts.active }})</option>
-                    <option value="0">Inactive ({{ counts.inactive }})</option>
-                </select>
+                <SearchSelect v-model="active"
+                    :options="[{value:'1',label:'Active (' + counts.active + ')'},{value:'0',label:'Inactive (' + counts.inactive + ')'}]"
+                    :clearable="true" :clearLabel="'All (' + counts.total + ')'" :placeholder="'All (' + counts.total + ')'" />
             </div>
             <button type="submit" class="btn-primary"><i class="bi bi-funnel"></i> Filter</button>
             <button v-if="hasFilters()" type="button" @click="clearFilters" class="btn-ghost">Clear</button>
@@ -102,7 +101,7 @@ function toggleActive(user) {
                             <td class="px-5 py-3.5">
                                 <div class="flex items-center gap-3">
                                     <div class="relative flex-shrink-0">
-                                        <img :src="user.avatar_url" class="w-9 h-9 rounded-full" alt="">
+                                        <UserAvatar :src="user.avatar_url" :name="user.name" size="lg" />
                                         <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-white dark:ring-slate-900"
                                               :class="user.availability_dot"></span>
                                     </div>

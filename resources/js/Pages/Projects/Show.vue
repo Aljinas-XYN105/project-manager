@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     project: Object,
@@ -270,7 +272,7 @@ const taskRows = [
                 <div class="divide-y divide-slate-50 dark:divide-slate-700">
                     <div v-for="member in project.members" :key="member.id"
                          class="flex items-center gap-3 px-5 py-3">
-                        <img :src="member.avatar_url" :alt="member.name" class="w-8 h-8 rounded-full">
+                        <UserAvatar :src="member.avatar_url" :name="member.name" size="md" />
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ member.name }}</p>
                             <p class="text-xs text-slate-400">{{ member.role.charAt(0).toUpperCase() + member.role.slice(1) }}</p>
@@ -380,18 +382,15 @@ const taskRows = [
                             <p v-if="available_users.length === 0" class="text-sm text-slate-400">
                                 All active users are already members of this project.
                             </p>
-                            <select v-else v-model="addMemberForm.user_id" class="form-input" required>
-                                <option value="" disabled>Select a user…</option>
-                                <option v-for="u in available_users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                            </select>
+                            <SearchSelect v-else v-model="addMemberForm.user_id"
+                                :options="available_users.map(u => ({value: u.id, label: u.name, avatar: u.avatar_url}))"
+                                placeholder="Select a user…" />
                         </div>
                         <div v-if="available_users.length > 0">
                             <label class="form-label">Role</label>
-                            <select v-model="addMemberForm.role" class="form-input">
-                                <option value="developer">Developer</option>
-                                <option value="manager">Manager</option>
-                                <option value="viewer">Viewer</option>
-                            </select>
+                            <SearchSelect v-model="addMemberForm.role"
+                                :options="[{value:'developer',label:'Developer'},{value:'manager',label:'Manager'},{value:'viewer',label:'Viewer'}]"
+                                placeholder="Select role…" />
                         </div>
                         <div class="flex justify-end gap-3 pt-2">
                             <button type="button" @click="showAddMember = false" class="btn-secondary">

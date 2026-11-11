@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     reports: Object,
@@ -74,10 +76,9 @@ function toggle(id) { expanded.value[id] = !expanded.value[id] }
                 </div>
                 <div class="flex-1 min-w-[180px]">
                     <label class="form-label">Team Member</label>
-                    <select v-model="filters.user_id" class="form-input">
-                        <option value="">All Members</option>
-                        <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                    </select>
+                    <SearchSelect v-model="filters.user_id"
+                        :options="users.map(u => ({value: u.id, label: u.name, avatar: u.avatar_url}))"
+                        :clearable="true" clearLabel="All Members" placeholder="All Members" />
                 </div>
                 <button @click="applyFilters" class="btn-primary">
                     <i class="bi bi-funnel"></i> Filter
@@ -119,8 +120,7 @@ function toggle(id) { expanded.value[id] = !expanded.value[id] }
                  class="card overflow-hidden"
                  :class="report.has_blockers ? 'border-l-4 border-l-amber-400 dark:border-l-amber-600' : ''">
                 <div class="p-4 flex items-center gap-3 cursor-pointer" @click="toggle(report.id)">
-                    <img :src="report.user?.avatar_url" :alt="report.user?.name"
-                         class="w-10 h-10 rounded-full flex-shrink-0">
+                    <UserAvatar :src="report.user?.avatar_url ?? ''" :name="report.user?.name ?? ''" size="lg" />
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
                             <span class="font-semibold text-slate-900 dark:text-white text-sm">{{ report.user?.name ?? '—' }}</span>

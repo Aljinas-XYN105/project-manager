@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     people: Array,
@@ -45,10 +46,9 @@ function search() {
                     <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                     <input type="search" v-model="q" class="form-input pl-9 text-sm" placeholder="Name or email…">
                 </div>
-                <select v-model="dept" @change="search" class="form-input text-sm w-auto">
-                    <option value="">All departments</option>
-                    <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
-                </select>
+                <SearchSelect v-model="dept" @update:modelValue="search" size="sm"
+                    :options="departments"
+                    :clearable="true" clearLabel="All departments" placeholder="All departments" />
                 <button type="submit" class="btn-secondary btn-sm">Search</button>
             </form>
 

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     team: Object,
@@ -103,18 +104,15 @@ function removeMember(member) {
                     <form v-else @submit.prevent="addMember" class="px-6 py-5 space-y-4 overflow-y-auto">
                         <div>
                             <label class="form-label">Member <span class="text-rose-500">*</span></label>
-                            <select v-model="addForm.user_id" class="form-input" required>
-                                <option value="" disabled>Select a member…</option>
-                                <option v-for="u in available_users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                            </select>
+                            <SearchSelect v-model="addForm.user_id"
+                                :options="available_users.map(u => ({value: u.id, label: u.name, avatar: u.avatar_url}))"
+                                placeholder="Select a member…" />
                         </div>
                         <div>
                             <label class="form-label">Role</label>
-                            <select v-model="addForm.role" class="form-input">
-                                <option value="admin">Admin</option>
-                                <option value="member">Member</option>
-                                <option value="viewer">Viewer</option>
-                            </select>
+                            <SearchSelect v-model="addForm.role"
+                                :options="[{value:'admin',label:'Admin'},{value:'member',label:'Member'},{value:'viewer',label:'Viewer'}]"
+                                placeholder="Select role…" />
                         </div>
                     </form>
                     <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex justify-end gap-2 flex-shrink-0">

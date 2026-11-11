@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 import ProjectSelect from '@/Components/ProjectSelect.vue'
 
 const props = defineProps({
@@ -73,10 +74,9 @@ function exportPdf() {
                     </div>
                     <div>
                         <label class="form-label">User</label>
-                        <select v-model="form.user_id" class="form-input">
-                            <option value="">All Users</option>
-                            <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                        </select>
+                        <SearchSelect v-model="form.user_id"
+                            :options="users.map(u => ({value: u.id, label: u.name, avatar: u.avatar_url}))"
+                            :clearable="true" clearLabel="All Users" placeholder="All Users" />
                     </div>
                     <button type="submit" class="btn-primary">Apply Filters</button>
                     <button type="button" @click="resetFilters" class="btn-secondary">Reset</button>

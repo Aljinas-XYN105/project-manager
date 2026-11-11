@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     period: [String, Number],
@@ -35,7 +37,7 @@ const maxDH = Math.max(...props.daily_breakdown.map(d => d.hours), 1)
                         <span>{{ user.name }}</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <img :src="user.avatar_url" class="w-12 h-12 rounded-2xl ring-2 ring-slate-200 dark:ring-slate-700">
+                        <UserAvatar :src="user.avatar_url" :name="user.name" size="xl" class="rounded-2xl ring-2 ring-slate-200 dark:ring-slate-700" />
                         <div>
                             <h1 class="page-title leading-tight">{{ user.name }}</h1>
                             <p class="text-sm text-slate-500 capitalize">{{ user.role }} · {{ user.email }}</p>
@@ -43,11 +45,9 @@ const maxDH = Math.max(...props.daily_breakdown.map(d => d.hours), 1)
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <select v-model="selectedPeriod" @change="changePeriod" class="form-input text-sm w-auto">
-                        <option value="7">Last 7 days</option>
-                        <option value="30">Last 30 days</option>
-                        <option value="90">Last 90 days</option>
-                    </select>
+                    <SearchSelect v-model="selectedPeriod" @update:modelValue="changePeriod" size="sm"
+                        :options="[{value:'7',label:'Last 7 days'},{value:'30',label:'Last 30 days'},{value:'90',label:'Last 90 days'}]"
+                        placeholder="Select period…" />
                     <a :href="admin_url" class="btn-ghost"><i class="bi bi-arrow-left"></i> Back</a>
                 </div>
             </div>

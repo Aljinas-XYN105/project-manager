@@ -2,6 +2,7 @@
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     conversation: Object,
@@ -499,7 +500,7 @@ onBeforeUnmount(() => {
 
                 <div class="relative flex-shrink-0">
                     <template v-if="!conversation.is_group">
-                        <img :src="conversation.other?.avatar_url" class="w-10 h-10 rounded-full object-cover" alt="">
+                        <UserAvatar :src="conversation.other?.avatar_url ?? ''" :name="conversation.other?.name ?? ''" size="lg" />
                         <span class="ct-dot" :class="conversation.other?.is_online ? 'online' : 'offline'"></span>
                     </template>
                     <div v-else class="w-10 h-10 rounded-2xl flex items-center justify-center"
@@ -792,7 +793,7 @@ onBeforeUnmount(() => {
                                      class="flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                                      style="border-bottom:1px solid var(--ct-header-border)"
                                      @mousedown.prevent="addMember(u)">
-                                    <img :src="u.avatar_url" class="w-7 h-7 rounded-full object-cover flex-shrink-0">
+                                    <UserAvatar :src="u.avatar_url" :name="u.name" size="sm" />
                                     <div class="min-w-0">
                                         <div class="text-sm font-medium truncate" style="color:var(--ct-name)">{{ u.name }}</div>
                                         <div class="text-xs truncate" style="color:var(--ct-preview)">{{ u.job_title }}</div>
@@ -808,7 +809,7 @@ onBeforeUnmount(() => {
                         <p class="text-xs font-semibold uppercase tracking-wide px-4 pt-2 pb-1" style="color:var(--ct-preview)">Members</p>
                         <div v-for="m in groupMembers" :key="m.id" class="flex items-center gap-3 px-4 py-2.5">
                             <div class="relative flex-shrink-0">
-                                <img :src="m.avatar_url" class="w-9 h-9 rounded-full object-cover">
+                                <UserAvatar :src="m.avatar_url" :name="m.name" size="lg" />
                                 <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2"
                                       :style="`background:${m.is_online ? '#22c55e' : 'var(--ct-preview)'};border-color:var(--ct-header-bg)`"></span>
                             </div>

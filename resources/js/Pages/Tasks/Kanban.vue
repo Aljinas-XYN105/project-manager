@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     project: Object,
@@ -207,7 +209,7 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
                                 </span>
                             </div>
                             <div class="flex -space-x-1">
-                                <img v-for="a in task.assignees.slice(0,3)" :key="a.id" :src="a.avatar_url" :title="a.name" class="w-5 h-5 rounded-full ring-1 ring-white dark:ring-slate-900">
+                                <UserAvatar v-for="a in task.assignees.slice(0,3)" :key="a.id" :src="a.avatar_url" :name="a.name" size="xs" class="ring-1 ring-white dark:ring-slate-900" />
                                 <div v-if="task.assignees.length > 3" class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-[8px] font-semibold text-slate-500 flex items-center justify-center ring-1 ring-white dark:ring-slate-900">
                                     +{{ task.assignees.length - 3 }}
                                 </div>
@@ -267,29 +269,22 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="form-label">Type</label>
-                                <select v-model="taskForm.type" class="form-input">
-                                    <option value="task">Task</option>
-                                    <option value="bug">Bug</option>
-                                    <option value="feature">Feature</option>
-                                    <option value="story">Story</option>
-                                    <option value="epic">Epic</option>
-                                </select>
+                                <SearchSelect v-model="taskForm.type"
+                                    :options="[{value:'task',label:'Task'},{value:'bug',label:'Bug'},{value:'feature',label:'Feature'},{value:'story',label:'Story'},{value:'epic',label:'Epic'}]"
+                                    placeholder="Select type…" />
                             </div>
                             <div>
                                 <label class="form-label">Priority</label>
-                                <select v-model="taskForm.priority" class="form-input">
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </select>
+                                <SearchSelect v-model="taskForm.priority"
+                                    :options="[{value:'low',label:'Low'},{value:'medium',label:'Medium'},{value:'high',label:'High'},{value:'critical',label:'Critical'}]"
+                                    placeholder="Select priority…" />
                             </div>
                         </div>
                         <div>
                             <label class="form-label">Column</label>
-                            <select v-model="taskForm.column_id" class="form-input">
-                                <option v-for="c in columns" :key="c.id" :value="c.id">{{ c.name }}</option>
-                            </select>
+                            <SearchSelect v-model="taskForm.column_id"
+                                :options="columns.map(c => ({value: c.id, label: c.name}))"
+                                placeholder="Select column…" />
                         </div>
                         <div>
                             <label class="form-label">Assignees</label>
@@ -306,7 +301,7 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
                                 <button v-for="m in members" :key="m.id" type="button" @click="toggleAssignee(m.id)"
                                         class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm transition-colors"
                                         :class="taskForm.assignee_ids.includes(m.id) ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300' : 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'">
-                                    <img :src="m.avatar_url" class="w-5 h-5 rounded-full flex-shrink-0">
+                                    <UserAvatar :src="m.avatar_url" :name="m.name" size="xs" />
                                     <span class="truncate text-xs">{{ m.name }}</span>
                                     <i v-if="taskForm.assignee_ids.includes(m.id)" class="bi bi-check-lg text-violet-500 ml-auto text-xs flex-shrink-0"></i>
                                 </button>

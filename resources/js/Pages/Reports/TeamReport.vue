@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     from: String,
@@ -52,10 +53,9 @@ function rateColor(rate) {
                 <form @submit.prevent="applyFilters" class="flex flex-wrap gap-3 items-end">
                     <div>
                         <label class="form-label">Team</label>
-                        <select v-model="form.team_id" class="form-input">
-                            <option value="">All Teams</option>
-                            <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
-                        </select>
+                        <SearchSelect v-model="form.team_id"
+                            :options="teams.map(t => ({value: t.id, label: t.name}))"
+                            :clearable="true" clearLabel="All Teams" placeholder="All Teams" />
                     </div>
                     <div>
                         <label class="form-label">From</label>

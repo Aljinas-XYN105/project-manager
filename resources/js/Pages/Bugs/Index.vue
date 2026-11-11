@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ProjectSelect from '@/Components/ProjectSelect.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     bugs: Object,
@@ -106,31 +107,21 @@ const hasFilters = () => f.value.status || f.value.severity || f.value.priority 
             <div class="flex flex-wrap items-end gap-3">
                 <div class="flex-1 min-w-[160px]">
                     <label class="form-label">Status</label>
-                    <select v-model="f.status" class="form-input text-sm">
-                        <option value="">All Statuses</option>
-                        <option v-for="(label, val) in statusLabels" :key="val" :value="val">{{ label }}</option>
-                    </select>
+                    <SearchSelect v-model="f.status" size="sm"
+                        :options="Object.entries(statusLabels).map(([k,v]) => ({value: k, label: v}))"
+                        :clearable="true" clearLabel="All Statuses" placeholder="All Statuses" />
                 </div>
                 <div class="min-w-[130px]">
                     <label class="form-label">Severity</label>
-                    <select v-model="f.severity" class="form-input text-sm">
-                        <option value="">All Severity</option>
-                        <option value="blocker">Blocker</option>
-                        <option value="critical">Critical</option>
-                        <option value="major">Major</option>
-                        <option value="minor">Minor</option>
-                        <option value="trivial">Trivial</option>
-                    </select>
+                    <SearchSelect v-model="f.severity" size="sm"
+                        :options="[{value:'blocker',label:'Blocker'},{value:'critical',label:'Critical'},{value:'major',label:'Major'},{value:'minor',label:'Minor'},{value:'trivial',label:'Trivial'}]"
+                        :clearable="true" clearLabel="All Severity" placeholder="All Severity" />
                 </div>
                 <div class="min-w-[120px]">
                     <label class="form-label">Priority</label>
-                    <select v-model="f.priority" class="form-input text-sm">
-                        <option value="">All Priority</option>
-                        <option value="critical">Critical</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                    </select>
+                    <SearchSelect v-model="f.priority" size="sm"
+                        :options="[{value:'critical',label:'Critical'},{value:'high',label:'High'},{value:'medium',label:'Medium'},{value:'low',label:'Low'}]"
+                        :clearable="true" clearLabel="All Priority" placeholder="All Priority" />
                 </div>
                 <div class="min-w-[160px]">
                     <label class="form-label">Project</label>

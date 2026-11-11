@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     projects: Object,
@@ -92,21 +93,12 @@ function archiveProject(url) {
                     <input v-model="search" type="text" placeholder="Search projects…"
                            class="form-input pl-9 text-sm">
                 </div>
-                <select v-model="status" class="form-input w-auto text-sm">
-                    <option value="">All Status</option>
-                    <option value="planning">Planning</option>
-                    <option value="active">Active</option>
-                    <option value="on_hold">On Hold</option>
-                    <option value="completed">Completed</option>
-                    <option value="archived">Archived</option>
-                </select>
-                <select v-model="priority" class="form-input w-auto text-sm">
-                    <option value="">All Priority</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                </select>
+                <SearchSelect v-model="status" size="sm"
+                    :options="[{value:'planning',label:'Planning'},{value:'active',label:'Active'},{value:'on_hold',label:'On Hold'},{value:'completed',label:'Completed'},{value:'archived',label:'Archived'}]"
+                    :clearable="true" clearLabel="All Status" placeholder="All Status" />
+                <SearchSelect v-model="priority" size="sm"
+                    :options="[{value:'low',label:'Low'},{value:'medium',label:'Medium'},{value:'high',label:'High'},{value:'critical',label:'Critical'}]"
+                    :clearable="true" clearLabel="All Priority" placeholder="All Priority" />
                 <button type="submit" class="btn-primary btn-sm">Filter</button>
                 <button v-if="hasFilters" type="button" @click="clearFilters" class="btn-ghost btn-sm">Clear</button>
             </form>

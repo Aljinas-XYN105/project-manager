@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import MemberPicker from '@/Components/MemberPicker.vue'
 import { usePage } from '@inertiajs/vue3'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     users: Array,
@@ -76,20 +77,15 @@ function submit(e) {
                         </div>
                         <div>
                             <label class="form-label">Status</label>
-                            <select v-model="form.status" class="form-input">
-                                <option value="planning">Planning</option>
-                                <option value="active">Active</option>
-                                <option value="on_hold">On Hold</option>
-                            </select>
+                            <SearchSelect v-model="form.status"
+                                :options="[{value:'planning',label:'Planning'},{value:'active',label:'Active'},{value:'on_hold',label:'On Hold'}]"
+                                placeholder="Select status…" />
                         </div>
                         <div>
                             <label class="form-label">Priority</label>
-                            <select v-model="form.priority" class="form-input">
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="critical">Critical</option>
-                            </select>
+                            <SearchSelect v-model="form.priority"
+                                :options="[{value:'low',label:'Low'},{value:'medium',label:'Medium'},{value:'high',label:'High'},{value:'critical',label:'Critical'}]"
+                                placeholder="Select priority…" />
                         </div>
                         <div>
                             <label class="form-label">Project Color</label>

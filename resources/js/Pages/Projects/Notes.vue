@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     project: Object,
@@ -112,7 +113,7 @@ async function convertToTask(note) {
             <!-- Quick Add Input -->
             <div class="card p-5">
                 <div class="flex items-start gap-3">
-                    <img :src="auth_avatar" class="w-8 h-8 rounded-full flex-shrink-0 mt-1" alt="">
+                    <UserAvatar :src="auth_avatar ?? ''" :name="$page.props.auth?.user?.name ?? ''" size="md" class="flex-shrink-0 mt-1" />
                     <div class="flex-1">
                         <textarea v-model="newNote" rows="3"
                                   placeholder="Jot a note... (Enter to add, Shift+Enter for new line)"

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     month_label: String,
@@ -62,10 +63,9 @@ function legendDot(color) {
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Who's off — approved leave, pending requests (striped) and company holidays.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <select v-model="selectedDept" @change="changeDept" class="form-input text-sm w-auto">
-                        <option value="">All departments</option>
-                        <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
-                    </select>
+                    <SearchSelect v-model="selectedDept" @update:modelValue="changeDept" size="sm"
+                        :options="departments"
+                        :clearable="true" clearLabel="All departments" placeholder="All departments" />
                     <Link :href="prev_url" class="btn-ghost btn-sm"><i class="bi bi-chevron-left"></i></Link>
                     <Link :href="this_month_url" class="btn-secondary btn-sm">This month</Link>
                     <Link :href="next_url" class="btn-ghost btn-sm"><i class="bi bi-chevron-right"></i></Link>

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     year: Number,
@@ -174,10 +175,9 @@ const statusLabel = { pending: 'Pending', approved: 'Approved', rejected: 'Rejec
                         </div>
                         <div>
                             <label class="form-label">Leave type <span class="text-rose-500">*</span></label>
-                            <select v-model="applyForm.leave_type_id" class="form-input" required>
-                                <option value="" disabled>Select type…</option>
-                                <option v-for="b in balances" :key="b.type.id" :value="b.type.id">{{ b.label }}</option>
-                            </select>
+                            <SearchSelect v-model="applyForm.leave_type_id"
+                                :options="balances.map(b => ({value: b.type.id, label: b.label}))"
+                                placeholder="Select type…" />
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>

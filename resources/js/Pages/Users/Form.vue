@@ -128,10 +128,9 @@ function directPermCount(group) {
                         </div>
                         <div>
                             <label class="form-label">Primary team</label>
-                            <select v-model="form.team_id" class="form-input">
-                                <option value="">No team</option>
-                                <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
-                            </select>
+                            <SearchSelect v-model="form.team_id"
+                                :options="teams.map(t => ({value: t.id, label: t.name}))"
+                                :clearable="true" clearLabel="No team" placeholder="No team" />
                         </div>
                         <div>
                             <label class="form-label">Timezone</label>
@@ -172,18 +171,17 @@ function directPermCount(group) {
                         </div>
                         <div>
                             <label class="form-label">Reports to</label>
-                            <select v-model="form.manager_id" class="form-input">
-                                <option :value="null">— No manager —</option>
-                                <option v-for="m in managers" :key="m.id" :value="m.id">{{ m.name }}{{ m.job_title ? ' · ' + m.job_title : '' }}</option>
-                            </select>
+                            <SearchSelect v-model="form.manager_id"
+                                :options="managers.map(m => ({value: m.id, label: m.name + (m.job_title ? ' · ' + m.job_title : ''), avatar: m.avatar_url}))"
+                                :clearable="true" clearLabel="— No manager —" placeholder="— No manager —" />
                             <p class="form-hint">The manager can approve this person's leave.</p>
                             <p v-if="errors.manager_id" class="form-error">{{ errors.manager_id }}</p>
                         </div>
                         <div>
                             <label class="form-label">Employment type</label>
-                            <select v-model="form.employment_type" class="form-input">
-                                <option v-for="(label, key) in employment_types" :key="key" :value="key">{{ label }}</option>
-                            </select>
+                            <SearchSelect v-model="form.employment_type"
+                                :options="Object.entries(employment_types).map(([k, v]) => ({value: k, label: v}))"
+                                placeholder="Select type…" />
                         </div>
                         <div>
                             <label class="form-label">Working hours / day</label>

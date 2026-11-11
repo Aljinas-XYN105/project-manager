@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     rows:         Array,
@@ -147,10 +148,9 @@ function sortIcon(key) {
                     </div>
                     <div>
                         <label class="form-label">Member</label>
-                        <select v-model="form.user_id" class="form-input">
-                            <option value="">All Members</option>
-                            <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                        </select>
+                        <SearchSelect v-model="form.user_id"
+                            :options="users.map(u => ({value: u.id, label: u.name, avatar: u.avatar_url}))"
+                            :clearable="true" clearLabel="All Members" placeholder="All Members" />
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" class="btn-primary btn-sm">

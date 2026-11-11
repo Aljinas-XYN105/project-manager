@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     announcements: Object,
@@ -164,13 +165,9 @@ function toggleExpired() {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="form-label">Category</label>
-                                <select v-model="modalForm.category" class="form-input">
-                                    <option value="general">General</option>
-                                    <option value="policy">Policy</option>
-                                    <option value="event">Event</option>
-                                    <option value="update">Update</option>
-                                    <option value="alert">Alert</option>
-                                </select>
+                                <SearchSelect v-model="modalForm.category"
+                                    :options="[{value:'general',label:'General'},{value:'policy',label:'Policy'},{value:'event',label:'Event'},{value:'update',label:'Update'},{value:'alert',label:'Alert'}]"
+                                    placeholder="Select category…" />
                             </div>
                             <div>
                                 <label class="form-label">Show until <span class="text-slate-400 font-normal">(optional)</span></label>

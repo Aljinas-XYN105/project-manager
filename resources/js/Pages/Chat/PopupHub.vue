@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import ChatPopupLayout from '@/Layouts/ChatPopupLayout.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     conversations: Array,
@@ -135,7 +136,7 @@ async function createGroup() {
                                        style="display:flex;align-items:center;gap:8px;padding:7px 12px;text-decoration:none;cursor:pointer;"
                                        onmouseover="this.style.background='var(--ci-row-hover)'" onmouseout="this.style.background=''">
                                         <div style="position:relative;flex-shrink:0;">
-                                            <img :src="u.avatar_url" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" alt="">
+                                            <UserAvatar :src="u.avatar_url" :name="u.name" size="sm" />
                                             <span :style="`position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:${u.is_online ? 'var(--ci-online)' : 'var(--ci-offline)'};border:2px solid var(--ci-header-bg);`"></span>
                                         </div>
                                         <div>
@@ -251,7 +252,7 @@ async function createGroup() {
                         <div v-if="selectedMembers.length > 0" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
                             <span v-for="m in selectedMembers" :key="m.id"
                                   style="display:inline-flex;align-items:center;gap:5px;background:var(--ci-chip-bg);color:var(--ci-chip-fg);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500;">
-                                <img :src="m.avatar_url" style="width:16px;height:16px;border-radius:50%;object-fit:cover;" alt="">
+                                <UserAvatar :src="m.avatar_url" :name="m.name" size="xs" />
                                 <span>{{ m.name.split(' ')[0] }}</span>
                                 <button type="button" @click="toggleMember(m)" style="opacity:.6;cursor:pointer;border:none;background:none;padding:0;"><i class="bi bi-x text-xs"></i></button>
                             </span>
@@ -261,7 +262,7 @@ async function createGroup() {
                                    style="display:flex;align-items:center;gap:12px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--ci-sep);"
                                    onmouseover="this.style.background='var(--ci-row-hover)'" onmouseout="this.style.background=''"
                                    @click.prevent="toggleMember(u)">
-                                <img :src="u.avatar_url" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="">
+                                <UserAvatar :src="u.avatar_url" :name="u.name" size="md" />
                                 <div style="flex:1;min-width:0;">
                                     <div style="font-size:14px;font-weight:500;color:var(--ci-name);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ u.name }}</div>
                                     <div style="font-size:12px;color:var(--ci-time);">{{ u.job_title || '' }}</div>

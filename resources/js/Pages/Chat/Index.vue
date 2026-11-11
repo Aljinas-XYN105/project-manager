@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     conversations: Array,
@@ -155,7 +156,7 @@ async function createGroup() {
 
                         <div class="relative flex-shrink-0">
                             <template v-if="!conv.is_group">
-                                <img :src="convOther(conv)?.avatar_url" class="w-11 h-11 rounded-full object-cover" alt="">
+                                <UserAvatar :src="convOther(conv)?.avatar_url ?? ''" :name="convOther(conv)?.name ?? ''" size="xl" />
                                 <span class="status-dot-ci" :class="convOther(conv)?.is_online ? 'online' : 'offline'"></span>
                             </template>
                             <div v-else class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
@@ -196,7 +197,7 @@ async function createGroup() {
                         <template v-for="u in peopleResults" :key="u.id">
                             <a :href="u.direct_url" class="conv-row-ci">
                                 <div class="relative flex-shrink-0">
-                                    <img :src="u.avatar_url" class="w-11 h-11 rounded-full object-cover" alt="">
+                                    <UserAvatar :src="u.avatar_url" :name="u.name" size="xl" />
                                     <span class="status-dot-ci" :class="u.is_online ? 'online' : 'offline'"></span>
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -257,7 +258,7 @@ async function createGroup() {
 
                         <div v-if="selected.length > 0" class="flex flex-wrap gap-1.5 mb-3">
                             <span v-for="m in selected" :key="m.id" class="member-chip-ci">
-                                <img :src="m.avatar_url" class="w-4 h-4 rounded-full object-cover">
+                                <UserAvatar :src="m.avatar_url" :name="m.name" size="xs" />
                                 <span class="text-xs">{{ m.name.split(' ')[0] }}</span>
                                 <button type="button" @click="deselectMember(m)" class="opacity-60 hover:opacity-100 ml-0.5">
                                     <i class="bi bi-x text-xs"></i>
@@ -274,7 +275,7 @@ async function createGroup() {
                                        @mouseover="$event.currentTarget.style.background='var(--ci-row-hover)'"
                                        @mouseout="$event.currentTarget.style.background=''">
                                     <div class="relative flex-shrink-0">
-                                        <img :src="u.avatar_url" class="w-9 h-9 rounded-full object-cover" alt="">
+                                        <UserAvatar :src="u.avatar_url" :name="u.name" size="lg" />
                                         <span class="status-dot-ci" :class="u.is_online ? 'online' : 'offline'"></span>
                                     </div>
                                     <div class="flex-1 min-w-0">

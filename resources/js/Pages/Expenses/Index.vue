@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     expenses: Object,
@@ -231,10 +232,9 @@ function cancelExpense(url) {
                             </div>
                             <div>
                                 <label class="form-label">Category <span class="text-rose-500">*</span></label>
-                                <select v-model="form.category" required class="form-input">
-                                    <option value="">Select…</option>
-                                    <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                                </select>
+                                <SearchSelect v-model="form.category" required
+                                    :options="categories.map(c => ({value: c, label: c}))"
+                                    placeholder="Select…" />
                             </div>
                         </div>
 

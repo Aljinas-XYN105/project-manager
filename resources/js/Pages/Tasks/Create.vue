@@ -5,6 +5,8 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import TimePicker from '@/Components/TimePicker.vue'
 import { useClickOutside } from '@/Composables/useClickOutside'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     project: Object,
@@ -185,16 +187,15 @@ function submit() {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="form-label">Column</label>
-                            <select v-model="form.column_id" class="form-input">
-                                <option v-for="c in columns" :key="c.id" :value="c.id">{{ c.name }}</option>
-                            </select>
+                            <SearchSelect v-model="form.column_id"
+                                :options="columns.map(c => ({value: c.id, label: c.name}))"
+                                placeholder="Select column…" />
                         </div>
                         <div v-if="sprints.length">
                             <label class="form-label">Sprint</label>
-                            <select v-model="form.sprint_id" class="form-input">
-                                <option value="">No sprint</option>
-                                <option v-for="s in sprints" :key="s.id" :value="s.id">{{ s.name }}</option>
-                            </select>
+                            <SearchSelect v-model="form.sprint_id"
+                                :options="sprints.map(s => ({value: s.id, label: s.name}))"
+                                :clearable="true" clearLabel="No sprint" placeholder="No sprint" />
                         </div>
                     </div>
 
@@ -229,7 +230,7 @@ function submit() {
                                 <button v-for="m in filteredMembers" :key="m.id" type="button" @click="toggleAssignee(m.id)"
                                         class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm transition-colors"
                                         :class="form.assignee_ids.includes(m.id) ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300' : 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'">
-                                    <img :src="m.avatar_url" class="w-5 h-5 rounded-full flex-shrink-0">
+                                    <UserAvatar :src="m.avatar_url" :name="m.name" size="xs" />
                                     <span class="truncate text-xs">{{ m.name }}</span>
                                     <i v-if="form.assignee_ids.includes(m.id)" class="bi bi-check-lg text-violet-500 ml-auto text-xs flex-shrink-0"></i>
                                 </button>
@@ -256,13 +257,9 @@ function submit() {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="form-label">Severity</label>
-                                <select v-model="form.severity" class="form-input">
-                                    <option value="">Select…</option>
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </select>
+                                <SearchSelect v-model="form.severity"
+                                    :options="[{value:'low',label:'Low'},{value:'medium',label:'Medium'},{value:'high',label:'High'},{value:'critical',label:'Critical'}]"
+                                    :clearable="true" clearLabel="None" placeholder="Select…" />
                             </div>
                             <div>
                                 <label class="form-label">Environment</label>

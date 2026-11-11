@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import TimePicker from '@/Components/TimePicker.vue'
 import { useClickOutside } from '@/Composables/useClickOutside'
@@ -500,7 +501,7 @@ function typeBg(type) {
                     </div>
                     <div class="divide-y divide-slate-50 dark:divide-slate-800">
                         <div v-for="c in task.comments" :key="c.id" class="p-5 flex gap-3">
-                            <img :src="c.user?.avatar_url ?? '/images/default-avatar.png'" class="w-8 h-8 rounded-full flex-shrink-0 object-cover">
+                            <UserAvatar :src="c.user?.avatar_url ?? ''" :name="c.user?.name ?? ''" size="md" class="flex-shrink-0" />
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1.5">
                                     <span class="font-semibold text-sm text-slate-900 dark:text-white">{{ c.user?.name ?? '(deleted user)' }}</span>
@@ -516,7 +517,7 @@ function typeBg(type) {
                     </div>
                     <div class="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
                         <div class="flex gap-3">
-                            <img :src="$page.props.auth?.user?.avatar_url" class="w-8 h-8 rounded-full flex-shrink-0 object-cover">
+                            <UserAvatar :src="$page.props.auth?.user?.avatar_url ?? ''" :name="$page.props.auth?.user?.name ?? ''" size="md" class="flex-shrink-0" />
                             <div class="flex-1">
                                 <textarea v-model="commentBody" rows="2" placeholder="Add a comment… (Ctrl+Enter to post)"
                                           class="form-input resize-none w-full text-sm"
@@ -697,7 +698,7 @@ function typeBg(type) {
                             <div class="flex flex-wrap gap-1.5 mb-1">
                                 <span v-if="!assignees.length" class="text-xs text-slate-400 italic">Unassigned</span>
                                 <div v-for="a in assignees" :key="a.id" class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5 group">
-                                    <img :src="a.avatar_url" class="w-4 h-4 rounded-full object-cover flex-shrink-0">
+                                    <UserAvatar :src="a.avatar_url" :name="a.name" size="xs" />
                                     <span class="text-xs text-slate-700 dark:text-slate-300 max-w-[80px] truncate">{{ a.name }}</span>
                                     <button v-if="can_update" @click="removeAssignee(a)" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-rose-500 leading-none">
                                         <i class="bi bi-x text-[10px]"></i>
@@ -721,7 +722,7 @@ function typeBg(type) {
                                         </p>
                                         <button v-for="u in filteredAvailableMembers" :key="u.id" @click="addAssignee(u)"
                                                 class="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                            <img :src="u.avatar_url" class="w-5 h-5 rounded-full flex-shrink-0 object-cover">
+                                            <UserAvatar :src="u.avatar_url" :name="u.name" size="xs" />
                                             <span class="text-sm text-slate-700 dark:text-slate-300 truncate">{{ u.name }}</span>
                                         </button>
                                     </div>

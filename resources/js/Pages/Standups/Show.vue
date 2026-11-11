@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ProjectSelect from '@/Components/ProjectSelect.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     date: String,
@@ -496,12 +497,9 @@ const taskTypes = [
                                 </div>
                                 <div>
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Priority</p>
-                                    <select v-model="newTaskPriority" class="form-input text-sm">
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                        <option value="critical">Critical</option>
-                                    </select>
+                                    <SearchSelect v-model="newTaskPriority" size="sm"
+                                        :options="[{value:'low',label:'Low'},{value:'medium',label:'Medium'},{value:'high',label:'High'},{value:'critical',label:'Critical'}]"
+                                        placeholder="Select priority…" />
                                 </div>
                             </div>
 

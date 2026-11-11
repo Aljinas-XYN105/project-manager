@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     records: Object,
@@ -129,7 +131,7 @@ const clockedInCount = () => props.board.filter(r => r.clocked_in).length
                 <div v-for="row in board" :key="row.user_id"
                      class="flex items-center gap-3 px-5 py-3 border-b border-slate-50 dark:border-slate-800">
                     <div class="relative flex-shrink-0">
-                        <img :src="row.avatar_url" class="w-9 h-9 rounded-full" alt="">
+                        <UserAvatar :src="row.avatar_url" :name="row.name" size="lg" />
                         <span :class="['absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-white dark:ring-slate-900', row.status_dot]"></span>
                     </div>
                     <div class="flex-1 min-w-0">
@@ -214,10 +216,9 @@ const clockedInCount = () => props.board.filter(r => r.clocked_in).length
                     <h2 class="font-semibold text-slate-900 dark:text-white">{{ modalMode === 'create' ? 'Add attendance entry' : 'Edit attendance entry' }}</h2>
                     <div>
                         <label class="form-label">Member</label>
-                        <select v-model="modalForm.user_id" class="form-input">
-                            <option value="">Select member…</option>
-                            <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                        </select>
+                        <SearchSelect v-model="modalForm.user_id"
+                            :options="users.map(u => ({value: u.id, label: u.name, avatar: u.avatar_url}))"
+                            placeholder="Select member…" />
                         <p v-if="modalErrors.user_id" class="form-error">{{ modalErrors.user_id }}</p>
                     </div>
                     <div>

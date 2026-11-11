@@ -274,7 +274,7 @@
               <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Off today</p>
               <div v-if="offToday.length">
                 <div v-for="leave in offToday" :key="leave.id" class="flex items-center gap-2.5 py-1">
-                  <img :src="leave.user?.avatar_url ?? '/images/default-avatar.png'" class="w-6 h-6 rounded-full" alt="">
+                  <UserAvatar :src="leave.user?.avatar_url ?? ''" :name="leave.user?.name ?? ''" size="sm" />
                   <span class="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">{{ leave.user?.name ?? '—' }}</span>
                   <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     {{ leave.type?.name }}{{ leave.is_half_day ? ' ½' : '' }}
@@ -311,7 +311,7 @@
           <div class="card overflow-hidden">
             <div class="divide-y divide-slate-50 dark:divide-slate-800 max-h-[420px] overflow-y-auto">
               <div v-for="activity in recentActivity" :key="activity.id" class="flex items-start gap-3 px-4 py-3">
-                <img :src="activity.causer?.avatar_url ?? ''" alt="" class="w-7 h-7 rounded-full flex-shrink-0 mt-0.5">
+                <UserAvatar :src="activity.causer?.avatar_url ?? ''" :name="activity.causer?.name ?? ''" size="sm" class="mt-0.5" />
                 <div class="flex-1 min-w-0">
                   <p class="text-xs text-slate-700 dark:text-slate-300 leading-snug">
                     <span class="font-medium text-slate-900 dark:text-white">{{ activity.causer?.name ?? 'System' }}</span>
@@ -368,6 +368,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import UserAvatar from '@/Components/UserAvatar.vue';
 
 const props = defineProps({
   stats:          { type: Object, default: () => ({}) },

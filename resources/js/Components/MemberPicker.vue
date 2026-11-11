@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     users: Array,
@@ -83,10 +85,7 @@ function remove(id) {
                             : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600')"
                     class="flex items-center gap-2.5 p-2.5 rounded-lg border text-left transition-all">
                 <div class="relative flex-shrink-0">
-                    <img v-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-8 h-8 rounded-full object-cover">
-                    <div v-else class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-xs font-semibold text-violet-600 dark:text-violet-400">
-                        {{ user.name.charAt(0).toUpperCase() }}
-                    </div>
+                    <UserAvatar :src="user.avatar ?? ''" :name="user.name" size="md" />
                     <span v-if="user.id === ownerId"
                           class="absolute -top-1 -right-1 w-4 h-4 bg-slate-400 dark:bg-slate-500 rounded-full flex items-center justify-center">
                         <i class="bi bi-lock-fill text-white" style="font-size:7px"></i>
@@ -111,19 +110,14 @@ function remove(id) {
             <div class="space-y-2">
                 <div v-for="member in selectedList" :key="member.id"
                      class="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60">
-                    <img v-if="member.avatar" :src="member.avatar" :alt="member.name" class="w-7 h-7 rounded-full object-cover flex-shrink-0">
-                    <div v-else class="w-7 h-7 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-xs font-semibold text-violet-600 dark:text-violet-400 flex-shrink-0">
-                        {{ member.name.charAt(0).toUpperCase() }}
-                    </div>
+                    <UserAvatar :src="member.avatar ?? ''" :name="member.name" size="sm" />
                     <span class="text-sm font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">{{ member.name }}</span>
-                    <select :name="`member_roles[${member.id}]`"
-                            v-model="selected[member.id].role"
-                            :disabled="member.id === ownerId"
-                            class="form-input py-1 px-2 text-xs w-28 flex-shrink-0 disabled:opacity-60">
-                        <option value="developer">Developer</option>
-                        <option value="manager">Manager</option>
-                        <option value="viewer">Viewer</option>
-                    </select>
+                    <div class="w-28 flex-shrink-0" :class="member.id === ownerId ? 'opacity-60 pointer-events-none' : ''">
+                        <input type="hidden" :name="`member_roles[${member.id}]`" :value="selected[member.id].role">
+                        <SearchSelect v-model="selected[member.id].role" size="sm"
+                            :options="[{value:'developer',label:'Developer'},{value:'manager',label:'Manager'},{value:'viewer',label:'Viewer'}]"
+                            placeholder="Role" />
+                    </div>
                     <button v-if="member.id !== ownerId" type="button" @click="remove(member.id)"
                             class="text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0">
                         <i class="bi bi-x-lg text-xs"></i>

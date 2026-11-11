@@ -613,12 +613,9 @@
               </div>
               <div>
                 <label class="form-label">Priority</label>
-                <select v-model="quickAddPriority" name="priority" class="form-input text-sm">
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </select>
+                <SearchSelect v-model="quickAddPriority" size="sm"
+                  :options="[{value:'low',label:'Low'},{value:'medium',label:'Medium'},{value:'high',label:'High'},{value:'critical',label:'Critical'}]"
+                  placeholder="Select priority…" />
               </div>
             </div>
             <div class="flex items-center gap-2 pt-1">
@@ -698,6 +695,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import ProjectSelect from '@/Components/ProjectSelect.vue';
+import SearchSelect from '@/Components/SearchSelect.vue';
 import { useClickOutside } from '@/Composables/useClickOutside';
 
 const page = usePage();

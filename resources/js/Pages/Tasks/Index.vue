@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     project: Object,
@@ -128,26 +129,15 @@ const statusOptions = [
                 <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
                 <input v-model="search" type="text" placeholder="Search tasks…" class="form-input pl-9 text-sm">
             </div>
-            <select v-model="status" class="form-input w-auto text-sm">
-                <option value="">All Status</option>
-                <option value="todo">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="qa_testing">QA Testing</option>
-                <option value="in_review">In Review</option>
-                <option value="done">Done</option>
-                <option value="cancelled">Cancelled</option>
-            </select>
-            <select v-model="priority" class="form-input w-auto text-sm">
-                <option value="">All Priority</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
-            </select>
-            <select v-model="assignee" class="form-input w-auto text-sm">
-                <option value="">All Assignees</option>
-                <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}</option>
-            </select>
+            <SearchSelect v-model="status" size="sm"
+                :options="[{value:'todo',label:'To Do'},{value:'in_progress',label:'In Progress'},{value:'qa_testing',label:'QA Testing'},{value:'in_review',label:'In Review'},{value:'done',label:'Done'},{value:'cancelled',label:'Cancelled'}]"
+                :clearable="true" clearLabel="All Status" placeholder="All Status" />
+            <SearchSelect v-model="priority" size="sm"
+                :options="[{value:'low',label:'Low'},{value:'medium',label:'Medium'},{value:'high',label:'High'},{value:'critical',label:'Critical'}]"
+                :clearable="true" clearLabel="All Priority" placeholder="All Priority" />
+            <SearchSelect v-model="assignee" size="sm"
+                :options="members.map(m => ({value: m.id, label: m.name, avatar: m.avatar_url}))"
+                :clearable="true" clearLabel="All Assignees" placeholder="All Assignees" />
             <button type="submit" class="btn-primary btn-sm">Filter</button>
             <button v-if="hasFilters()" type="button" @click="clearFilters" class="btn-ghost btn-sm">Clear</button>
         </form>
@@ -230,16 +220,10 @@ const statusOptions = [
                                 </div>
                             </td>
                             <td class="hidden sm:table-cell">
-                                <select :value="task.status" @change="updateStatus(task, $event.target.value)"
-                                        class="form-input text-xs w-auto"
-                                        :class="statusStyles[task.status]">
-                                    <option value="todo">To Do</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="qa_testing">QA Testing</option>
-                                    <option value="in_review">In Review</option>
-                                    <option value="done">Done</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
+                                <SearchSelect :modelValue="task.status"
+                                    @update:modelValue="v => updateStatus(task, v)"
+                                    :options="[{value:'todo',label:'To Do'},{value:'in_progress',label:'In Progress'},{value:'qa_testing',label:'QA Testing'},{value:'in_review',label:'In Review'},{value:'done',label:'Done'},{value:'cancelled',label:'Cancelled'}]"
+                                    size="sm" />
                             </td>
                             <td class="hidden md:table-cell">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-medium"

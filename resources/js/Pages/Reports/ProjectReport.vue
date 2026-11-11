@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     projects: Object,
@@ -42,21 +43,15 @@ function resetFilters() {
                 <form @submit.prevent="applyFilters" class="flex flex-wrap gap-3 items-end">
                     <div>
                         <label class="form-label">Status</label>
-                        <select v-model="form.status" class="form-input">
-                            <option value="">All Statuses</option>
-                            <option value="planning">Planning</option>
-                            <option value="active">Active</option>
-                            <option value="on_hold">On Hold</option>
-                            <option value="completed">Completed</option>
-                            <option value="archived">Archived</option>
-                        </select>
+                        <SearchSelect v-model="form.status"
+                            :options="[{value:'planning',label:'Planning'},{value:'active',label:'Active'},{value:'on_hold',label:'On Hold'},{value:'completed',label:'Completed'},{value:'archived',label:'Archived'}]"
+                            :clearable="true" clearLabel="All Statuses" placeholder="All Statuses" />
                     </div>
                     <div>
                         <label class="form-label">Team</label>
-                        <select v-model="form.team_id" class="form-input">
-                            <option value="">All Teams</option>
-                            <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
-                        </select>
+                        <SearchSelect v-model="form.team_id"
+                            :options="teams.map(t => ({value: t.id, label: t.name}))"
+                            :clearable="true" clearLabel="All Teams" placeholder="All Teams" />
                     </div>
                     <button type="submit" class="btn-primary">Apply Filters</button>
                     <button type="button" @click="resetFilters" class="btn-secondary">Reset</button>

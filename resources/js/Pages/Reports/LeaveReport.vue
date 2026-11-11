@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     from: String,
@@ -71,26 +72,21 @@ const statusClass = {
                     </div>
                     <div>
                         <label class="form-label">Employee</label>
-                        <select v-model="form.user_id" class="form-input">
-                            <option value="">All Employees</option>
-                            <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                        </select>
+                        <SearchSelect v-model="form.user_id"
+                            :options="users.map(u => ({value: u.id, label: u.name, avatar: u.avatar_url}))"
+                            :clearable="true" clearLabel="All Employees" placeholder="All Employees" />
                     </div>
                     <div>
                         <label class="form-label">Status</label>
-                        <select v-model="form.status" class="form-input">
-                            <option value="">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
+                        <SearchSelect v-model="form.status"
+                            :options="[{value:'pending',label:'Pending'},{value:'approved',label:'Approved'},{value:'rejected',label:'Rejected'}]"
+                            :clearable="true" clearLabel="All Statuses" placeholder="All Statuses" />
                     </div>
                     <div>
                         <label class="form-label">Type</label>
-                        <select v-model="form.type_id" class="form-input">
-                            <option value="">All Types</option>
-                            <option v-for="t in leave_types" :key="t.id" :value="t.id">{{ t.name }}</option>
-                        </select>
+                        <SearchSelect v-model="form.type_id"
+                            :options="leave_types.map(t => ({value: t.id, label: t.name}))"
+                            :clearable="true" clearLabel="All Types" placeholder="All Types" />
                     </div>
                     <button type="submit" class="btn-primary">Apply</button>
                     <button type="button" @click="resetFilters" class="btn-secondary">Reset</button>

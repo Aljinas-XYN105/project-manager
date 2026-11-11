@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     period: [String, Number],
@@ -56,12 +58,9 @@ function burnClass(rate) {
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Organisation-wide performance dashboard</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <select v-model="selectedPeriod" @change="changePeriod" class="form-input text-sm w-auto">
-                        <option value="7">Last 7 days</option>
-                        <option value="14">Last 14 days</option>
-                        <option value="30">Last 30 days</option>
-                        <option value="90">Last 90 days</option>
-                    </select>
+                    <SearchSelect v-model="selectedPeriod" @update:modelValue="changePeriod" size="sm"
+                        :options="[{value:'7',label:'Last 7 days'},{value:'14',label:'Last 14 days'},{value:'30',label:'Last 30 days'},{value:'90',label:'Last 90 days'}]"
+                        placeholder="Select period…" />
                     <a :href="users_url" class="btn-primary">
                         <i class="bi bi-people-fill"></i> Manage Members
                     </a>
@@ -201,7 +200,7 @@ function burnClass(rate) {
                                     <tr v-for="emp in employees" :key="emp.name">
                                         <td>
                                             <div class="flex items-center gap-2.5">
-                                                <img :src="emp.avatar_url" class="w-7 h-7 rounded-full flex-shrink-0">
+                                                <UserAvatar :src="emp.avatar_url" :name="emp.name" size="sm" />
                                                 <div class="min-w-0">
                                                     <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ emp.name }}</p>
                                                     <p class="text-xs text-slate-400 capitalize">{{ emp.role }}</p>
@@ -308,7 +307,7 @@ function burnClass(rate) {
                     <template v-if="recent_reports.length">
                         <div v-for="report in recent_reports" :key="report.id"
                              class="flex items-start gap-4 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <img :src="report.avatar_url" class="w-8 h-8 rounded-full flex-shrink-0 mt-0.5">
+                            <UserAvatar :src="report.avatar_url" :name="report.name" size="md" class="mt-0.5" />
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ report.user_name }}</span>

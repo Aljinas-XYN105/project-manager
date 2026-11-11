@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     logs: Object,
@@ -99,17 +100,15 @@ function needsDateHeader(idx) {
             </div>
             <div>
                 <label class="form-label">User</label>
-                <select v-model="form.user_id" class="form-input">
-                    <option value="">All users</option>
-                    <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                </select>
+                <SearchSelect v-model="form.user_id"
+                    :options="users.map(u => ({value: u.id, label: u.name, avatar: u.avatar_url}))"
+                    :clearable="true" clearLabel="All users" placeholder="All users" />
             </div>
             <div>
                 <label class="form-label">Type</label>
-                <select v-model="form.category" class="form-input">
-                    <option value="">All types</option>
-                    <option v-for="(label, key) in categories" :key="key" :value="key">{{ label }}</option>
-                </select>
+                <SearchSelect v-model="form.category"
+                    :options="Object.entries(categories).map(([k, v]) => ({value: k, label: v}))"
+                    :clearable="true" clearLabel="All types" placeholder="All types" />
             </div>
             <div>
                 <label class="form-label">From</label>

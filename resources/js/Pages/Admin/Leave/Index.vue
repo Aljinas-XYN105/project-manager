@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     types: Array,
@@ -127,9 +128,8 @@ const colorText = { amber: 'text-amber-600 dark:text-amber-400', violet: 'text-v
                         <div><label class="form-label text-xs">Days/yr</label><input v-model="editForm.days_per_year" type="number" min="0" max="365" step="0.5" required class="form-input text-sm"></div>
                         <div>
                             <label class="form-label text-xs">Colour</label>
-                            <select v-model="editForm.color" class="form-input text-sm">
-                                <option v-for="c in leave_type_colors" :key="c" :value="c">{{ c }}</option>
-                            </select>
+                            <SearchSelect v-model="editForm.color" size="sm"
+                                :options="leave_type_colors" placeholder="Pick color…" />
                         </div>
                         <div class="space-y-1 text-xs text-slate-600 dark:text-slate-400">
                             <label class="flex items-center gap-1.5"><input type="checkbox" v-model="editForm.is_paid" class="rounded text-violet-600"> Paid</label>
@@ -148,9 +148,8 @@ const colorText = { amber: 'text-amber-600 dark:text-amber-400', violet: 'text-v
                     <div><label class="form-label text-xs">Days/yr</label><input v-model="newType.days_per_year" type="number" min="0" max="365" step="0.5" required class="form-input text-sm"></div>
                     <div>
                         <label class="form-label text-xs">Colour</label>
-                        <select v-model="newType.color" class="form-input text-sm">
-                            <option v-for="c in leave_type_colors" :key="c" :value="c">{{ c }}</option>
-                        </select>
+                        <SearchSelect v-model="newType.color" size="sm"
+                            :options="leave_type_colors" placeholder="Pick color…" />
                     </div>
                     <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 pb-2">
                         <input type="checkbox" v-model="newType.is_paid" class="rounded text-violet-600"> Paid
