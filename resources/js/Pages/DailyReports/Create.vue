@@ -142,7 +142,7 @@ async function submit() {
                         <span class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                             <i class="bi bi-journal-plus text-amber-600 dark:text-amber-400"></i>
                         </span>
-                        Daily Standup
+                        Daily Report
                     </h1>
                     <p class="text-sm text-slate-500 mt-1">{{ new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}</p>
                 </div>
