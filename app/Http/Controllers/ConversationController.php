@@ -136,7 +136,9 @@ class ConversationController extends Controller
                 'mark_read_url'      => route('chat.mark-read', $conversation),
                 'popup_url'          => route('chat.popup'),
                 'other_last_read_at' => $other
-                    ? $conversation->participants()->where('users.id', $other->id)->first()?->pivot?->last_read_at?->toIso8601String()
+                    ? (fn($v) => $v ? \Carbon\Carbon::parse($v)->toIso8601String() : null)(
+                        $conversation->participants()->where('users.id', $other->id)->first()?->pivot?->last_read_at
+                    )
                     : null,
             ],
             'messages' => $messages->through(fn ($m) => [
