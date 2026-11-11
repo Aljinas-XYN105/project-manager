@@ -1105,8 +1105,21 @@ function onKeydown(e) {
 }
 
 // ── Lifecycle ──────────────────────────────────────────────────
+function sendBeaconClockOut() {
+  if (!presenceClockedIn.value) return;
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+  if (!csrf) return;
+  const data = new FormData();
+  data.append('_token', csrf);
+  navigator.sendBeacon('/attendance/beacon-clock-out', data);
+}
+
 onMounted(() => {
   document.addEventListener('keydown', onKeydown);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') sendBeaconClockOut();
+  });
+  window.addEventListener('beforeunload', sendBeaconClockOut);
   refreshTimers();
   fetchNotifs();
   tickPresence();
@@ -1118,6 +1131,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown);
+  document.removeEventListener('visibilitychange', sendBeaconClockOut);
+  window.removeEventListener('beforeunload', sendBeaconClockOut);
   clearInterval(timerTick);
   clearInterval(timerPoll);
   clearInterval(presenceTick);

@@ -80,6 +80,16 @@ class AttendanceController extends Controller
         return $this->respond($request, $closed ? 'Clocked out — worked '.$closed->duration_formatted.'.' : 'You were not clocked in.');
     }
 
+    // Called by sendBeacon on tab/window close — no response body needed.
+    public function beaconClockOut(Request $request)
+    {
+        if ($request->user()) {
+            Attendance::clockOut($request->user(), $request->ip());
+            $request->user()->forceFill(['availability' => 'away'])->saveQuietly();
+        }
+        return response()->noContent();
+    }
+
     public function availability(Request $request)
     {
         $data = $request->validate([
