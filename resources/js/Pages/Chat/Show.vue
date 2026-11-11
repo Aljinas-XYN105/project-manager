@@ -31,6 +31,24 @@ const mentionResults = ref([])
 const mentionIndex   = ref(0)
 const allMentions    = ref([])
 
+// ── Read receipts ─────────────────────────────────────────────
+const otherLastReadAt = ref(props.conversation.other_last_read_at ? new Date(props.conversation.other_last_read_at) : null)
+
+function isRead(msg) {
+    if (!isMine(msg) || props.conversation.is_group) return false
+    if (msg.optimistic) return false
+    if (!otherLastReadAt.value) return false
+    const ts = msg.created_at_iso ? new Date(msg.created_at_iso) : (msg.created_at ? new Date(msg.created_at) : null)
+    return ts && ts <= otherLastReadAt.value
+}
+
+function callMarkRead() {
+    if (!props.conversation.mark_read_url) return
+    navigator.sendBeacon
+        ? navigator.sendBeacon(props.conversation.mark_read_url, (() => { const f = new FormData(); f.append('_token', csrfMeta()); return f })())
+        : fetch(props.conversation.mark_read_url, { method:'POST', headers:{'X-CSRF-TOKEN':csrfMeta()} })
+}
+
 // ── Typing state ──────────────────────────────────────────────
 const typingUsers  = ref([])
 const typingTimers = {}
@@ -138,6 +156,23 @@ function scrollToBottom(smooth = true) {
             el.scrollTop = el.scrollHeight
         }
     })
+}
+
+// ── Message notification sound ────────────────────────────────
+function playMsgSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        ;[[520,0,0.08],[660,0.09,0.1]].forEach(([freq,start,dur]) => {
+            const o = ctx.createOscillator(), g = ctx.createGain()
+            o.connect(g); g.connect(ctx.destination)
+            o.type = 'sine'; o.frequency.value = freq
+            g.gain.setValueAtTime(0, ctx.currentTime + start)
+            g.gain.linearRampToValueAtTime(0.15, ctx.currentTime + start + 0.02)
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur)
+            o.start(ctx.currentTime + start)
+            o.stop(ctx.currentTime + start + dur + 0.05)
+        })
+    } catch(e) {}
 }
 
 // ── contenteditable helpers ───────────────────────────────────
@@ -411,11 +446,20 @@ onMounted(() => {
             .listen('.message.sent', (data) => {
                 if (data.user?.id === authId.value) return
                 messages.value.push({ ...data, deleted: false })
+                playMsgSound()
                 scrollToBottom(true)
+                // Mark read since we're looking at the conversation
+                callMarkRead()
             })
             .listen('.message.deleted', (data) => {
                 const msg = messages.value.find(m => m.id === data.id)
                 if (msg) { msg.body = ''; msg.deleted = true }
+            })
+            .listen('.conversation.read', (data) => {
+                // Other person read our messages — update their last_read_at
+                if (data.user_id !== authId.value) {
+                    otherLastReadAt.value = new Date(data.last_read_at)
+                }
             })
             .listenForWhisper('typing', (data) => {
                 if (data.id === authId.value) return
@@ -552,7 +596,14 @@ onBeforeUnmount(() => {
                                         </div>
                                         <div class="ct-bubble-time">
                                             <span>{{ msg.created_time || formatTime(msg.created_at) }}</span>
-                                            <i v-if="isMine(msg)" class="bi bi-check2" style="font-size:11px"></i>
+                                            <template v-if="isMine(msg)">
+                                                <!-- single tick: optimistic (not yet confirmed by server) -->
+                                                <i v-if="msg.optimistic" class="bi bi-check" style="font-size:11px;opacity:.7"></i>
+                                                <!-- double green: read by recipient -->
+                                                <i v-else-if="isRead(msg)" class="bi bi-check2-all" style="font-size:11px;color:#4ade80"></i>
+                                                <!-- double grey: delivered to server -->
+                                                <i v-else class="bi bi-check2-all" style="font-size:11px;opacity:.6"></i>
+                                            </template>
                                         </div>
                                     </template>
                                     <span v-else class="ct-deleted">

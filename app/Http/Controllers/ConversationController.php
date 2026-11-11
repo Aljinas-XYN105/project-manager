@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ConversationRead;
 use App\Models\Conversation;
 use App\Models\Task;
 use App\Models\User;
@@ -84,11 +85,12 @@ class ConversationController extends Controller
             ->latest('created_at')
             ->paginate(50);
 
-        // Mark all as read
-        $conversation->participants()
-            ->updateExistingPivot($user->id, ['last_read_at' => now()]);
+        // Mark all as read and broadcast so sender sees green ticks
+        $now = now();
+        $conversation->participants()->updateExistingPivot($user->id, ['last_read_at' => $now]);
+        try { broadcast(new ConversationRead($conversation->id, $user->id, $now->toIso8601String()))->toOthers(); } catch (\Throwable) {}
 
-        // Also load participants with status for header
+        // Also load participants with status and pivot for read receipts
         $conversation->load('participants:id,name,avatar,last_seen_at,availability');
 
         $users = User::where('id', '!=', $user->id)->where('is_active', true)->orderBy('name')
@@ -130,18 +132,23 @@ class ConversationController extends Controller
                     'status_label' => $statusLabel,
                 ] : null,
                 'member_count' => $conversation->participants->count(),
-                'store_url'    => route('chat.messages.store', $conversation),
-                'popup_url'    => route('chat.popup'),
+                'store_url'          => route('chat.messages.store', $conversation),
+                'mark_read_url'      => route('chat.mark-read', $conversation),
+                'popup_url'          => route('chat.popup'),
+                'other_last_read_at' => $other
+                    ? $conversation->participants()->where('users.id', $other->id)->first()?->pivot?->last_read_at?->toIso8601String()
+                    : null,
             ],
             'messages' => $messages->through(fn ($m) => [
-                'id'          => $m->id,
-                'body'        => $m->body,
-                'is_deleted'  => (bool) $m->deleted_at,
-                'is_mine'     => $m->user_id === $authId,
-                'user'        => $m->user ? ['id' => $m->user->id, 'name' => $m->user->name, 'avatar_url' => $m->user->avatar_url] : null,
-                'created_at'  => $m->created_at->format('g:i A'),
-                'created_date'=> $m->created_at->toDateString(),
-                'destroy_url' => route('chat.messages.destroy', $m),
+                'id'              => $m->id,
+                'body'            => $m->body,
+                'is_deleted'      => (bool) $m->deleted_at,
+                'is_mine'         => $m->user_id === $authId,
+                'user'            => $m->user ? ['id' => $m->user->id, 'name' => $m->user->name, 'avatar_url' => $m->user->avatar_url] : null,
+                'created_at'      => $m->created_at->format('g:i A'),
+                'created_at_iso'  => $m->created_at->toIso8601String(),
+                'created_date'    => $m->created_at->toDateString(),
+                'destroy_url'     => route('chat.messages.destroy', $m),
             ]),
             'users' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'avatar_url' => $u->avatar_url]),
             'back_url' => route('chat.index'),
@@ -245,6 +252,17 @@ class ConversationController extends Controller
             'chat_index_url' => route('chat.index'),
             'groups_store_url' => route('chat.groups.store'),
         ]);
+    }
+
+    // Mark all messages in a conversation as read by the current user
+    public function markRead(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        abort_unless($conversation->participants()->where('users.id', $user->id)->exists(), 403);
+        $now = now();
+        $conversation->participants()->updateExistingPivot($user->id, ['last_read_at' => $now]);
+        try { broadcast(new ConversationRead($conversation->id, $user->id, $now->toIso8601String()))->toOthers(); } catch (\Throwable) {}
+        return response()->noContent();
     }
 
     // Open chat in a standalone popup window (no app chrome)

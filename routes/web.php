@@ -272,6 +272,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('{conversation}', [\App\Http\Controllers\ConversationController::class, 'show'])->name('show');
         Route::get('{conversation}/window', [\App\Http\Controllers\ConversationController::class, 'window'])->name('window');
         Route::post('{conversation}/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+        Route::post('{conversation}/mark-read', [\App\Http\Controllers\ConversationController::class, 'markRead'])->name('mark-read');
         Route::delete('messages/{message}', [\App\Http\Controllers\MessageController::class, 'destroy'])->name('messages.destroy');
         Route::post('{conversation}/members', [\App\Http\Controllers\ConversationController::class, 'addMember'])->name('members.add');
         Route::delete('{conversation}/members/{user}', [\App\Http\Controllers\ConversationController::class, 'removeMember'])->name('members.remove');
