@@ -652,6 +652,45 @@
       </div>
     </TransitionGroup>
   </div>
+
+  <!-- Overtime alert modal -->
+  <Teleport to="body">
+    <Transition name="ot-fade">
+      <div v-if="overtimeAlertOpen"
+           class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+           style="background:rgba(15,23,42,.7);backdrop-filter:blur(4px)">
+        <div class="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
+             style="background:#1e293b;border:1.5px solid #f59e0b">
+          <div class="px-6 pt-6 pb-4 text-center">
+            <div class="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center"
+                 style="background:rgba(245,158,11,.15)">
+              <i class="bi bi-clock-history text-2xl" style="color:#f59e0b"></i>
+            </div>
+            <h2 class="text-lg font-bold text-white mb-1">Still working?</h2>
+            <p class="text-sm text-slate-400">
+              You've been working for <span class="font-semibold text-white">{{ presenceElapsed }}</span>,
+              which exceeds your scheduled {{ workingHoursPerDay }}h day.
+            </p>
+            <p class="text-xs text-amber-400 mt-3 font-medium">
+              Auto clock-out in <span class="font-mono">{{ fmtCountdown(overtimeAutooutSecs) }}</span>
+            </p>
+          </div>
+          <div class="flex gap-3 px-6 pb-6">
+            <button @click="dismissOvertimeAlert"
+                    class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    style="background:#334155;color:#e2e8f0">
+              <i class="bi bi-play-fill mr-1"></i> Still working
+            </button>
+            <button @click="() => { overtimeAlertOpen = false; clearInterval(overtimeCountdownTimer); sendPresence('/attendance/clock-out', 'post') }"
+                    class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    style="background:#f59e0b;color:#1e293b">
+              <i class="bi bi-box-arrow-right mr-1"></i> Clock out
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup>
@@ -943,9 +982,77 @@ const presenceBusy         = ref(false);
 const presenceAvailability = ref(page.props.presence?.availability ?? 'available');
 const presenceStatuses     = computed(() => page.props.presence?.statuses ?? {});
 const presenceClockedIn    = ref(page.props.presence?.clockedIn ?? false);
-const presenceClockInAt    = ref(page.props.presence?.clockInAt ? new Date(page.props.presence.clockInAt) : null);
+const presenceClockInAt     = ref(page.props.presence?.clockInAt ? new Date(page.props.presence.clockInAt) : null);
 const presenceWorkedMinutes = ref(page.props.presence?.workedMinutes ?? 0);
-const presenceElapsed      = ref('0h 00m');
+const presenceElapsed       = ref('0h 00m');
+const workingHoursPerDay    = ref(page.props.presence?.workingHoursPerDay ?? 8);
+
+// ── Overtime alert ─────────────────────────────────────────────
+const overtimeAlertOpen     = ref(false);
+const overtimeAutooutSecs   = ref(600); // 10-minute countdown
+let   overtimeAlertTimer    = null;
+let   overtimeCountdownTimer = null;
+
+function totalWorkedMins() {
+  let mins = presenceWorkedMinutes.value;
+  if (presenceClockedIn.value && presenceClockInAt.value) {
+    mins += Math.max(0, Math.floor((Date.now() - presenceClockInAt.value) / 60000));
+  }
+  return mins;
+}
+
+function playAlertSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[440,0,0.15],[550,0.18,0.15],[440,0.36,0.15],[550,0.54,0.2]].forEach(([freq,start,dur]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, ctx.currentTime + start);
+      g.gain.linearRampToValueAtTime(0.22, ctx.currentTime + start + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      o.start(ctx.currentTime + start); o.stop(ctx.currentTime + start + dur + 0.05);
+    });
+  } catch(_) {}
+}
+
+function startOvertimeCountdown() {
+  overtimeAutooutSecs.value = 600;
+  clearInterval(overtimeCountdownTimer);
+  overtimeCountdownTimer = setInterval(() => {
+    overtimeAutooutSecs.value--;
+    if (overtimeAutooutSecs.value <= 0) {
+      clearInterval(overtimeCountdownTimer);
+      overtimeAlertOpen.value = false;
+      sendPresence('/attendance/clock-out', 'post');
+    }
+  }, 1000);
+}
+
+function dismissOvertimeAlert() {
+  overtimeAlertOpen.value = false;
+  clearInterval(overtimeCountdownTimer);
+  // Suppress for 2 hours
+  overtimeAlertTimer = setTimeout(checkOvertime, 2 * 60 * 60 * 1000);
+}
+
+function checkOvertime() {
+  if (!presenceClockedIn.value) return;
+  const worked = totalWorkedMins();
+  const limit  = workingHoursPerDay.value * 60;
+  if (worked >= limit + 30) { // alert 30 min after expected end
+    overtimeAlertOpen.value = true;
+    playAlertSound();
+    startOvertimeCountdown();
+  } else {
+    // Check again in 5 minutes
+    overtimeAlertTimer = setTimeout(checkOvertime, 5 * 60 * 1000);
+  }
+}
+
+function fmtCountdown(secs) {
+  return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+}
 let presenceTick           = null;
 
 const currentPresence = computed(() => presenceStatuses.value[presenceAvailability.value] ?? { dot: 'bg-slate-400', label: 'Available' });
@@ -1103,10 +1210,12 @@ onMounted(() => {
   refreshTimers();
   fetchNotifs();
   tickPresence();
-  timerTick   = setInterval(tickTimers,   1000);
-  timerPoll   = setInterval(refreshTimers, 30000);
+  timerTick    = setInterval(tickTimers,   1000);
+  timerPoll    = setInterval(refreshTimers, 30000);
   presenceTick = setInterval(tickPresence, 30000);
-  notifPoll   = setInterval(fetchNotifs,  60000);
+  notifPoll    = setInterval(fetchNotifs,  60000);
+  // Start overtime check after 5 minutes
+  overtimeAlertTimer = setTimeout(checkOvertime, 5 * 60 * 1000);
 });
 
 onUnmounted(() => {
@@ -1116,6 +1225,8 @@ onUnmounted(() => {
   clearInterval(timerPoll);
   clearInterval(presenceTick);
   clearInterval(notifPoll);
+  clearTimeout(overtimeAlertTimer);
+  clearInterval(overtimeCountdownTimer);
 });
 
 // Scroll active nav item into view on page navigation
@@ -1127,3 +1238,8 @@ router.on('navigate', () => {
   });
 });
 </script>
+
+<style>
+.ot-fade-enter-active, .ot-fade-leave-active { transition: opacity .2s; }
+.ot-fade-enter-from, .ot-fade-leave-to { opacity: 0; }
+</style>

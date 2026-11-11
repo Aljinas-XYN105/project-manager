@@ -98,11 +98,12 @@ class HandleInertiaRequests extends Middleware
             ->sum('duration_minutes');
 
         return [
-            'statuses'      => \App\Models\User::AVAILABILITY,
-            'availability'  => $user->availability ?: 'available',
-            'clockedIn'     => (bool) $openShift,
-            'clockInAt'     => $openShift?->clock_in_at?->toIso8601String(),
-            'workedMinutes' => $workedToday,
+            'statuses'            => \App\Models\User::AVAILABILITY,
+            'availability'        => $user->availability ?: 'available',
+            'clockedIn'           => (bool) $openShift,
+            'clockInAt'           => $openShift?->clock_in_at?->toIso8601String(),
+            'workedMinutes'       => $workedToday,
+            'workingHoursPerDay'  => (float) ($user->working_hours_per_day ?? 8),
         ];
     }
 }
