@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ProjectSelect from '@/Components/ProjectSelect.vue'
+import TaskPicker from '@/Components/TaskPicker.vue'
 
 const props = defineProps({
     my_tasks: Array,
@@ -205,16 +206,10 @@ async function submit() {
                                     <!-- Task selector -->
                                     <div>
                                         <label class="form-label">Task</label>
-                                        <div class="relative">
-                                            <select v-model="task.task_id" @change="onTaskPicked(task)"
-                                                    class="form-input text-sm">
-                                                <option value="">— Not linked to a task —</option>
-                                                <option value="__new__">＋ Create a new task…</option>
-                                                <option v-for="opt in optionsFor(task)" :key="opt.id" :value="String(opt.id)">
-                                                    {{ opt.label }}
-                                                </option>
-                                            </select>
-                                        </div>
+                                        <TaskPicker
+                                            :modelValue="task.task_id"
+                                            :options="optionsFor(task)"
+                                            @update:modelValue="val => { task.task_id = val; onTaskPicked(task) }" />
                                     </div>
 
                                     <!-- New task inline form -->
