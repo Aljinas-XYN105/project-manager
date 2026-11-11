@@ -18,6 +18,8 @@ const props = defineProps({
     today: String,
     store_url: String,
     clock_out_all_url: String,
+    summary_url: String,
+    export_url: String,
 })
 
 const dateFrom = ref(props.from)
@@ -99,7 +101,15 @@ const clockedInCount = () => props.board.filter(r => r.clocked_in).length
                 <h1 class="page-title">Team Attendance</h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Who is available right now, and everyone's sign-in / sign-out times. Times shown in {{ timezone }}.</p>
             </div>
-            <button v-if="can_manage" @click="openNew" class="btn-primary"><i class="bi bi-plus-lg"></i> Add entry</button>
+            <div class="flex items-center gap-2">
+                <a :href="route('admin.attendance.summary')" class="btn-secondary">
+                    <i class="bi bi-graph-up"></i> Working Hours
+                </a>
+                <a :href="export_url + '?from=' + from + '&to=' + to" class="btn-secondary">
+                    <i class="bi bi-download"></i> Export CSV
+                </a>
+                <button v-if="can_manage" @click="openNew" class="btn-primary"><i class="bi bi-plus-lg"></i> Add entry</button>
+            </div>
         </div>
 
         <!-- KPIs -->

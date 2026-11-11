@@ -36,6 +36,19 @@ class AttendanceController extends Controller
 
         $open = $user->openAttendance();
 
+        // Expected hours for the month
+        $expectedHoursPerDay = (float) ($user->expected_hours_per_day ?? 8.0);
+        $workDays = $user->work_days ?? ['mon', 'tue', 'wed', 'thu', 'fri'];
+        $period = \Carbon\CarbonPeriod::create($month->copy()->startOfMonth(), $month->copy()->endOfMonth());
+        $workingDaysCount = 0;
+        foreach ($period as $day) {
+            if (in_array(strtolower($day->format('D')), array_map(fn ($d) => substr($d, 0, 3), $workDays))) {
+                $workingDaysCount++;
+            }
+        }
+        $expectedMinutes = $workingDaysCount * $expectedHoursPerDay * 60;
+        $diffMinutes     = $summary['total_minutes'] - $expectedMinutes;
+
         $byDayArray = $byDay->map(fn ($sessions) => $sessions->sortBy('clock_in_at')->map(fn ($s) => [
             'id'          => $s->id,
             'clock_in_at' => $s->clock_in_at->inUserTz()->format('g:i A'),
@@ -58,6 +71,17 @@ class AttendanceController extends Controller
                 'clock_in_at'       => $open->clock_in_at->inUserTz()->format('g:i A'),
                 'duration_formatted'=> $open->duration_formatted,
             ] : null,
+            'schedule' => [
+                'expected_hours_per_day' => $expectedHoursPerDay,
+                'expected_start_time'    => $user->expected_start_time ? substr($user->expected_start_time, 0, 5) : null,
+                'work_days'              => $workDays,
+                'working_days_in_month'  => $workingDaysCount,
+                'expected_formatted'     => sprintf('%dh %02dm', intdiv((int)$expectedMinutes, 60), (int)$expectedMinutes % 60),
+                'diff_minutes'           => (int) $diffMinutes,
+                'diff_formatted'         => ($diffMinutes >= 0 ? '+' : '-').sprintf('%dh %02dm', intdiv(abs((int)$diffMinutes), 60), abs((int)$diffMinutes) % 60),
+                'overtime'               => $diffMinutes > 0,
+                'shortfall'              => $diffMinutes < 0,
+            ],
             'clock_in_url'  => route('attendance.clock-in'),
             'clock_out_url' => route('attendance.clock-out'),
             'timezone'      => $user->timezone,

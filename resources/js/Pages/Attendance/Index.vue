@@ -10,6 +10,7 @@ const props = defineProps({
     next_month: String,
     summary: Object,
     open: Object,
+    schedule: Object,
     clock_in_url: String,
     clock_out_url: String,
     timezone: String,
@@ -60,6 +61,34 @@ const days = Object.entries(props.byDay ?? {}).map(([date, sessions]) => ({ date
                 You're clocked in since <strong>{{ open.clock_in_at }}</strong>
                 ({{ open.duration_formatted }} so far).
             </p>
+        </div>
+
+        <!-- Expected vs actual banner -->
+        <div v-if="schedule" class="card p-4 mb-6 flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2 text-sm">
+                <i class="bi bi-clock text-slate-400"></i>
+                <span class="text-slate-600 dark:text-slate-400">Expected this month:</span>
+                <span class="font-semibold text-slate-900 dark:text-white">{{ schedule.expected_formatted }}</span>
+                <span class="text-slate-400 text-xs">({{ schedule.expected_hours_per_day }}h/day · {{ schedule.working_days_in_month }} working days)</span>
+            </div>
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+            <div class="flex items-center gap-2 text-sm">
+                <i class="bi bi-hourglass-split text-slate-400"></i>
+                <span class="text-slate-600 dark:text-slate-400">Actual:</span>
+                <span class="font-semibold text-slate-900 dark:text-white">{{ summary.total_formatted }}</span>
+            </div>
+            <span v-if="schedule.diff_minutes !== 0"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                  :class="schedule.overtime
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'">
+                <i :class="schedule.overtime ? 'bi-arrow-up' : 'bi-arrow-down'" class="bi text-[10px]"></i>
+                {{ schedule.diff_formatted }}
+                {{ schedule.overtime ? 'overtime' : 'shortfall' }}
+            </span>
+            <span v-else class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <i class="bi bi-check2 text-[10px]"></i> On target
+            </span>
         </div>
 
         <!-- Summary stats -->
