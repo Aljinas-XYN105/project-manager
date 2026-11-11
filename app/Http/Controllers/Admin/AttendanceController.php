@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceController extends Controller
 {
@@ -90,9 +92,146 @@ class AttendanceController extends Controller
             'can_manage'     => $request->user()->hasRole('admin') || $request->user()->can('attendance.manage'),
             'timezone'       => $tz,
             'today'          => now($tz)->toDateString(),
-            'store_url'      => route('admin.attendance.store'),
+            'store_url'         => route('admin.attendance.store'),
             'clock_out_all_url' => route('admin.attendance.clock-out-all'),
+            'summary_url'       => route('admin.attendance.summary'),
+            'export_url'        => route('admin.attendance.export'),
+            'schedule_url_base' => url('admin/attendance/schedule'),
         ]);
+    }
+
+    public function summary(Request $request): \Inertia\Response
+    {
+        $tz   = $request->user()->timezone ?: config('app.timezone');
+        $from = $request->filled('from') ? Carbon::parse($request->input('from'), $tz)->startOfDay()->utc()
+                                         : now($tz)->startOfMonth()->utc();
+        $to   = $request->filled('to') ? Carbon::parse($request->input('to'), $tz)->endOfDay()->utc()
+                                       : now($tz)->endOfDay()->utc();
+
+        $users   = User::active()->orderBy('name')->get();
+        $records = Attendance::whereBetween('clock_in_at', [$from, $to])->get()->groupBy('user_id');
+
+        $dayNames = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+        $rows = $users->map(function (User $u) use ($from, $to, $records, $tz, $dayNames) {
+            $workDays  = $u->work_days ?? ['mon', 'tue', 'wed', 'thu', 'fri'];
+            $expectedH = (float) ($u->expected_hours_per_day ?? 8.0);
+            $startTime = $u->expected_start_time; // e.g. "09:00:00"
+
+            // Count working days in range
+            $period = CarbonPeriod::create($from->copy()->setTimezone($tz)->toDateString(),
+                                           $to->copy()->setTimezone($tz)->toDateString());
+            $workingDays = 0;
+            foreach ($period as $day) {
+                if (in_array(strtolower($day->format('D')), array_map(fn ($d) => substr($d, 0, 3), $workDays))) {
+                    $workingDays++;
+                }
+            }
+
+            $sessions       = $records->get($u->id, collect());
+            $totalMinutes   = $sessions->sum('duration_minutes');
+            $daysPresent    = $sessions->groupBy(fn ($s) => $s->work_date->toDateString())->count();
+            $expectedMins   = $workingDays * $expectedH * 60;
+            $diffMins       = $totalMinutes - $expectedMins;
+
+            // Late-arrival detection
+            $lateDays = 0;
+            if ($startTime) {
+                $byDay = $sessions->groupBy(fn ($s) => $s->work_date->toDateString());
+                foreach ($byDay as $day => $daySessions) {
+                    $firstIn = $daySessions->min('clock_in_at');
+                    if ($firstIn) {
+                        $expectedAt = Carbon::parse($day.' '.$startTime, $tz)->utc()->addMinutes(10); // 10-min grace
+                        if ($firstIn->gt($expectedAt)) {
+                            $lateDays++;
+                        }
+                    }
+                }
+            }
+
+            return [
+                'user_id'          => $u->id,
+                'user_name'        => $u->name,
+                'avatar_url'       => $u->avatar_url,
+                'show_url'         => route('users.show', $u),
+                'schedule_url'     => route('admin.attendance.schedule', $u),
+                'expected_hours'   => $expectedH,
+                'work_days'        => $workDays,
+                'expected_start'   => $startTime ? substr($startTime, 0, 5) : null,
+                'days_present'     => $daysPresent,
+                'working_days'     => $workingDays,
+                'total_minutes'    => $totalMinutes,
+                'total_formatted'  => sprintf('%dh %02dm', intdiv($totalMinutes, 60), $totalMinutes % 60),
+                'expected_minutes' => (int) $expectedMins,
+                'expected_formatted' => sprintf('%dh %02dm', intdiv((int)$expectedMins, 60), (int)$expectedMins % 60),
+                'diff_minutes'     => $diffMins,
+                'diff_formatted'   => ($diffMins >= 0 ? '+' : '-').sprintf('%dh %02dm', intdiv(abs((int)$diffMins), 60), abs((int)$diffMins) % 60),
+                'overtime'         => $diffMins > 0,
+                'shortfall'        => $diffMins < 0,
+                'late_days'        => $lateDays,
+            ];
+        });
+
+        return Inertia::render('Admin/Attendance/Summary', [
+            'rows'    => $rows,
+            'from'    => $from->setTimezone($tz)->toDateString(),
+            'to'      => $to->setTimezone($tz)->toDateString(),
+            'users'   => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]),
+            'export_url' => route('admin.attendance.export'),
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $tz   = $request->user()->timezone ?: config('app.timezone');
+        $from = $request->filled('from') ? Carbon::parse($request->input('from'), $tz)->startOfDay()->utc()
+                                         : now($tz)->startOfMonth()->utc();
+        $to   = $request->filled('to') ? Carbon::parse($request->input('to'), $tz)->endOfDay()->utc()
+                                       : now($tz)->endOfDay()->utc();
+
+        $records = Attendance::with('user')
+            ->whereBetween('clock_in_at', [$from, $to])
+            ->when($request->filled('user_id'), fn ($q) => $q->where('user_id', $request->integer('user_id')))
+            ->orderBy('work_date')->orderBy('clock_in_at')
+            ->get();
+
+        $filename = 'attendance-'.$from->setTimezone($tz)->toDateString().'-to-'.$to->setTimezone($tz)->toDateString().'.csv';
+
+        return response()->streamDownload(function () use ($records, $tz) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Date', 'Member', 'Clock In', 'Clock Out', 'Duration (min)', 'Duration', 'Source', 'Note']);
+            foreach ($records as $r) {
+                fputcsv($out, [
+                    $r->work_date->toDateString(),
+                    $r->user?->name ?? '—',
+                    $r->clock_in_at?->setTimezone($tz)->format('H:i'),
+                    $r->clock_out_at?->setTimezone($tz)->format('H:i') ?? '',
+                    $r->duration_minutes,
+                    $r->duration_formatted,
+                    $r->source,
+                    $r->note ?? '',
+                ]);
+            }
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    public function updateSchedule(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'expected_hours_per_day' => ['required', 'numeric', 'min:0.5', 'max:24'],
+            'expected_start_time'    => ['nullable', 'date_format:H:i'],
+            'work_days'              => ['nullable', 'array'],
+            'work_days.*'            => ['string', 'in:mon,tue,wed,thu,fri,sat,sun'],
+        ]);
+
+        if (isset($data['expected_start_time']) && $data['expected_start_time']) {
+            $data['expected_start_time'] = $data['expected_start_time'].':00';
+        }
+
+        $user->update($data);
+
+        return back()->with('success', "Work schedule updated for {$user->name}.");
     }
 
     public function store(Request $request)
