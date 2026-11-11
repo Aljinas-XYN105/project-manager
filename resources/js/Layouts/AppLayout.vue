@@ -1116,9 +1116,6 @@ function sendBeaconClockOut() {
 
 onMounted(() => {
   document.addEventListener('keydown', onKeydown);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') sendBeaconClockOut();
-  });
   window.addEventListener('beforeunload', sendBeaconClockOut);
   refreshTimers();
   fetchNotifs();
@@ -1131,7 +1128,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown);
-  document.removeEventListener('visibilitychange', sendBeaconClockOut);
   window.removeEventListener('beforeunload', sendBeaconClockOut);
   clearInterval(timerTick);
   clearInterval(timerPoll);
