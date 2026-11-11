@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\Expense;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
@@ -308,5 +309,82 @@ class ReportController extends Controller
             'filters'    => $request->only('from', 'to', 'user_id', 'status', 'category'),
             'export_url' => route('reports.expenses'),
         ]);
+    }
+
+    public function attendanceReport(Request $request)
+    {
+        $tz   = $request->user()->timezone ?: config('app.timezone');
+        $from = $request->filled('from') ? Carbon::parse($request->input('from'), $tz)->startOfDay() : now($tz)->startOfMonth()->startOfDay();
+        $to   = $request->filled('to')   ? Carbon::parse($request->input('to'), $tz)->endOfDay()     : now($tz)->endOfDay();
+
+        $users = User::active()->orderBy('name')->get();
+
+        $records = Attendance::whereBetween('work_date', [$from->toDateString(), $to->toDateString()])
+            ->get()
+            ->groupBy('user_id');
+
+        $workingDays = $this->workingDaysBetween($from, $to);
+
+        $rows = $users->map(function (User $user) use ($records, $workingDays, $tz) {
+            $userRecs  = $records->get($user->id, collect());
+            $byDay     = $userRecs->groupBy(fn ($a) => $a->work_date->toDateString());
+            $totalMins = $userRecs->sum('duration_minutes');
+            $daysPresent = $byDay->count();
+
+            $clockInMins = $userRecs->map(fn ($a) => $a->clock_in_at->setTimezone($tz)->hour * 60 + $a->clock_in_at->setTimezone($tz)->minute);
+            $avgIn  = $clockInMins->count() ? (int) round($clockInMins->avg()) : null;
+
+            $clockOutMins = $userRecs->whereNotNull('clock_out_at')
+                ->map(fn ($a) => $a->clock_out_at->setTimezone($tz)->hour * 60 + $a->clock_out_at->setTimezone($tz)->minute);
+            $avgOut = $clockOutMins->count() ? (int) round($clockOutMins->avg()) : null;
+
+            return [
+                'user_id'        => $user->id,
+                'user_name'      => $user->name,
+                'avatar_url'     => $user->avatar_url,
+                'days_present'   => $daysPresent,
+                'working_days'   => $workingDays,
+                'attendance_pct' => $workingDays ? (int) round($daysPresent / $workingDays * 100) : 0,
+                'total_minutes'  => $totalMins,
+                'total_hours'    => round($totalMins / 60, 1),
+                'avg_minutes'    => $daysPresent ? (int) round($totalMins / $daysPresent) : 0,
+                'avg_clock_in'   => $avgIn  !== null ? sprintf('%02d:%02d', intdiv($avgIn, 60), $avgIn % 60) : '—',
+                'avg_clock_out'  => $avgOut !== null ? sprintf('%02d:%02d', intdiv($avgOut, 60), $avgOut % 60) : '—',
+            ];
+        });
+
+        if ($request->filled('user_id')) {
+            $rows = $rows->where('user_id', $request->integer('user_id'));
+        }
+
+        $rows = $rows->sortByDesc('days_present')->values();
+
+        $summary = [
+            'total_members'      => $rows->count(),
+            'avg_attendance_pct' => $rows->count() ? (int) round($rows->avg('attendance_pct')) : 0,
+            'total_hours'        => round($rows->sum('total_minutes') / 60, 1),
+            'perfect_attendance' => $rows->where('attendance_pct', 100)->count(),
+        ];
+
+        return Inertia::render('Reports/AttendanceReport', [
+            'rows'         => $rows,
+            'summary'      => $summary,
+            'working_days' => $workingDays,
+            'from'         => $from->toDateString(),
+            'to'           => $to->toDateString(),
+            'users'        => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]),
+            'filters'      => $request->only(['from', 'to', 'user_id']),
+        ]);
+    }
+
+    private function workingDaysBetween(Carbon $from, Carbon $to): int
+    {
+        $days    = 0;
+        $current = $from->copy()->startOfDay();
+        while ($current->lte($to)) {
+            if ($current->isWeekday()) $days++;
+            $current->addDay();
+        }
+        return $days;
     }
 }

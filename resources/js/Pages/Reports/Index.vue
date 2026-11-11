@@ -123,6 +123,17 @@ defineProps({
                         View report <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </div>
                 </a>
+
+                <a :href="route('reports.attendance')" class="card-hover p-6 group">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="bi bi-person-check-fill text-blue-600 dark:text-blue-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Attendance Report</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Track clock-in/out times, attendance rates, and working hours per member.</p>
+                    <div class="mt-4 flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium">
+                        View report <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </a>
             </div>
 
             <!-- Saved Snapshots -->
