@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ProjectSelect from '@/Components/ProjectSelect.vue'
+import TaskPicker from '@/Components/TaskPicker.vue'
 
 const props = defineProps({
     daily_report: Object,
@@ -172,13 +173,10 @@ function deleteReport() {
                                 <div class="flex-1 min-w-0 space-y-3">
                                     <div>
                                         <label class="form-label">Task</label>
-                                        <select v-model="task.task_id" @change="onTaskPicked(task)" class="form-input text-sm">
-                                            <option value="">— Not linked to a task —</option>
-                                            <option value="__new__">＋ Create a new task…</option>
-                                            <option v-for="opt in optionsFor(task)" :key="opt.id" :value="String(opt.id)">
-                                                {{ opt.label }}
-                                            </option>
-                                        </select>
+                                        <TaskPicker
+                                            :modelValue="task.task_id"
+                                            :options="optionsFor(task)"
+                                            @update:modelValue="val => { task.task_id = val; onTaskPicked(task) }" />
                                     </div>
 
                                     <div v-if="task.task_id === '__new__'"
