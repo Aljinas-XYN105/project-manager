@@ -225,11 +225,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('attendance', [AdminAttendanceController::class, 'index'])
             ->middleware('role_or_permission:admin|attendance.view|attendance.manage')->name('attendance.index');
+        Route::get('attendance/summary', [AdminAttendanceController::class, 'summary'])
+            ->middleware('role_or_permission:admin|attendance.view|attendance.manage')->name('attendance.summary');
+        Route::get('attendance/export', [AdminAttendanceController::class, 'export'])
+            ->middleware('role_or_permission:admin|attendance.manage')->name('attendance.export');
         Route::middleware('role_or_permission:admin|attendance.manage')->group(function () {
             Route::post('attendance', [AdminAttendanceController::class, 'store'])->name('attendance.store');
             Route::post('attendance/clock-out-all', [AdminAttendanceController::class, 'clockOutAll'])->name('attendance.clock-out-all');
             Route::put('attendance/{attendance}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
             Route::delete('attendance/{attendance}', [AdminAttendanceController::class, 'destroy'])->name('attendance.destroy');
+            Route::put('attendance/schedule/{user}', [AdminAttendanceController::class, 'updateSchedule'])->name('attendance.schedule');
         });
 
         Route::middleware('role_or_permission:admin|leave.manage')->group(function () {
