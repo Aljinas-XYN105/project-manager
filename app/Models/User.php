@@ -20,7 +20,7 @@ class User extends Authenticatable
         'timezone', 'theme', 'team_id', 'last_seen_at', 'is_active',
         'availability', 'availability_note',
         'expected_hours_per_day', 'expected_start_time', 'work_days',
-        'employee_code', 'department', 'employment_type', 'manager_id', 'joined_on', 'date_of_birth',
+        'employee_code', 'department', 'employment_type', 'working_hours_per_day', 'manager_id', 'joined_on', 'date_of_birth',
         'phone', 'emergency_contact_name', 'emergency_contact_phone',
     ];
 

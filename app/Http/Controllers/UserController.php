@@ -149,7 +149,7 @@ class UserController extends Controller
                 'id' => null, 'name' => '', 'email' => '', 'job_title' => '',
                 'team_id' => null, 'timezone' => auth()->user()->timezone ?: config('app.timezone'),
                 'is_active' => true, 'employee_code' => '', 'department' => '',
-                'employment_type' => 'full_time', 'manager_id' => null,
+                'employment_type' => 'full_time', 'working_hours_per_day' => 8, 'manager_id' => null,
                 'joined_on' => '', 'date_of_birth' => '', 'phone' => '',
                 'emergency_contact_name' => '', 'emergency_contact_phone' => '',
                 'current_roles' => ['member'], 'is_self' => false,
@@ -204,7 +204,7 @@ class UserController extends Controller
                 'job_title' => $user->job_title ?? '', 'team_id' => $user->team_id,
                 'timezone' => $user->timezone ?? config('app.timezone'), 'is_active' => $user->is_active,
                 'employee_code' => $user->employee_code ?? '', 'department' => $user->department ?? '',
-                'employment_type' => $user->employment_type ?? 'full_time', 'manager_id' => $user->manager_id,
+                'employment_type' => $user->employment_type ?? 'full_time', 'working_hours_per_day' => $user->working_hours_per_day ?? 8, 'manager_id' => $user->manager_id,
                 'joined_on' => $user->joined_on?->toDateString() ?? '',
                 'date_of_birth' => $user->date_of_birth?->toDateString() ?? '',
                 'phone' => $user->phone ?? '', 'emergency_contact_name' => $user->emergency_contact_name ?? '',
@@ -308,7 +308,10 @@ class UserController extends Controller
             'phone', 'emergency_contact_name', 'emergency_contact_phone',
         ])->map(fn ($v) => $v === '' ? null : $v)->all();
 
-        return $fields + ['employment_type' => $data['employment_type'] ?? 'full_time'];
+        return $fields + [
+            'employment_type'        => $data['employment_type'] ?? 'full_time',
+            'working_hours_per_day'  => $data['working_hours_per_day'] ?? 8,
+        ];
     }
 
     private function rules(?User $user = null): array
@@ -317,6 +320,7 @@ class UserController extends Controller
             'employee_code'           => ['nullable', 'string', 'max:30', Rule::unique('users', 'employee_code')->ignore($user?->id)],
             'department'              => ['nullable', 'string', 'max:80'],
             'employment_type'         => ['nullable', Rule::in(array_keys(User::EMPLOYMENT_TYPES))],
+            'working_hours_per_day'   => ['nullable', 'numeric', 'min:1', 'max:24'],
             'manager_id'              => ['nullable', 'exists:users,id', Rule::notIn(array_filter([$user?->id])),
                 function ($attr, $value, $fail) use ($user) {
                     // Walk up the chosen manager's chain; finding this user there would create a loop.

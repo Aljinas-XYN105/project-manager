@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import TimePicker from '@/Components/TimePicker.vue'
 import { useClickOutside } from '@/Composables/useClickOutside'
 
 const props = defineProps({
@@ -44,7 +45,14 @@ const description = ref(props.task.description ?? '')
 const status      = ref(props.task.status)
 const priority    = ref(props.task.priority)
 const taskType    = ref(props.task.type)
-const dueDate     = ref(props.task.due_date ?? '')
+const dueDateFull = props.task.due_date ?? ''
+const dueDate     = ref(dueDateFull ? dueDateFull.split(' ')[0] : '')
+const dueTime     = ref(dueDateFull ? (dueDateFull.split(' ')[1] ?? '') : '')
+const assigneeSearch = ref('')
+const filteredAvailableMembers = computed(() => {
+    const q = assigneeSearch.value.toLowerCase().trim()
+    return q ? availableMembers.value.filter(m => m.name.toLowerCase().includes(q)) : availableMembers.value
+})
 const assignees   = ref([...props.task.assignees])
 const availableMembers = computed(() => props.members.filter(m => !assignees.value.find(a => a.id === m.id)))
 
@@ -122,7 +130,10 @@ async function setType(val) {
 }
 
 async function saveDue() {
-    await patch({ due_date: dueDate.value || null })
+    const combined = dueDate.value
+        ? dueDate.value + (dueTime.value ? ' ' + dueTime.value : ' 00:00')
+        : null
+    await patch({ due_date: combined })
 }
 
 async function addAssignee(member) {
@@ -670,10 +681,11 @@ function typeBg(type) {
                     <div class="px-4 py-2.5 flex items-center gap-3">
                         <i class="bi bi-calendar3 text-[10px] text-slate-400 w-3 text-center flex-shrink-0"></i>
                         <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide w-20 flex-shrink-0">Due</span>
-                        <div class="flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
                             <DatePicker v-model="dueDate" @update:modelValue="saveDue"
                                         compact :overdue="task.is_overdue" :disabled="!can_update"
                                         :placeholder="can_update ? 'Set date' : '—'" />
+                            <TimePicker v-if="dueDate && can_update" v-model="dueTime" @update:modelValue="saveDue" compact />
                         </div>
                     </div>
 
@@ -698,13 +710,21 @@ function typeBg(type) {
                                     <i class="bi bi-plus-circle text-xs"></i> Add
                                 </button>
                                 <div v-if="assigneeOpen"
-                                     class="absolute left-0 top-5 z-50 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 max-h-48 overflow-y-auto">
-                                    <p v-if="!availableMembers.length" class="text-xs text-slate-400 text-center py-3">All members assigned</p>
-                                    <button v-for="u in availableMembers" :key="u.id" @click="addAssignee(u)"
-                                            class="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                        <img :src="u.avatar_url" class="w-5 h-5 rounded-full flex-shrink-0 object-cover">
-                                        <span class="text-sm text-slate-700 dark:text-slate-300 truncate">{{ u.name }}</span>
-                                    </button>
+                                     class="absolute left-0 top-5 z-50 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                    <div class="px-2 pt-2 pb-1">
+                                        <input v-model="assigneeSearch" type="text" placeholder="Search members…"
+                                               class="w-full text-xs bg-slate-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5 outline-none placeholder-slate-400 text-slate-700 dark:text-slate-300" />
+                                    </div>
+                                    <div class="max-h-44 overflow-y-auto py-1">
+                                        <p v-if="!filteredAvailableMembers.length" class="text-xs text-slate-400 text-center py-3">
+                                            {{ availableMembers.length ? 'No match' : 'All members assigned' }}
+                                        </p>
+                                        <button v-for="u in filteredAvailableMembers" :key="u.id" @click="addAssignee(u)"
+                                                class="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <img :src="u.avatar_url" class="w-5 h-5 rounded-full flex-shrink-0 object-cover">
+                                            <span class="text-sm text-slate-700 dark:text-slate-300 truncate">{{ u.name }}</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

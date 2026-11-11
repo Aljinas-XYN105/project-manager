@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import { useClickOutside } from '@/Composables/useClickOutside'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import TimePicker from '@/Components/TimePicker.vue'
 
 const props = defineProps({
     task: Object,
@@ -46,7 +47,8 @@ const form = useForm({
     sprint_id:          props.task.sprint?.id ?? '',
     assignee_ids:       props.task.assignee_ids ? [...props.task.assignee_ids] : [],
     label_ids:          props.task.label_ids ? [...props.task.label_ids] : [],
-    due_date:           props.task.due_date ?? '',
+    due_date:           props.task.due_date ? props.task.due_date.split(' ')[0] : '',
+    due_time:           props.task.due_date ? (props.task.due_date.split(' ')[1] ?? '') : '',
     estimated_hours:    props.task.estimated_hours ?? '',
     story_points:       props.task.story_points ?? '',
     severity:           props.task.severity ?? '',
@@ -78,7 +80,16 @@ function toggleLabel(id) {
     i === -1 ? form.label_ids.push(id) : form.label_ids.splice(i, 1)
 }
 
+const memberSearch = ref('')
+const filteredMembers = computed(() => {
+    const q = memberSearch.value.toLowerCase().trim()
+    return q ? props.members.filter(m => m.name.toLowerCase().includes(q)) : props.members
+})
+
 function submit() {
+    if (form.due_date && form.due_time) {
+        form.due_date = form.due_date + ' ' + form.due_time
+    }
     form.patch(props.task.update_url)
 }
 </script>
@@ -194,8 +205,9 @@ function submit() {
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="form-label">Due date</label>
+                            <label class="form-label">Due date &amp; time</label>
                             <DatePicker v-model="form.due_date" />
+                            <TimePicker v-if="form.due_date" v-model="form.due_time" class="mt-1.5" />
                         </div>
                         <div>
                             <label class="form-label">Estimate (hrs)</label>
@@ -213,14 +225,21 @@ function submit() {
                                 <button type="button" @click="toggleAssignee(id)" class="hover:text-rose-500"><i class="bi bi-x text-xs"></i></button>
                             </span>
                         </div>
-                        <div class="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <button v-for="m in members" :key="m.id" type="button" @click="toggleAssignee(m.id)"
-                                    class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm transition-colors"
-                                    :class="form.assignee_ids.includes(m.id) ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300' : 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'">
-                                <img :src="m.avatar_url" class="w-5 h-5 rounded-full flex-shrink-0">
-                                <span class="truncate text-xs">{{ m.name }}</span>
-                                <i v-if="form.assignee_ids.includes(m.id)" class="bi bi-check-lg text-violet-500 ml-auto text-xs flex-shrink-0"></i>
-                            </button>
+                        <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <div class="px-2 pt-2 pb-1">
+                                <input v-model="memberSearch" type="text" placeholder="Search members…"
+                                       class="w-full text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 outline-none placeholder-slate-400 text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-violet-400" />
+                            </div>
+                            <div class="grid grid-cols-2 gap-1 max-h-36 overflow-y-auto p-2">
+                                <button v-for="m in filteredMembers" :key="m.id" type="button" @click="toggleAssignee(m.id)"
+                                        class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-sm transition-colors"
+                                        :class="form.assignee_ids.includes(m.id) ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300' : 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'">
+                                    <img :src="m.avatar_url" class="w-5 h-5 rounded-full flex-shrink-0">
+                                    <span class="truncate text-xs">{{ m.name }}</span>
+                                    <i v-if="form.assignee_ids.includes(m.id)" class="bi bi-check-lg text-violet-500 ml-auto text-xs flex-shrink-0"></i>
+                                </button>
+                                <p v-if="!filteredMembers.length" class="text-xs text-slate-400 py-3 text-center col-span-2">No match</p>
+                            </div>
                         </div>
                     </div>
 
