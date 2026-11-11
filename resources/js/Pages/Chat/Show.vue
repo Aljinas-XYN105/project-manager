@@ -140,23 +140,6 @@ function scrollToBottom(smooth = true) {
     })
 }
 
-// ── Notification sound ────────────────────────────────────────
-function playNotifSound() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)()
-        ;[[880,0,0.12],[1100,0.1,0.1]].forEach(([freq,start,dur]) => {
-            const o = ctx.createOscillator(), g = ctx.createGain()
-            o.connect(g); g.connect(ctx.destination)
-            o.type = 'sine'; o.frequency.value = freq
-            g.gain.setValueAtTime(0, ctx.currentTime + start)
-            g.gain.linearRampToValueAtTime(0.18, ctx.currentTime + start + 0.02)
-            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur)
-            o.start(ctx.currentTime + start)
-            o.stop(ctx.currentTime + start + dur + 0.05)
-        })
-    } catch(e) {}
-}
-
 // ── contenteditable helpers ───────────────────────────────────
 function extractText() {
     const el = compose.value
@@ -428,7 +411,6 @@ onMounted(() => {
             .listen('.message.sent', (data) => {
                 if (data.user?.id === authId.value) return
                 messages.value.push({ ...data, deleted: false })
-                playNotifSound()
                 scrollToBottom(true)
             })
             .listen('.message.deleted', (data) => {
