@@ -186,6 +186,11 @@ function directPermCount(group) {
                             </select>
                         </div>
                         <div>
+                            <label class="form-label">Working hours / day</label>
+                            <input v-model.number="form.working_hours_per_day" type="number" min="1" max="24" step="0.5" class="form-input" placeholder="8">
+                            <p class="form-hint">Default working hours per day for capacity planning.</p>
+                        </div>
+                        <div>
                             <label class="form-label">Joining date</label>
                             <DatePicker v-model="form.joined_on" />
                         </div>
