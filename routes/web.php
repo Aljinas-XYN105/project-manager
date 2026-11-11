@@ -119,6 +119,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('teams', [ReportController::class, 'teamReport'])->name('teams');
         Route::get('leave', [ReportController::class, 'leaveReport'])->name('leave');
         Route::get('expenses', [ReportController::class, 'expenseReport'])->name('expenses');
+        Route::get('attendance', [ReportController::class, 'attendanceReport'])->name('attendance');
     });
 
     // Notifications
