@@ -22,16 +22,14 @@ return new class extends Migration
             Permission::firstOrCreate(['name' => $name]);
         }
 
-        // Give admin all permissions
-        $admin = Role::findByName('admin');
-        $admin->syncPermissions(Permission::all());
+        // Give admin all permissions (skip if role not seeded yet — seeder handles it)
+        $admin = Role::where('name', 'admin')->first();
+        $admin?->syncPermissions(Permission::all());
 
         // Give manager the new permissions (on top of existing ones)
-        $manager = Role::findByName('manager');
-        $manager->givePermissionTo($new);
-
-        // expenses.review was already in seeder but make sure manager has it
-        $manager->givePermissionTo('expenses.review');
+        $manager = Role::where('name', 'manager')->first();
+        $manager?->givePermissionTo($new);
+        $manager?->givePermissionTo('expenses.review');
     }
 
     public function down(): void
