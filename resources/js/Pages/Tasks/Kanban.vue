@@ -248,7 +248,7 @@ function memberName(id) { return props.members.find(m => m.id === id)?.name ?? '
         <Teleport to="body">
             <div v-if="panelOpen" class="fixed inset-0 z-40" @keydown.escape.window="panelOpen = false">
                 <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" @click="panelOpen = false"></div>
-                <div class="absolute inset-y-0 right-0 z-50 w-full max-w-md flex flex-col bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800">
+                <div class="absolute inset-x-0 bottom-0 sm:inset-x-auto sm:inset-y-0 sm:right-0 z-50 w-full sm:max-w-md flex flex-col bg-white dark:bg-slate-900 shadow-2xl border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-none max-h-[92dvh] sm:max-h-none">
                     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
