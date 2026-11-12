@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Contracts\Repositories\TaskRepositoryInterface;
 use App\Models\Column;
+use App\Models\DailyReportTask;
 use App\Models\Project;
+use App\Models\StandupItem;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -118,7 +120,29 @@ class TaskService
     {
         Cache::forget("project_stats_{$task->project_id}");
         $this->activityLogService->log("deleted task \"{$task->title}\"", $task, auth()->user());
+
+        // Collect all descendant IDs so we can cascade soft-delete and clear FK references.
+        $allIds   = $this->collectDescendantIds($task);
+        $allIds[] = $task->id;
+
+        // Soft-delete all descendant tasks (subtasks of subtasks, etc.)
+        Task::whereIn('id', $allIds)->where('id', '!=', $task->id)->each->delete();
+
+        // Null out nullable FK references so soft-deleted tasks don't appear as broken links.
+        DailyReportTask::whereIn('task_id', $allIds)->update(['task_id' => null]);
+        StandupItem::whereIn('task_id', $allIds)->update(['task_id' => null]);
+
         return $this->taskRepository->delete($task);
+    }
+
+    private function collectDescendantIds(Task $task): array
+    {
+        $ids = [];
+        foreach ($task->subtasks()->withTrashed()->get() as $subtask) {
+            $ids[] = $subtask->id;
+            array_push($ids, ...$this->collectDescendantIds($subtask));
+        }
+        return $ids;
     }
 
     public function moveTask(Task $task, Column $newColumn, int $position): void
