@@ -105,10 +105,12 @@ class AttendanceController extends Controller
     }
 
     // Called by sendBeacon on tab/window close — no response body needed.
+    // We intentionally do NOT clock out attendance here: beforeunload fires on page
+    // refresh and mobile tab kills too, which would silently clock users out mid-day.
+    // Attendance is closed on explicit logout or the next morning via closeStale().
     public function beaconClockOut(Request $request)
     {
         if ($request->user()) {
-            Attendance::clockOut($request->user(), $request->ip());
             $request->user()->forceFill(['availability' => 'away'])->saveQuietly();
         }
         return response()->noContent();
