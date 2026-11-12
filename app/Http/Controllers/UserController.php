@@ -14,6 +14,7 @@ use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
 {
@@ -185,6 +186,7 @@ class UserController extends Controller
             'email_verified_at' => now(),
         ] + $this->hrFields($data));
         $user->syncRoles($data['current_roles']);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $message = "Member \"{$user->name}\" created.";
         if (! $data['password']) {
@@ -251,6 +253,8 @@ class UserController extends Controller
         if (auth()->user()->hasRole('admin') && isset($data['direct_permissions'])) {
             $user->syncPermissions($data['direct_permissions']);
         }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('users.index')->with('success', "Member \"{$user->name}\" updated.");
     }
