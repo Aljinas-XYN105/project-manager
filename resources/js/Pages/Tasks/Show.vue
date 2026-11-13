@@ -85,15 +85,19 @@ const currentStatus   = computed(() => statusOptions.find(o => o.val === status.
 const currentPriority = computed(() => priorityOptions.find(o => o.val === priority.value) ?? priorityOptions[1])
 const currentType     = computed(() => typeOptions.find(o => o.val === taskType.value) ?? typeOptions[0])
 
+// CSRF helper — uses the XSRF-TOKEN cookie the way Laravel/axios expect
+function csrfHeaders(json = true) {
+    const cookie = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1]
+    const headers = { 'X-XSRF-TOKEN': cookie ? decodeURIComponent(cookie) : '', 'Accept': 'application/json' }
+    if (json) headers['Content-Type'] = 'application/json'
+    return headers
+}
+
 // Inline PATCH helper
 async function patch(data) {
     return fetch(props.task.update_url, {
         method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-            'Accept': 'application/json',
-        },
+        headers: csrfHeaders(),
         body: JSON.stringify(data),
     })
 }
@@ -115,7 +119,7 @@ async function setStatus(val) {
     status.value = val; statusOpen.value = false
     await fetch(props.task.status_url, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+        headers: csrfHeaders(),
         body: JSON.stringify({ status: val }),
     })
 }
@@ -141,7 +145,7 @@ async function addAssignee(member) {
     assigneeOpen.value = false
     const r = await fetch(props.task.assignees_add_url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+        headers: csrfHeaders(),
         body: JSON.stringify({ user_id: member.id }),
     })
     if (r.ok) assignees.value.push({ id: member.id, name: member.name, avatar_url: member.avatar_url })
@@ -150,7 +154,7 @@ async function addAssignee(member) {
 async function removeAssignee(member) {
     const r = await fetch(props.task.assignees_remove_base + '/' + member.id, {
         method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+        headers: csrfHeaders(false),
     })
     if (r.ok) assignees.value = assignees.value.filter(a => a.id !== member.id)
 }
@@ -163,7 +167,7 @@ async function postComment() {
     postingComment.value = true
     await fetch(props.task.comments_store_url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+        headers: csrfHeaders(),
         body: JSON.stringify({ body: commentBody.value, commentable_type: 'task', commentable_id: props.task.id }),
     })
     commentBody.value = ''
@@ -176,7 +180,7 @@ async function addSubtask() {
     if (!newSubtaskTitle.value.trim()) return
     const r = await fetch(props.task.project.store_subtask_url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+        headers: csrfHeaders(),
         body: JSON.stringify({
             title: newSubtaskTitle.value,
             project_id: props.task.project.id,
@@ -209,7 +213,7 @@ async function addTestCase() {
     savingTc.value = true
     await fetch(props.task.test_cases_store_url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+        headers: csrfHeaders(),
         body: JSON.stringify(tcForm.value),
     })
     tcForm.value = { title: '', steps: '', expected_result: '' }
@@ -221,7 +225,7 @@ async function addTestCase() {
 async function setTcStatus(tc, status) {
     await fetch(tc.update_url, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+        headers: csrfHeaders(),
         body: JSON.stringify({ status }),
     })
     router.reload({ only: ['task'] })
@@ -231,7 +235,7 @@ async function deleteTestCase(tc) {
     if (!confirm('Delete this test case?')) return
     await fetch(tc.destroy_url, {
         method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+        headers: csrfHeaders(false),
     })
     router.reload({ only: ['task'] })
 }
@@ -286,10 +290,9 @@ const totalFormatted = computed(() => {
 })
 
 async function toggleTimer() {
-    const tok = document.querySelector('meta[name=csrf-token]').content
     if (timerRunning.value) {
         const r = await fetch('/time-entries/' + timerEntryId.value + '/stop', {
-            method: 'POST', headers: { 'X-CSRF-TOKEN': tok, Accept: 'application/json' },
+            method: 'POST', headers: csrfHeaders(false),
         })
         if (r.ok) {
             timerRunning.value = false
@@ -303,7 +306,7 @@ async function toggleTimer() {
     } else {
         const r = await fetch('/time-entries/start', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': tok, Accept: 'application/json' },
+            headers: csrfHeaders(),
             body: JSON.stringify({ task_id: props.task.id }),
         })
         if (r.ok) {
