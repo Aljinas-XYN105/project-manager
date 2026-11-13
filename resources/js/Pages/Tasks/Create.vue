@@ -108,6 +108,15 @@ function submit() {
 
             <div class="card p-6">
                 <form @submit.prevent="submit" class="space-y-5">
+                    <!-- Validation error summary -->
+                    <div v-if="Object.keys(form.errors).length"
+                         class="rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-4 py-3 flex items-start gap-2.5">
+                        <i class="bi bi-exclamation-circle-fill text-rose-500 flex-shrink-0 mt-0.5 text-sm"></i>
+                        <ul class="text-sm text-rose-700 dark:text-rose-300 space-y-0.5 list-none">
+                            <li v-for="(msg, field) in form.errors" :key="field">{{ msg }}</li>
+                        </ul>
+                    </div>
+
                     <!-- Type selector -->
                     <div>
                         <label class="form-label">Ticket Type *</label>
@@ -208,6 +217,7 @@ function submit() {
                         <div>
                             <label class="form-label">Estimate (hrs)</label>
                             <input v-model="form.estimated_hours" type="number" min="0" step="0.5" class="form-input" placeholder="0">
+                            <p v-if="form.errors.estimated_hours" class="text-xs text-rose-500 mt-1">{{ form.errors.estimated_hours }}</p>
                         </div>
                     </div>
 

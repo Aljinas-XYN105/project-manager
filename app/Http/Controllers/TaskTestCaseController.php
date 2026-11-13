@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Models\TaskTestCase;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TaskTestCaseController extends Controller
 {
@@ -13,9 +14,13 @@ class TaskTestCaseController extends Controller
         $this->authorize('update', $task);
 
         $data = $request->validate([
-            'title'           => ['required', 'string', 'max:255'],
+            'title'           => ['required', 'string', 'max:255',
+                Rule::unique('task_test_cases', 'title')->where(fn ($q) => $q->where('task_id', $task->id)),
+            ],
             'steps'           => ['nullable', 'string', 'max:5000'],
             'expected_result' => ['nullable', 'string', 'max:5000'],
+        ], [
+            'title.unique' => 'A test case with this title already exists for this task.',
         ]);
 
         $tc = $task->testCases()->create([

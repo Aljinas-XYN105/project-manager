@@ -165,19 +165,28 @@ const postingComment = ref(false)
 async function postComment() {
     if (!commentBody.value.trim() || postingComment.value) return
     postingComment.value = true
-    await fetch(props.task.comments_store_url, {
+    commentError.value = ''
+    const r = await fetch(props.task.comments_store_url, {
         method: 'POST',
         headers: csrfHeaders(),
         body: JSON.stringify({ body: commentBody.value, commentable_type: 'task', commentable_id: props.task.id }),
     })
-    commentBody.value = ''
     postingComment.value = false
-    router.reload({ only: ['task'] })
+    if (r.ok) {
+        commentBody.value = ''
+        router.reload({ only: ['task'] })
+    } else {
+        const body = await r.json().catch(() => ({}))
+        commentError.value = r.status === 422
+            ? (body.errors?.body?.[0] ?? body.message ?? 'Validation failed.')
+            : 'Something went wrong. Please try again.'
+    }
 }
 
 // Subtasks
 async function addSubtask() {
     if (!newSubtaskTitle.value.trim()) return
+    subtaskError.value = ''
     const r = await fetch(props.task.project.store_subtask_url, {
         method: 'POST',
         headers: csrfHeaders(),
@@ -194,6 +203,11 @@ async function addSubtask() {
         newSubtaskTitle.value = ''
         addingSubtask.value = false
         router.reload({ only: ['task'] })
+    } else {
+        const body = await r.json().catch(() => ({}))
+        subtaskError.value = r.status === 422
+            ? (body.errors?.title?.[0] ?? body.message ?? 'Validation failed.')
+            : 'Something went wrong. Please try again.'
     }
 }
 
@@ -208,18 +222,35 @@ const tcForm = ref({ title: '', steps: '', expected_result: '' })
 const savingTc = ref(false)
 const expandedTc = ref(null)
 
+// Inline form errors
+const subtaskError = ref('')
+const tcErrors     = ref({})
+const commentError = ref('')
+
 async function addTestCase() {
     if (!tcForm.value.title.trim() || savingTc.value) return
     savingTc.value = true
-    await fetch(props.task.test_cases_store_url, {
+    tcErrors.value = {}
+    const r = await fetch(props.task.test_cases_store_url, {
         method: 'POST',
         headers: csrfHeaders(),
         body: JSON.stringify(tcForm.value),
     })
-    tcForm.value = { title: '', steps: '', expected_result: '' }
-    addingTestCase.value = false
     savingTc.value = false
-    router.reload({ only: ['task'] })
+    if (r.ok) {
+        tcForm.value = { title: '', steps: '', expected_result: '' }
+        addingTestCase.value = false
+        router.reload({ only: ['task'] })
+    } else {
+        const body = await r.json().catch(() => ({}))
+        if (r.status === 422 && body.errors) {
+            tcErrors.value = Object.fromEntries(
+                Object.entries(body.errors).map(([k, msgs]) => [k, msgs[0]])
+            )
+        } else {
+            tcErrors.value = { _general: body.message ?? 'Something went wrong. Please try again.' }
+        }
+    }
 }
 
 async function setTcStatus(tc, status) {
@@ -521,13 +552,16 @@ function typeBg(type) {
                         </div>
                     </div>
                     <div v-if="can_update && addingSubtask" class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                        <p v-if="subtaskError" class="text-xs text-rose-500 mb-1.5 flex items-center gap-1">
+                            <i class="bi bi-exclamation-circle"></i> {{ subtaskError }}
+                        </p>
                         <div class="flex items-center gap-2">
                             <input v-model="newSubtaskTitle" ref="subInput" placeholder="Subtask title…"
-                                   @keydown.enter.prevent="addSubtask" @keydown.escape="addingSubtask=false; newSubtaskTitle=''"
-                                   class="flex-1 form-input text-sm py-1.5">
+                                   @keydown.enter.prevent="addSubtask" @keydown.escape="addingSubtask=false; newSubtaskTitle=''; subtaskError=''"
+                                   class="flex-1 form-input text-sm py-1.5" :class="subtaskError ? 'border-rose-400' : ''">
                             <button @click="addSubtask" :disabled="!newSubtaskTitle.trim()"
                                     class="px-3 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors disabled:opacity-40">Add</button>
-                            <button @click="addingSubtask=false; newSubtaskTitle=''"
+                            <button @click="addingSubtask=false; newSubtaskTitle=''; subtaskError=''"
                                     class="px-2 py-1.5 text-xs text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
                                 <i class="bi bi-x-lg"></i>
                             </button>
@@ -620,9 +654,17 @@ function typeBg(type) {
 
                     <!-- Add form -->
                     <div v-if="can_update && addingTestCase" class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 space-y-3">
-                        <input v-model="tcForm.title" placeholder="Test case title…"
-                               class="w-full form-input text-sm py-1.5"
-                               @keydown.escape="addingTestCase=false; tcForm={title:'',steps:'',expected_result:''}">
+                        <p v-if="tcErrors._general" class="text-xs text-rose-500 flex items-center gap-1">
+                            <i class="bi bi-exclamation-circle"></i> {{ tcErrors._general }}
+                        </p>
+                        <div>
+                            <input v-model="tcForm.title" placeholder="Test case title…"
+                                   class="w-full form-input text-sm py-1.5" :class="tcErrors.title ? 'border-rose-400' : ''"
+                                   @keydown.escape="addingTestCase=false; tcForm={title:'',steps:'',expected_result:''}; tcErrors={}">
+                            <p v-if="tcErrors.title" class="text-xs text-rose-500 mt-1 flex items-center gap-1">
+                                <i class="bi bi-exclamation-circle"></i> {{ tcErrors.title }}
+                            </p>
+                        </div>
                         <textarea v-model="tcForm.steps" placeholder="Steps to reproduce (optional)…"
                                   rows="2" class="w-full form-input text-sm py-1.5 resize-none"></textarea>
                         <textarea v-model="tcForm.expected_result" placeholder="Expected result (optional)…"
@@ -632,7 +674,7 @@ function typeBg(type) {
                                     class="px-3 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors disabled:opacity-40">
                                 {{ savingTc ? 'Saving…' : 'Add' }}
                             </button>
-                            <button @click="addingTestCase=false; tcForm={title:'',steps:'',expected_result:''}"
+                            <button @click="addingTestCase=false; tcForm={title:'',steps:'',expected_result:''}; tcErrors={}"
                                     class="px-2 py-1.5 text-xs text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
                                 Cancel
                             </button>
@@ -672,6 +714,9 @@ function typeBg(type) {
                                 <textarea v-model="commentBody" rows="2" placeholder="Add a comment… (Ctrl+Enter to post)"
                                           class="form-input resize-none w-full text-sm"
                                           @keydown.ctrl.enter.prevent="postComment"></textarea>
+                                <p v-if="commentError" class="text-xs text-rose-500 mt-1 flex items-center gap-1">
+                                    <i class="bi bi-exclamation-circle"></i> {{ commentError }}
+                                </p>
                                 <div class="flex justify-end mt-2">
                                     <button @click="postComment" :disabled="!commentBody.trim() || postingComment" class="btn-primary btn-sm disabled:opacity-40">
                                         <i class="bi" :class="postingComment ? 'bi-hourglass-split' : 'bi-send'"></i>

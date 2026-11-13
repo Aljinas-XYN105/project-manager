@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Task;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateTaskRequest extends FormRequest
 {
@@ -25,7 +26,11 @@ class UpdateTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title'               => ['sometimes', 'required', 'string', 'max:255'],
+            'title'               => ['sometimes', 'required', 'string', 'max:255',
+                Rule::unique('tasks', 'title')
+                    ->where(fn ($q) => $q->where('project_id', $this->route('task')->project_id)->whereNull('deleted_at'))
+                    ->ignore($this->route('task')->id),
+            ],
             'description'         => ['nullable', 'string'],
             'column_id'           => ['sometimes', 'exists:columns,id'],
             'type'                => ['nullable', 'in:task,bug,feature,story,epic'],
@@ -44,6 +49,13 @@ class UpdateTaskRequest extends FormRequest
             'expected_behavior'   => ['nullable', 'string'],
             'actual_behavior'     => ['nullable', 'string'],
             'environment'         => ['nullable', 'string', 'max:255'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'title.unique' => 'A task with this title already exists in this project.',
         ];
     }
 }
