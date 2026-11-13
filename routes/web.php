@@ -13,6 +13,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\SprintController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskTestCaseController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\AdminController;
@@ -76,6 +77,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status');
     Route::post('tasks/{task}/assignees', [TaskController::class, 'addAssignee'])->name('tasks.assignees.add');
     Route::delete('tasks/{task}/assignees/{user}', [TaskController::class, 'removeAssignee'])->name('tasks.assignees.remove');
+
+    // Test Cases
+    Route::post('tasks/{task}/test-cases', [TaskTestCaseController::class, 'store'])->name('tasks.test-cases.store');
+    Route::patch('tasks/{task}/test-cases/{testCase}', [TaskTestCaseController::class, 'update'])->name('tasks.test-cases.update');
+    Route::delete('tasks/{task}/test-cases/{testCase}', [TaskTestCaseController::class, 'destroy'])->name('tasks.test-cases.destroy');
 
     // Attachments
     Route::post('tasks/{task}/attachments', [AttachmentController::class, 'store'])->name('attachments.store');

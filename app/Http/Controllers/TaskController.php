@@ -256,6 +256,18 @@ class TaskController extends Controller
                 'attachments_store_url'=> route('attachments.store', $task),
                 'comments_store_url'   => route('comments.store'),
                 'edit_url'             => route('tasks.edit', $task),
+                'test_cases'           => ($task->testCases ?? collect())->map(fn ($tc) => [
+                    'id'              => $tc->id,
+                    'title'           => $tc->title,
+                    'steps'           => $tc->steps,
+                    'expected_result' => $tc->expected_result,
+                    'status'          => $tc->status,
+                    'created_by_name' => $tc->creator?->name,
+                    'created_ago'     => $tc->created_at->diffForHumans(),
+                    'update_url'      => route('tasks.test-cases.update', [$task, $tc]),
+                    'destroy_url'     => route('tasks.test-cases.destroy', [$task, $tc]),
+                ]),
+                'test_cases_store_url' => route('tasks.test-cases.store', $task),
             ],
             'members'    => $members->map(fn ($m) => ['id' => $m->id, 'name' => $m->name, 'avatar_url' => $m->avatar_url]),
             'activity'   => $activityLogs->map(fn ($l) => [

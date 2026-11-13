@@ -91,6 +91,11 @@ class Task extends Model
         return $this->belongsTo(Sprint::class);
     }
 
+    public function testCases(): HasMany
+    {
+        return $this->hasMany(TaskTestCase::class)->orderBy('created_at');
+    }
+
     public function dailyReportTasks(): HasMany
     {
         return $this->hasMany(DailyReportTask::class);

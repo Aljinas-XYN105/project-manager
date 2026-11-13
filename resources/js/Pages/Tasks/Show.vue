@@ -198,6 +198,48 @@ const subtaskDone  = computed(() => props.task.subtasks.filter(s => s.status ===
 const subtaskTotal = computed(() => props.task.subtasks.length)
 const subtaskPct   = computed(() => subtaskTotal.value > 0 ? Math.round(subtaskDone.value / subtaskTotal.value * 100) : 0)
 
+// Test Cases
+const addingTestCase  = ref(false)
+const tcForm = ref({ title: '', steps: '', expected_result: '' })
+const savingTc = ref(false)
+const expandedTc = ref(null)
+
+async function addTestCase() {
+    if (!tcForm.value.title.trim() || savingTc.value) return
+    savingTc.value = true
+    await fetch(props.task.test_cases_store_url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+        body: JSON.stringify(tcForm.value),
+    })
+    tcForm.value = { title: '', steps: '', expected_result: '' }
+    addingTestCase.value = false
+    savingTc.value = false
+    router.reload({ only: ['task'] })
+}
+
+async function setTcStatus(tc, status) {
+    await fetch(tc.update_url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ status }),
+    })
+    router.reload({ only: ['task'] })
+}
+
+async function deleteTestCase(tc) {
+    if (!confirm('Delete this test case?')) return
+    await fetch(tc.destroy_url, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+    })
+    router.reload({ only: ['task'] })
+}
+
+const tcPassedCount  = computed(() => props.task.test_cases.filter(t => t.status === 'passed').length)
+const tcFailedCount  = computed(() => props.task.test_cases.filter(t => t.status === 'failed').length)
+const tcTotal        = computed(() => props.task.test_cases.length)
+
 // Due date display
 const dueDateDisplay = computed(() => {
     if (!dueDate.value) return ''
@@ -485,6 +527,111 @@ function typeBg(type) {
                             <button @click="addingSubtask=false; newSubtaskTitle=''"
                                     class="px-2 py-1.5 text-xs text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
                                 <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card overflow-hidden" id="test-cases">
+                    <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800">
+                        <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                            <i class="bi bi-clipboard2-check text-slate-400 text-xs"></i>
+                            Test Cases
+                            <span v-if="tcTotal" class="text-xs font-normal text-slate-400">
+                                <span class="text-emerald-500">{{ tcPassedCount }} passed</span>
+                                <span v-if="tcFailedCount" class="text-rose-500 ml-1">· {{ tcFailedCount }} failed</span>
+                                <span class="text-slate-400 ml-1">/ {{ tcTotal }}</span>
+                            </span>
+                        </h3>
+                        <button v-if="can_update" @click="addingTestCase = !addingTestCase"
+                                class="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1 font-medium">
+                            <i class="bi bi-plus-lg text-sm"></i> Add test case
+                        </button>
+                    </div>
+
+                    <div class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                        <div v-for="tc in task.test_cases" :key="tc.id">
+                            <!-- Row -->
+                            <div class="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+                                <!-- Status cycle button -->
+                                <button v-if="can_update" @click="setTcStatus(tc, tc.status === 'pending' ? 'passed' : tc.status === 'passed' ? 'failed' : 'pending')"
+                                        class="mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors"
+                                        :class="{
+                                            'border-slate-300 dark:border-slate-600 hover:border-emerald-400': tc.status === 'pending',
+                                            'bg-emerald-400 border-emerald-400 hover:bg-emerald-500': tc.status === 'passed',
+                                            'bg-rose-400 border-rose-400 hover:bg-rose-500': tc.status === 'failed',
+                                        }"
+                                        :title="tc.status === 'pending' ? 'Mark passed' : tc.status === 'passed' ? 'Mark failed' : 'Reset to pending'">
+                                    <i v-if="tc.status === 'passed'" class="bi bi-check text-white text-[9px]"></i>
+                                    <i v-else-if="tc.status === 'failed'" class="bi bi-x text-white text-[9px]"></i>
+                                </button>
+                                <div v-else class="mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0"
+                                     :class="{
+                                         'border-slate-300 dark:border-slate-600': tc.status === 'pending',
+                                         'bg-emerald-400 border-emerald-400': tc.status === 'passed',
+                                         'bg-rose-400 border-rose-400': tc.status === 'failed',
+                                     }"></div>
+
+                                <div class="flex-1 min-w-0">
+                                    <button class="text-sm text-left w-full"
+                                            :class="tc.status === 'passed' ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'"
+                                            @click="expandedTc = expandedTc === tc.id ? null : tc.id">
+                                        {{ tc.title }}
+                                    </button>
+                                    <!-- Expanded detail -->
+                                    <div v-if="expandedTc === tc.id" class="mt-2 space-y-2 text-xs text-slate-500 dark:text-slate-400">
+                                        <div v-if="tc.steps">
+                                            <p class="font-semibold text-slate-600 dark:text-slate-300 mb-0.5">Steps</p>
+                                            <p class="whitespace-pre-wrap leading-relaxed">{{ tc.steps }}</p>
+                                        </div>
+                                        <div v-if="tc.expected_result">
+                                            <p class="font-semibold text-slate-600 dark:text-slate-300 mb-0.5">Expected result</p>
+                                            <p class="whitespace-pre-wrap leading-relaxed">{{ tc.expected_result }}</p>
+                                        </div>
+                                        <p class="text-slate-400">Added by {{ tc.created_by_name }} · {{ tc.created_ago }}</p>
+                                    </div>
+                                </div>
+
+                                <span class="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium mt-0.5"
+                                      :class="{
+                                          'bg-slate-100 dark:bg-slate-800 text-slate-500': tc.status === 'pending',
+                                          'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400': tc.status === 'passed',
+                                          'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400': tc.status === 'failed',
+                                      }">
+                                    {{ tc.status }}
+                                </span>
+
+                                <button v-if="can_update" @click="deleteTestCase(tc)"
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-rose-400 ml-1 mt-0.5 flex-shrink-0">
+                                    <i class="bi bi-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-if="!tcTotal" class="px-5 py-6 text-center">
+                            <i class="bi bi-clipboard2 text-3xl text-slate-200 dark:text-slate-700 block mb-2"></i>
+                            <p class="text-sm text-slate-400">No test cases yet</p>
+                        </div>
+                    </div>
+
+                    <!-- Add form -->
+                    <div v-if="can_update && addingTestCase" class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 space-y-3">
+                        <input v-model="tcForm.title" placeholder="Test case title…"
+                               class="w-full form-input text-sm py-1.5"
+                               @keydown.escape="addingTestCase=false; tcForm={title:'',steps:'',expected_result:''}">
+                        <textarea v-model="tcForm.steps" placeholder="Steps to reproduce (optional)…"
+                                  rows="2" class="w-full form-input text-sm py-1.5 resize-none"></textarea>
+                        <textarea v-model="tcForm.expected_result" placeholder="Expected result (optional)…"
+                                  rows="2" class="w-full form-input text-sm py-1.5 resize-none"></textarea>
+                        <div class="flex items-center gap-2">
+                            <button @click="addTestCase" :disabled="!tcForm.title.trim() || savingTc"
+                                    class="px-3 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors disabled:opacity-40">
+                                {{ savingTc ? 'Saving…' : 'Add' }}
+                            </button>
+                            <button @click="addingTestCase=false; tcForm={title:'',steps:'',expected_result:''}"
+                                    class="px-2 py-1.5 text-xs text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
+                                Cancel
                             </button>
                         </div>
                     </div>
