@@ -1197,12 +1197,26 @@ function sendBeaconClockOut() {
   if (!presenceClockedIn.value) return;
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
   if (!csrf) return;
+  // Mark that a beacon was sent so the next mount knows it was a refresh, not a close.
+  try { sessionStorage.setItem('beacon_refresh', '1'); } catch (_) {}
   const data = new FormData();
   data.append('_token', csrf);
   navigator.sendBeacon('/attendance/beacon-clock-out', data);
 }
 
 onMounted(() => {
+  // If the page was refreshed while clocked in, the beacon set availability to 'away'.
+  // Restore it to 'online' silently so the refresh is transparent to other users.
+  try {
+    if (sessionStorage.getItem('beacon_refresh') && presenceClockedIn.value) {
+      sessionStorage.removeItem('beacon_refresh');
+      presenceAvailability.value = 'online';
+      window.axios.patch('/me/availability', { availability: 'online' }).catch(() => {});
+    } else {
+      sessionStorage.removeItem('beacon_refresh');
+    }
+  } catch (_) {}
+
   document.addEventListener('keydown', onKeydown);
   window.addEventListener('beforeunload', sendBeaconClockOut);
   refreshTimers();
