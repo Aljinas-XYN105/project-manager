@@ -29,6 +29,7 @@ const files = ref([])
 const fileErrors = ref([])
 const isDragging = ref(false)
 const submitting = ref(false)
+const formErrors = ref({})
 let fileInputEl = null
 
 function categoryIcon(cat) {
@@ -61,6 +62,8 @@ function onFileInput(e) { addFiles(e.target.files); e.target.value = '' }
 async function submitExpense(e) {
     e.preventDefault()
     submitting.value = true
+    formErrors.value = {}
+    const cookie = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1]
     const fd = new FormData()
     fd.append('title', form.value.title)
     fd.append('amount', form.value.amount)
@@ -69,15 +72,30 @@ async function submitExpense(e) {
     fd.append('expense_date', form.value.expense_date)
     if (form.value.description) fd.append('description', form.value.description)
     files.value.forEach(f => fd.append('receipts[]', f.file))
-    fd.append('_token', document.querySelector('meta[name=csrf-token]')?.content)
     try {
-        const res = await fetch(props.store_url, { method: 'POST', headers: { Accept: 'application/json' }, body: fd })
+        const res = await fetch(props.store_url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': cookie ? decodeURIComponent(cookie) : '',
+            },
+            body: fd,
+        })
         if (res.ok || res.redirected) {
             router.reload({ only: ['expenses', 'summary', 'pending_review'] })
             submitOpen.value = false
             form.value = { title: '', amount: '', currency: 'INR', category: '', expense_date: new Date().toISOString().slice(0, 10), description: '' }
             files.value = []
+        } else if (res.status === 422) {
+            const body = await res.json().catch(() => ({}))
+            formErrors.value = Object.fromEntries(
+                Object.entries(body.errors ?? {}).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+            )
+        } else {
+            formErrors.value = { _general: 'Something went wrong. Please try again.' }
         }
+    } catch (err) {
+        formErrors.value = { _general: 'Something went wrong. Please try again.' }
     } finally {
         submitting.value = false
     }
@@ -205,36 +223,51 @@ function cancelExpense(url) {
         <Teleport to="body">
             <div v-if="submitOpen"
                  class="fixed inset-0 z-50 flex items-center justify-center p-4"
-                 @click.self="submitOpen = false"
-                 @keydown.escape.window="submitOpen = false">
+                 @click.self="submitOpen = false; formErrors = {}"
+                 @keydown.escape.window="submitOpen = false; formErrors = {}">
                 <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" @click="submitOpen = false"></div>
                 <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                     <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
                         <h3 class="text-base font-semibold text-slate-900 dark:text-white">Submit Expense</h3>
-                        <button @click="submitOpen = false" class="btn-ghost btn-sm p-1.5">
+                        <button @click="submitOpen = false; formErrors = {}" class="btn-ghost btn-sm p-1.5">
                             <i class="bi bi-x-lg text-sm"></i>
                         </button>
                     </div>
 
                     <form @submit="submitExpense" enctype="multipart/form-data" class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                        <!-- Validation error banner -->
+                        <div v-if="Object.keys(formErrors).length"
+                             class="rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-4 py-3 flex items-start gap-2.5">
+                            <i class="bi bi-exclamation-circle-fill text-rose-500 flex-shrink-0 mt-0.5 text-sm"></i>
+                            <ul class="text-sm text-rose-700 dark:text-rose-300 space-y-0.5 list-none m-0 p-0">
+                                <li v-for="(msg, field) in formErrors" :key="field">{{ msg }}</li>
+                            </ul>
+                        </div>
+
                         <!-- Title -->
                         <div>
                             <label class="form-label">Title <span class="text-rose-500">*</span></label>
                             <input type="text" v-model="form.title" required class="form-input"
+                                   :class="formErrors.title ? 'border-rose-400 dark:border-rose-600' : ''"
                                    placeholder="e.g. Team lunch, Flight to Bangalore">
+                            <p v-if="formErrors.title" class="text-xs text-rose-500 mt-1">{{ formErrors.title }}</p>
                         </div>
 
                         <!-- Amount + Category -->
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="form-label">Amount <span class="text-rose-500">*</span></label>
-                                <input type="number" v-model="form.amount" step="0.01" min="0.01" required class="form-input" placeholder="0.00">
+                                <input type="number" v-model="form.amount" step="0.01" min="0.01" required class="form-input"
+                                       :class="formErrors.amount ? 'border-rose-400 dark:border-rose-600' : ''"
+                                       placeholder="0.00">
+                                <p v-if="formErrors.amount" class="text-xs text-rose-500 mt-1">{{ formErrors.amount }}</p>
                             </div>
                             <div>
                                 <label class="form-label">Category <span class="text-rose-500">*</span></label>
                                 <SearchSelect v-model="form.category" required
                                     :options="categories.map(c => ({value: c, label: c}))"
                                     placeholder="Select…" />
+                                <p v-if="formErrors.category" class="text-xs text-rose-500 mt-1">{{ formErrors.category }}</p>
                             </div>
                         </div>
 
@@ -242,6 +275,7 @@ function cancelExpense(url) {
                         <div>
                             <label class="form-label">Expense Date <span class="text-rose-500">*</span></label>
                             <DatePicker v-model="form.expense_date" :max="new Date().toISOString().slice(0,10)" />
+                            <p v-if="formErrors.expense_date" class="text-xs text-rose-500 mt-1">{{ formErrors.expense_date }}</p>
                         </div>
 
                         <!-- Description -->

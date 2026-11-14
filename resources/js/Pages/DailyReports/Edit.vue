@@ -34,6 +34,7 @@ const planForTomorrow = ref(props.daily_report.plan_for_tomorrow ?? '')
 const blockers = ref(props.daily_report.blockers ?? '')
 const tasks = ref((props.existing_tasks ?? []).map(normalize))
 const processing = ref(false)
+const errors = ref({})
 
 const totalHours = computed(() => tasks.value.reduce((s, t) => s + (parseFloat(t.hours) || 0), 0))
 
@@ -75,17 +76,44 @@ const priorityOpts = [
     { val: 'high', label: 'High' }, { val: 'critical', label: 'Critical' },
 ]
 
+function csrfHeaders() {
+    const cookie = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1]
+    return {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-XSRF-TOKEN': cookie ? decodeURIComponent(cookie) : '',
+    }
+}
+
+const duplicateTaskIds = computed(() => {
+    const seen = new Set()
+    const dupes = new Set()
+    tasks.value
+        .filter(t => t.task_id && t.task_id !== '__new__')
+        .forEach(t => { seen.has(t.task_id) ? dupes.add(t.task_id) : seen.add(t.task_id) })
+    return dupes
+})
+
+function rowError(idx, field) {
+    return errors.value[`tasks.${idx}.${field}`] ?? null
+}
+
 async function submit() {
     processing.value = true
-    const csrfToken = document.querySelector('meta[name=csrf-token]')?.content
+    errors.value = {}
+
+    const taskIds = tasks.value.filter(t => t.task_id && t.task_id !== '__new__').map(t => t.task_id)
+    if (taskIds.length !== new Set(taskIds).size) {
+        errors.value = { tasks: 'The same task cannot be added more than once to a report.' }
+        processing.value = false
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+    }
+
     try {
         const res = await fetch(props.daily_report.update_url, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-            },
+            headers: csrfHeaders(),
             body: JSON.stringify({
                 summary: summary.value,
                 plan_for_tomorrow: planForTomorrow.value || null,
@@ -103,7 +131,18 @@ async function submit() {
         })
         if (res.ok || res.redirected) {
             window.location.href = props.daily_report.show_url
+        } else if (res.status === 422) {
+            const body = await res.json().catch(() => ({}))
+            errors.value = Object.fromEntries(
+                Object.entries(body.errors ?? {}).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+            )
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        } else {
+            errors.value = { _general: 'Something went wrong. Please try again.' }
         }
+    } catch (e) {
+        console.error(e)
+        errors.value = { _general: 'Something went wrong. Please try again.' }
     } finally {
         processing.value = false
     }
@@ -141,12 +180,23 @@ function deleteReport() {
             </div>
 
             <form @submit.prevent="submit" class="space-y-5">
+                <!-- Validation error banner -->
+                <div v-if="errors._general || errors.tasks"
+                     class="rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-4 py-3 flex items-start gap-2.5">
+                    <i class="bi bi-exclamation-circle-fill text-rose-500 flex-shrink-0 mt-0.5 text-sm"></i>
+                    <ul class="text-sm text-rose-700 dark:text-rose-300 space-y-0.5 list-none m-0 p-0">
+                        <li v-if="errors._general">{{ errors._general }}</li>
+                        <li v-if="errors.tasks">{{ errors.tasks }}</li>
+                    </ul>
+                </div>
+
                 <!-- Summary -->
                 <div class="card p-5">
                     <label class="form-label">What did you accomplish? *</label>
                     <textarea v-model="summary" rows="4" required
                               class="form-input resize-none"
                               placeholder="Describe your accomplishments, meetings, reviews…"></textarea>
+                    <p v-if="errors.summary" class="mt-1 text-xs font-medium text-rose-500">{{ errors.summary }}</p>
                 </div>
 
                 <!-- Task Breakdown -->
@@ -169,7 +219,14 @@ function deleteReport() {
                              class="border rounded-xl p-4 space-y-3 transition-colors"
                              :class="task.task_id === '__new__'
                                 ? 'border-violet-300 dark:border-violet-700 bg-violet-50/40 dark:bg-violet-900/10'
-                                : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30'">
+                                : (duplicateTaskIds.has(task.task_id)
+                                    ? 'border-rose-300 dark:border-rose-700 bg-rose-50/40 dark:bg-rose-900/10'
+                                    : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30')">
+                            <div v-if="task.task_id && task.task_id !== '__new__' && duplicateTaskIds.has(task.task_id)"
+                                 class="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 mb-1">
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                                <span>Duplicate — this task is already added to this report.</span>
+                            </div>
                             <div class="flex items-start gap-3">
                                 <div class="flex-1 min-w-0 space-y-3">
                                     <div>
@@ -215,7 +272,9 @@ function deleteReport() {
                                         <input type="text" v-model="task.description"
                                                @input="task._descTouched = true"
                                                required class="form-input text-sm"
+                                               :class="rowError(idx, 'description') ? 'border-rose-400 dark:border-rose-600' : ''"
                                                placeholder="Brief description…">
+                                        <p v-if="rowError(idx, 'description')" class="text-xs text-rose-500 mt-1">{{ rowError(idx, 'description') }}</p>
                                     </div>
 
                                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -223,7 +282,9 @@ function deleteReport() {
                                             <label class="form-label">Hours *</label>
                                             <input type="number" v-model.number="task.hours"
                                                    step="0.05" min="0.05" max="24" required
-                                                   class="form-input text-sm text-center">
+                                                   class="form-input text-sm text-center"
+                                                   :class="rowError(idx, 'hours') ? 'border-rose-400 dark:border-rose-600' : ''">
+                                            <p v-if="rowError(idx, 'hours')" class="text-xs text-rose-500 mt-1">{{ rowError(idx, 'hours') }}</p>
                                         </div>
                                         <div class="sm:col-span-2">
                                             <label class="form-label">Status After Today</label>

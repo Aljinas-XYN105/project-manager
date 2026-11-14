@@ -17,6 +17,14 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Show full-page offline screen when internet is lost
+if (!navigator.onLine) {
+    window.location.href = '/offline';
+}
+window.addEventListener('offline', () => {
+    window.location.href = '/offline';
+});
+
 createInertiaApp({
     title: (title) => `${title} — Workzen`,
     resolve: (name) =>

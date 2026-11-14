@@ -1205,9 +1205,15 @@ function sendBeaconClockOut() {
 }
 
 onMounted(() => {
-  // If the page was refreshed while clocked in, the beacon set availability to 'away'.
-  // Restore it to 'online' silently so the refresh is transparent to other users.
+  // If availability is 'offline' (set on logout) and the user has just loaded the page,
+  // they are clearly online — reset to 'available' so the header doesn't flash "Offline".
   try {
+    if (presenceAvailability.value === 'offline') {
+      presenceAvailability.value = 'available';
+      window.axios.patch('/me/availability', { availability: 'available' }).catch(() => {});
+    }
+    // If the page was refreshed while clocked in, the beacon set availability to 'away'.
+    // Restore it to 'online' silently so the refresh is transparent to other users.
     if (sessionStorage.getItem('beacon_refresh') && presenceClockedIn.value) {
       sessionStorage.removeItem('beacon_refresh');
       presenceAvailability.value = 'online';

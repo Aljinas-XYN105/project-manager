@@ -91,11 +91,14 @@ async function networkFirstWithOffline(req) {
     try {
         return await fetchWithTimeout(req);
     } catch {
-        // Serve stale cache if available, then let the browser handle the error.
+        // Serve stale cache if available.
         const cached = await caches.match(req);
         if (cached) return cached;
 
-        // Nothing cached — propagate so the browser shows its native error page.
-        return fetch(req);
+        // Nothing cached — show the full-page offline screen.
+        const offline = await caches.match('/offline');
+        if (offline) return offline;
+
+        return new Response('No internet connection', { status: 503, headers: { 'Content-Type': 'text/plain' } });
     }
 }

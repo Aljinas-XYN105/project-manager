@@ -64,10 +64,21 @@ function submit(e) {
 
             <div class="card p-6">
                 <form @submit.prevent="submit" class="space-y-5">
+                    <!-- Validation error banner -->
+                    <div v-if="Object.keys(form.errors).length"
+                         class="rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-4 py-3 flex items-start gap-2.5">
+                        <i class="bi bi-exclamation-circle-fill text-rose-500 flex-shrink-0 mt-0.5 text-sm"></i>
+                        <ul class="text-sm text-rose-700 dark:text-rose-300 space-y-0.5 list-none m-0 p-0">
+                            <li v-for="(msg, field) in form.errors" :key="field">{{ msg }}</li>
+                        </ul>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div class="sm:col-span-2">
                             <label class="form-label">Project Name <span class="text-red-500">*</span></label>
-                            <input v-model="form.name" type="text" required class="form-input" placeholder="e.g. Website Redesign">
+                            <input v-model="form.name" type="text" required class="form-input"
+                                   :class="form.errors.name ? 'border-rose-400 dark:border-rose-600' : ''"
+                                   placeholder="e.g. Website Redesign">
                             <p v-if="form.errors.name" class="form-error">{{ form.errors.name }}</p>
                         </div>
                         <div class="sm:col-span-2">

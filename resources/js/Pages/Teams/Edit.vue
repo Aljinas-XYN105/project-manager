@@ -45,9 +45,19 @@ function deleteTeam() {
             <div class="card p-6">
                 <form @submit.prevent="submit">
                     <div class="space-y-4">
+                        <!-- Validation error banner -->
+                        <div v-if="Object.keys(errors).length"
+                             class="rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-4 py-3 flex items-start gap-2.5">
+                            <i class="bi bi-exclamation-circle-fill text-rose-500 flex-shrink-0 mt-0.5 text-sm"></i>
+                            <ul class="text-sm text-rose-700 dark:text-rose-300 space-y-0.5 list-none m-0 p-0">
+                                <li v-for="(msg, field) in errors" :key="field">{{ msg }}</li>
+                            </ul>
+                        </div>
+
                         <div>
                             <label class="form-label">Team Name <span class="text-rose-500">*</span></label>
-                            <input v-model="form.name" type="text" required autofocus class="form-input">
+                            <input v-model="form.name" type="text" required autofocus class="form-input"
+                                   :class="errors.name ? 'border-rose-400 dark:border-rose-600' : ''">
                             <p v-if="errors.name" class="text-xs text-red-500 mt-1">{{ errors.name }}</p>
                         </div>
                         <div>
