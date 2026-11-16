@@ -138,6 +138,7 @@
             transition: background 0.15s;
         }
         .btn-primary:hover { background: var(--brand-dark); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .status-line {
             display: flex;
@@ -225,11 +226,11 @@
         </p>
 
         <div class="actions">
-            <button class="btn-primary" onclick="window.location.reload()">
+            <button class="btn-primary" id="retry-btn" onclick="tryReconnect()">
                 <i class="bi bi-arrow-clockwise"></i> Try again
             </button>
             <div class="status-line">
-                <span class="status-dot"></span>
+                <span class="status-dot" id="status-dot"></span>
                 <span id="status-text">Waiting for connection…</span>
             </div>
         </div>
@@ -258,21 +259,51 @@
     </footer>
 
     <script>
-        // Auto-reload when connection is restored
-        window.addEventListener('online', () => {
-            document.getElementById('status-text').textContent = 'Connection restored — reloading…';
-            setTimeout(() => window.location.reload(), 800);
-        });
+        // Where to go once back online — the page the user was on before going offline
+        var returnUrl = '/';
+        try {
+            var stored = sessionStorage.getItem('offlineReturnUrl');
+            if (stored && stored !== window.location.href) {
+                returnUrl = stored;
+            }
+        } catch (_) {}
 
-        // Ping every 10s as a fallback for browsers that miss the online event
-        setInterval(() => {
+        var reconnected = false;
+
+        function goBack() {
+            if (reconnected) return;
+            reconnected = true;
+            try { sessionStorage.removeItem('offlineReturnUrl'); } catch (_) {}
+            var el = document.getElementById('status-text');
+            var dot = document.getElementById('status-dot');
+            if (el) el.textContent = 'Connection restored — returning…';
+            if (dot) { dot.style.background = '#22c55e'; dot.style.animation = 'none'; }
+            setTimeout(() => { window.location.href = returnUrl; }, 600);
+        }
+
+        function tryReconnect() {
+            var btn = document.getElementById('retry-btn');
+            var el = document.getElementById('status-text');
+            if (btn) btn.disabled = true;
+            if (el) el.textContent = 'Checking connection…';
             fetch('/favicon.ico?_=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
-                .then(() => {
-                    document.getElementById('status-text').textContent = 'Connection restored — reloading…';
-                    setTimeout(() => window.location.reload(), 800);
-                })
+                .then(() => goBack())
+                .catch(() => {
+                    if (el) el.textContent = 'Still offline — please check your connection.';
+                    if (btn) btn.disabled = false;
+                });
+        }
+
+        // Auto-navigate when browser fires the online event
+        window.addEventListener('online', () => goBack());
+
+        // Ping every 8s as a fallback (some browsers delay or miss the online event)
+        setInterval(() => {
+            if (reconnected) return;
+            fetch('/favicon.ico?_=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
+                .then(() => goBack())
                 .catch(() => {});
-        }, 10000);
+        }, 8000);
     </script>
 </body>
 </html>

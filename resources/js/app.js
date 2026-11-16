@@ -19,9 +19,11 @@ if ('serviceWorker' in navigator) {
 
 // Show full-page offline screen when internet is lost
 if (!navigator.onLine) {
+    try { sessionStorage.setItem('offlineReturnUrl', window.location.href); } catch (_) {}
     window.location.href = '/offline';
 }
 window.addEventListener('offline', () => {
+    try { sessionStorage.setItem('offlineReturnUrl', window.location.href); } catch (_) {}
     window.location.href = '/offline';
 });
 
