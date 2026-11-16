@@ -457,11 +457,12 @@ class DailyReportController extends Controller
 
     private function reportableProjects(User $user)
     {
+        $isPrivileged = $user->hasRole(['admin', 'manager', 'hr_manager']) || $user->can('daily-reports.view-team');
+
         return Project::query()
             ->where('status', '!=', 'archived')
-            ->when(! $user->can('daily-reports.view-team'), fn ($q) => $q->where(fn ($q) => $q
-                ->where('is_public', true)
-                ->orWhere('owner_id', $user->id)
+            ->when(! $isPrivileged, fn ($q) => $q->where(fn ($q) => $q
+                ->where('owner_id', $user->id)
                 ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id))))
             ->orderBy('name')
             ->get(['id', 'name']);
