@@ -43,6 +43,7 @@ const form = useForm({
     type: 'task',
     title: '',
     description: '',
+    project_id: props.project.id,
     status: 'todo',
     priority: 'medium',
     column_id: props.column?.id ?? props.columns[0]?.id ?? null,
