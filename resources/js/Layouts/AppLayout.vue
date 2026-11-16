@@ -739,6 +739,16 @@ const taskTypes = [
   { value: 'epic',    icon: 'bi-lightning-fill',      color: 'text-orange-500', label: 'Epic' },
 ];
 
+// Keep top bar in sync when Inertia shared data updates (e.g. after navigating to a new page)
+watch(() => page.props.presence?.availability, (newVal) => {
+  if (newVal && newVal !== presenceAvailability.value) {
+    presenceAvailability.value = newVal;
+  }
+});
+watch(() => page.props.presence?.clockedIn, (newVal) => {
+  if (newVal !== undefined) presenceClockedIn.value = newVal;
+});
+
 watch(quickAdd, (v) => {
   if (v) {
     nextTick(() => quickAddInput.value?.focus());
@@ -1205,19 +1215,13 @@ function sendBeaconClockOut() {
 }
 
 onMounted(() => {
-  // If availability is 'offline' (set on logout) and the user has just loaded the page,
-  // they are clearly online — reset to 'available' so the header doesn't flash "Offline".
   try {
-    if (presenceAvailability.value === 'offline') {
-      presenceAvailability.value = 'available';
-      window.axios.patch('/me/availability', { availability: 'available' }).catch(() => {});
-    }
     // If the page was refreshed while clocked in, the beacon set availability to 'away'.
-    // Restore it to 'online' silently so the refresh is transparent to other users.
+    // Restore it to 'available' silently so the refresh is transparent to other users.
     if (sessionStorage.getItem('beacon_refresh') && presenceClockedIn.value) {
       sessionStorage.removeItem('beacon_refresh');
-      presenceAvailability.value = 'online';
-      window.axios.patch('/me/availability', { availability: 'online' }).catch(() => {});
+      presenceAvailability.value = 'available';
+      window.axios.patch('/me/availability', { availability: 'available' }).catch(() => {});
     } else {
       sessionStorage.removeItem('beacon_refresh');
     }

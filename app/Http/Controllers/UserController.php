@@ -34,7 +34,7 @@ class UserController extends Controller
             'total'    => User::count(),
             'active'   => User::where('is_active', true)->count(),
             'inactive' => User::where('is_active', false)->count(),
-            'online'   => User::where('last_seen_at', '>=', now()->subMinutes(5))->count(),
+            'online'   => User::where('last_seen_at', '>=', now()->subMinutes(15))->count(),
         ];
 
         $authUser = $request->user();

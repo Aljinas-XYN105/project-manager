@@ -169,7 +169,7 @@ class User extends Authenticatable
 
     public function getIsOnlineAttribute(): bool
     {
-        return $this->last_seen_at && $this->last_seen_at->gt(now()->subMinutes(5));
+        return $this->last_seen_at && $this->last_seen_at->gt(now()->subMinutes(15));
     }
 
     // Offline once the session goes idle, regardless of the last chosen status.
