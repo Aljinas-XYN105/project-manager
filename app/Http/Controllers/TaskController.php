@@ -672,17 +672,17 @@ class TaskController extends Controller
     {
         $user = auth()->user();
 
-        $isPrivileged = $user->can('tasks.view-all');
+        // Admins and managers see all bugs; regular members see only bugs from their assigned projects.
+        $isPrivileged = $user->hasRole(['admin', 'manager']) || $user->can('tasks.view-all');
+
+        $memberScope = fn ($q) => $q->where('owner_id', $user->id)
+            ->orWhereHas('members', fn ($m) => $m->where('users.id', $user->id));
 
         $query = Task::with(['project', 'assignees', 'creator'])
             ->where('type', 'bug');
 
         if (!$isPrivileged) {
-            $query->whereHas('project', function ($q) use ($user) {
-                $q->where('owner_id', $user->id)
-                  ->orWhereHas('members', fn($m) => $m->where('users.id', $user->id))
-                  ->orWhere('is_public', true);
-            });
+            $query->whereHas('project', $memberScope);
         }
 
         if ($request->status) {
@@ -705,22 +705,14 @@ class TaskController extends Controller
         // Stats strip — same privilege scope as the main query
         $statsQuery = Task::where('type', 'bug');
         if (!$isPrivileged) {
-            $statsQuery->whereHas('project', function ($q) use ($user) {
-                $q->where('owner_id', $user->id)
-                  ->orWhereHas('members', fn($m) => $m->where('users.id', $user->id))
-                  ->orWhere('is_public', true);
-            });
+            $statsQuery->whereHas('project', $memberScope);
         }
         $bugsByStatus = $statsQuery->selectRaw('status, count(*) as cnt')->groupBy('status')->pluck('cnt', 'status');
 
-        // Projects for filter
+        // Projects for filter — members only see their own assigned projects
         $projectsQuery = \App\Models\Project::query();
         if (!$isPrivileged) {
-            $projectsQuery->where(function ($q) use ($user) {
-                $q->where('owner_id', $user->id)
-                  ->orWhereHas('members', fn($m) => $m->where('users.id', $user->id))
-                  ->orWhere('is_public', true);
-            });
+            $projectsQuery->where($memberScope);
         }
         $projects = $projectsQuery->orderBy('name')->get();
 
