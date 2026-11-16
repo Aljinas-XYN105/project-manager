@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\LeaveRequest;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class LeaveRequested extends Notification
@@ -14,7 +15,31 @@ class LeaveRequested extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['mail', 'database'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $leave    = $this->leave;
+        $applicant = $leave->user->name;
+        $type     = $leave->type->name;
+        $days     = rtrim(rtrim(number_format((float) $leave->days, 1), '0'), '.');
+        $dayLabel = $leave->days == 1 ? 'day' : 'days';
+        $reason   = $leave->reason ?: '—';
+        $url      = route('leave.approvals');
+
+        return (new MailMessage)
+            ->subject("Leave Request: {$applicant} — {$type} ({$leave->date_range})")
+            ->greeting("Hi {$notifiable->name},")
+            ->line("{$applicant} has submitted a leave request that requires your review.")
+            ->line('')
+            ->line("**Leave Type:** {$type}")
+            ->line("**Dates:** {$leave->date_range}")
+            ->line("**Duration:** {$days} {$dayLabel}".($leave->is_half_day ? ' (half day)' : ''))
+            ->line("**Reason:** {$reason}")
+            ->action('Review Leave Request', $url)
+            ->line('You can approve or decline this request from the leave approvals page.')
+            ->salutation('— '.config('app.name'));
     }
 
     public function toArray(object $notifiable): array
