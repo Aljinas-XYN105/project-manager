@@ -19,7 +19,7 @@ class ProjectController extends Controller
         $projects = $request->user()->projects()
             ->where('status', '!=', 'archived')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['projects.id', 'projects.name']);
 
         return response()->json($projects);
     }
