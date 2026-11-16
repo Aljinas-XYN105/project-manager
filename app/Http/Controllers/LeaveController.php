@@ -293,9 +293,9 @@ class LeaveController extends Controller
 
     private function approversFor(User $employee)
     {
-        // Always notify all admins/approvers.
+        // Notify all admins, managers, and HR managers.
         $approvers = User::active()->where('id', '!=', $employee->id)->get()
-            ->filter(fn (User $u) => $u->hasRole('admin') || $u->can('leave.approve'));
+            ->filter(fn (User $u) => $u->hasRole(['admin', 'manager', 'hr_manager']) || $u->can('leave.approve'));
 
         // Also include the direct manager if they are not already in the list.
         if ($employee->manager && $employee->manager->is_active && $approvers->doesntContain('id', $employee->manager->id)) {
