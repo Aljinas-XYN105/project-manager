@@ -27,11 +27,11 @@ const form = useForm({
 function submit(e) {
     const formEl = e.target
     const memberIds = [...formEl.querySelectorAll('input[name="member_ids[]"]')].map(i => parseInt(i.value))
-    const memberRoleInputs = [...formEl.querySelectorAll('select[name^="member_roles["]')]
+    const memberRoleInputs = [...formEl.querySelectorAll('input[type="hidden"][name^="member_roles["]')]
     const memberRoles = {}
-    memberRoleInputs.forEach(sel => {
-        const id = sel.name.match(/\[(\d+)\]/)?.[1]
-        if (id) memberRoles[id] = sel.value
+    memberRoleInputs.forEach(input => {
+        const id = input.name.match(/\[(\d+)\]/)?.[1]
+        if (id) memberRoles[id] = input.value
     })
 
     form.member_ids = memberIds

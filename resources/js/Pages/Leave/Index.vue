@@ -16,6 +16,7 @@ const props = defineProps({
 })
 
 const showApply = ref(false)
+const cancelConfirmId = ref(null)
 const applyForm = useForm({
     leave_type_id: '',
     start_date: new Date().toISOString().slice(0, 10),
@@ -33,8 +34,12 @@ function submitLeave() {
     })
 }
 
-function cancelLeave(url) {
-    if (!confirm('Cancel this leave request?')) return
+function cancelLeave(id, url) {
+    cancelConfirmId.value = id
+}
+
+function confirmCancel(url) {
+    cancelConfirmId.value = null
     router.patch(url, {}, { preserveScroll: true })
 }
 
@@ -124,7 +129,14 @@ const statusLabel = { pending: 'Pending', approved: 'Approved', rejected: 'Rejec
                           :class="statusClass[r.status]">
                         {{ statusLabel[r.status] }}
                     </span>
-                    <button v-if="r.can_cancel" @click="cancelLeave(r.cancel_url)" class="btn-ghost btn-sm text-rose-500">Cancel</button>
+                    <template v-if="r.can_cancel">
+                        <div v-if="cancelConfirmId === r.id" class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500">Cancel this leave?</span>
+                            <button @click="confirmCancel(r.cancel_url)" class="btn-sm bg-rose-500 hover:bg-rose-600 text-white rounded-lg px-2.5 py-1 text-xs font-medium">Yes, cancel</button>
+                            <button @click="cancelConfirmId = null" class="btn-ghost btn-sm text-xs">No</button>
+                        </div>
+                        <button v-else @click="cancelLeave(r.id, r.cancel_url)" class="btn-ghost btn-sm text-rose-500">Cancel</button>
+                    </template>
                 </div>
                 <div v-if="requests.last_page > 1" class="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1">
                     <template v-for="link in requests.links" :key="link.label">
