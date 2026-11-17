@@ -5,6 +5,9 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import SearchSelect from '@/Components/SearchSelect.vue'
 import UserAvatar from '@/Components/UserAvatar.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     records: Object,
@@ -66,14 +69,14 @@ function submitModal() {
     })
 }
 
-function deleteRecord(url) {
-    if (!confirm('Delete this attendance entry?')) return
+async function deleteRecord(url) {
+    if (!await confirm('Delete this attendance entry?', { confirmLabel: 'Delete', danger: true })) return
     router.delete(url, { preserveScroll: true })
 }
 
-function clockOutAll() {
+async function clockOutAll() {
     const count = props.board.filter(r => r.clocked_in).length
-    if (!confirm(`Clock out all ${count} clocked-in member(s)?`)) return
+    if (!await confirm(`Clock out all ${count} clocked-in member(s)?`, { confirmLabel: 'Clock out all', danger: true })) return
     router.post(props.clock_out_all_url, {}, { preserveScroll: true })
 }
 

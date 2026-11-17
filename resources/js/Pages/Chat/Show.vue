@@ -3,6 +3,9 @@ import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import UserAvatar from '@/Components/UserAvatar.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     conversation: Object,
@@ -366,7 +369,7 @@ async function sendMessage() {
 }
 
 async function deleteMessage(msg) {
-    if (!confirm('Delete this message for everyone?')) return
+    if (!await confirm('Delete this message for everyone?', { confirmLabel: 'Delete', danger: true })) return
     await fetch(`/chat/messages/${msg.id}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': csrfMeta() },
@@ -415,7 +418,7 @@ async function addMember(user) {
 }
 
 async function removeMember(user) {
-    if (!confirm(`Remove ${user.name} from the group?`)) return
+    if (!await confirm(`Remove ${user.name} from the group?`, { confirmLabel: 'Remove', danger: true })) return
     const resp = await fetch(`/chat/${props.conversation.id}/members/${user.id}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': csrfMeta(), 'Accept': 'application/json' },

@@ -1,6 +1,9 @@
 <script setup>
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     reports: Object,
@@ -9,8 +12,8 @@ const props = defineProps({
     today_date: String,
 })
 
-function deleteReport(url) {
-    if (!confirm('Delete this report?')) return
+async function deleteReport(url) {
+    if (!await confirm('Delete this report?', { confirmLabel: 'Delete', danger: true })) return
     router.delete(url, { preserveScroll: true })
 }
 </script>

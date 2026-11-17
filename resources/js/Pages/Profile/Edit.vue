@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     user: Object,
@@ -46,8 +49,8 @@ function updatePassword() {
     })
 }
 
-function deleteAccount() {
-    if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return
+async function deleteAccount() {
+    if (!await confirm('Are you sure you want to delete your account? This cannot be undone.', { confirmLabel: 'Delete account', danger: true })) return
     deleteProcessing.value = true
     router.delete(props.delete_url, { data: deleteForm.value, onError: (e) => { deleteErrors.value = e; deleteProcessing.value = false } })
 }

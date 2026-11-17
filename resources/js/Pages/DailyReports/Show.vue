@@ -1,6 +1,9 @@
 <script setup>
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({ daily_report: Object })
 
@@ -19,8 +22,8 @@ const statusLabels = {
     todo:        '⚪ To Do',
 }
 
-function deleteReport() {
-    if (!confirm('Delete this report?')) return
+async function deleteReport() {
+    if (!await confirm('Delete this report?', { confirmLabel: 'Delete', danger: true })) return
     router.delete(props.daily_report.destroy_url)
 }
 </script>

@@ -2,6 +2,10 @@
 import { ref, computed } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import UserAvatar from '@/Components/UserAvatar.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
+const convertError = ref('')
 
 const props = defineProps({
     project: Object,
@@ -66,7 +70,7 @@ async function saveEdit(note) {
 }
 
 async function deleteNote(note) {
-    if (!confirm('Delete this note?')) return
+    if (!await confirm('Delete this note?', { confirmLabel: 'Delete', danger: true })) return
     try {
         await fetch(note.destroy_url, { method: 'DELETE', headers: { 'X-XSRF-TOKEN': csrfToken() } })
         notesList.value = notesList.value.filter(n => n.id !== note.id)
@@ -80,7 +84,7 @@ async function convertToTask(note) {
             headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': csrfToken() },
         })
         const data = await r.json()
-        if (data.error) { alert(data.error); return }
+        if (data.error) { convertError.value = data.error; return }
         note.is_converted = true
         note.task_id = data.task.id
         note.task_url = data.task_url

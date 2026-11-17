@@ -4,6 +4,9 @@ import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import SearchSelect from '@/Components/SearchSelect.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     expenses: Object,
@@ -101,8 +104,8 @@ async function submitExpense(e) {
     }
 }
 
-function cancelExpense(url) {
-    if (!confirm('Cancel this expense?')) return
+async function cancelExpense(url) {
+    if (!await confirm('Cancel this expense?', { confirmLabel: 'Cancel expense', danger: true })) return
     router.patch(url, {}, { preserveScroll: true })
 }
 </script>

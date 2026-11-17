@@ -4,6 +4,9 @@ import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import SearchSelect from '@/Components/SearchSelect.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     types: Array,
@@ -35,8 +38,8 @@ function saveType(type) {
     })
 }
 
-function deleteType(type) {
-    if (!confirm(`Delete ${type.name}?`)) return
+async function deleteType(type) {
+    if (!await confirm(`Delete ${type.name}?`, { confirmLabel: 'Delete', danger: true })) return
     router.delete(type.destroy_url, { preserveScroll: true })
 }
 
@@ -56,8 +59,8 @@ function storeHoliday() {
     })
 }
 
-function deleteHoliday(h) {
-    if (!confirm(`Remove ${h.name}?`)) return
+async function deleteHoliday(h) {
+    if (!await confirm(`Remove ${h.name}?`, { confirmLabel: 'Remove', danger: true })) return
     router.delete(h.destroy_url, { preserveScroll: true })
 }
 

@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     team: Object,
@@ -19,8 +22,8 @@ function submit() {
     })
 }
 
-function deleteTeam() {
-    if (!confirm(`Delete team '${props.team.name}'? This cannot be undone.`)) return
+async function deleteTeam() {
+    if (!await confirm(`Delete team '${props.team.name}'? This cannot be undone.`, { confirmLabel: 'Delete', danger: true })) return
     router.delete(props.team.destroy_url)
 }
 </script>

@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     roles: Array,
@@ -31,8 +34,8 @@ function deletePermission(url) {
     router.delete(url, { preserveScroll: true })
 }
 
-function deleteRole(role) {
-    if (!confirm(`Delete the ${role.name} role?`)) return
+async function deleteRole(role) {
+    if (!await confirm(`Delete the ${role.name} role?`, { confirmLabel: 'Delete', danger: true })) return
     router.delete(role.destroy_url)
 }
 </script>

@@ -688,6 +688,8 @@
       </div>
     </Transition>
   </Teleport>
+
+  <ConfirmDialog />
 </template>
 
 <script setup>
@@ -696,6 +698,7 @@ import { Link, usePage, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import ProjectSelect from '@/Components/ProjectSelect.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { useClickOutside } from '@/Composables/useClickOutside';
 
 const page = usePage();

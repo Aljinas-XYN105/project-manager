@@ -4,6 +4,9 @@ import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import { useClickOutside } from '@/Composables/useClickOutside'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     date: String,
@@ -16,7 +19,7 @@ const props = defineProps({
 })
 
 async function deleteStandup() {
-    if (!confirm(`Delete ${props.user.name}'s standup for ${props.date_label}? This cannot be undone.`)) return
+    if (!await confirm(`Delete ${props.user.name}'s standup for ${props.date_label}? This cannot be undone.`, { confirmLabel: 'Delete', danger: true })) return
     const form = document.createElement('form')
     form.method = 'POST'
     form.action = props.delete_url

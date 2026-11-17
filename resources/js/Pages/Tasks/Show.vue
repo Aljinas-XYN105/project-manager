@@ -6,6 +6,9 @@ import UserAvatar from '@/Components/UserAvatar.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import TimePicker from '@/Components/TimePicker.vue'
 import { useClickOutside } from '@/Composables/useClickOutside'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     task: Object,
@@ -263,7 +266,7 @@ async function setTcStatus(tc, status) {
 }
 
 async function deleteTestCase(tc) {
-    if (!confirm('Delete this test case?')) return
+    if (!await confirm('Delete this test case?', { confirmLabel: 'Delete', danger: true })) return
     await fetch(tc.destroy_url, {
         method: 'DELETE',
         headers: csrfHeaders(false),
@@ -351,8 +354,8 @@ async function toggleTimer() {
 }
 
 // Delete task
-function deleteTask() {
-    if (!confirm('Delete this task? This cannot be undone.')) return
+async function deleteTask() {
+    if (!await confirm('Delete this task? This cannot be undone.', { confirmLabel: 'Delete', danger: true })) return
     router.delete(props.task.destroy_url)
 }
 

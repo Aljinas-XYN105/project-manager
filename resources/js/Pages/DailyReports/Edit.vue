@@ -5,6 +5,9 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import ProjectSelect from '@/Components/ProjectSelect.vue'
 import TaskPicker from '@/Components/TaskPicker.vue'
 import SearchSelect from '@/Components/SearchSelect.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     daily_report: Object,
@@ -148,8 +151,8 @@ async function submit() {
     }
 }
 
-function deleteReport() {
-    if (!confirm('Delete this report?')) return
+async function deleteReport() {
+    if (!await confirm('Delete this report?', { confirmLabel: 'Delete', danger: true })) return
     router.delete(props.daily_report.destroy_url)
 }
 </script>

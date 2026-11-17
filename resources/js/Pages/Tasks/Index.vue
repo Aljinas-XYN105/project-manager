@@ -4,6 +4,9 @@ import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
 import SearchSelect from '@/Components/SearchSelect.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     project: Object,
@@ -75,8 +78,8 @@ async function updateStatus(task, newStatus) {
     router.reload({ preserveScroll: true })
 }
 
-function deleteTask(task) {
-    if (!confirm('Delete this task?')) return
+async function deleteTask(task) {
+    if (!await confirm('Delete this task?', { confirmLabel: 'Delete', danger: true })) return
     router.delete(task.destroy_url, { preserveScroll: true })
 }
 

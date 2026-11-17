@@ -3,6 +3,11 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
+const showResetModal = ref(false)
+const resetPasswordInput = ref('')
 import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
@@ -51,13 +56,17 @@ function submit() {
 }
 
 function resetPassword() {
-    const pwd = prompt(`New password for ${props.user.name} (leave empty to generate):`)
-    if (pwd === null) return
-    router.post(props.user.reset_password_url, { password: pwd }, { preserveScroll: true })
+    resetPasswordInput.value = ''
+    showResetModal.value = true
 }
 
-function removeUser() {
-    if (!confirm(`Remove ${props.user.name}? They will no longer be able to sign in. Their tasks and history are kept.`)) return
+function submitResetPassword() {
+    showResetModal.value = false
+    router.post(props.user.reset_password_url, { password: resetPasswordInput.value }, { preserveScroll: true })
+}
+
+async function removeUser() {
+    if (!await confirm(`Remove ${props.user.name}? They will no longer be able to sign in. Their tasks and history are kept.`, { confirmLabel: 'Remove member', danger: true })) return
     router.delete(props.user.destroy_url)
 }
 
@@ -300,4 +309,22 @@ function directPermCount(group) {
             </div>
         </div>
     </AppLayout>
+
+    <!-- Reset password modal -->
+    <Teleport to="body">
+        <div v-if="showResetModal" class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             @keydown.escape="showResetModal = false">
+            <div class="absolute inset-0 backdrop-blur-sm bg-slate-950/60" @click="showResetModal = false"></div>
+            <div class="relative card w-full max-w-sm shadow-xl p-6">
+                <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Reset password</h3>
+                <p class="text-sm text-slate-500 mb-4">Set a new password for {{ props.user?.name }}. Leave empty to auto-generate one.</p>
+                <input v-model="resetPasswordInput" type="password" placeholder="New password (leave empty to generate)"
+                       class="form-input mb-4" autocomplete="new-password">
+                <div class="flex justify-end gap-2">
+                    <button type="button" @click="showResetModal = false" class="btn-ghost btn-sm">Cancel</button>
+                    <button type="button" @click="submitResetPassword" class="btn-primary btn-sm">Set password</button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 </template>

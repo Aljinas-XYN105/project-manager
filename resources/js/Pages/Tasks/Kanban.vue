@@ -5,6 +5,9 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import SearchSelect from '@/Components/SearchSelect.vue'
 import UserAvatar from '@/Components/UserAvatar.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     project: Object,
@@ -112,7 +115,7 @@ async function updateColumn(col) {
 }
 
 async function deleteColumn(col) {
-    if (!confirm('Delete column? Tasks will be moved to the first column.')) return
+    if (!await confirm('Delete column? Tasks will be moved to the first column.', { confirmLabel: 'Delete', danger: true })) return
     const r = await fetch('/columns/' + col.id, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },

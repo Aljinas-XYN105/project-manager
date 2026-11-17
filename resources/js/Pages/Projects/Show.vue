@@ -5,6 +5,9 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
 import SearchSelect from '@/Components/SearchSelect.vue'
 import UserAvatar from '@/Components/UserAvatar.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     project: Object,
@@ -115,7 +118,7 @@ async function upload(fileList) {
 }
 
 async function removeAttachment(id) {
-    if (!confirm('Delete this attachment?')) return
+    if (!await confirm('Delete this attachment?', { confirmLabel: 'Delete', danger: true })) return
     const url = props.project.destroy_attachment_url.replace(':id', id)
     const res = await fetch(url, {
         method: 'DELETE',

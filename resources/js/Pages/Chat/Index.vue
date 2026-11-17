@@ -20,6 +20,7 @@ const groupName = ref('')
 const memberSearch = ref('')
 const selected = ref([])
 const loading = ref(false)
+const createError = ref('')
 
 function openPopup() {
     window.open(props.popup_url, 'chatpopup', 'width=820,height=680,resizable=yes,menubar=no,toolbar=no,location=no,status=no')
@@ -94,8 +95,8 @@ async function createGroup() {
         })
         const d = await r.json()
         if (d.id) window.location.href = `/chat/${d.id}`
-        else alert(d.message || 'Failed.')
-    } catch { alert('Something went wrong.') }
+        else createError.value = d.message || 'Failed to create group.'
+    } catch { createError.value = 'Something went wrong. Please try again.' }
     finally { loading.value = false }
 }
 </script>
@@ -308,6 +309,7 @@ async function createGroup() {
                                 <span v-else>Creating…</span>
                             </button>
                         </div>
+                        <p v-if="createError" class="text-xs text-rose-500 text-center mt-2">{{ createError }}</p>
                         <p v-if="selected.length === 1" class="text-xs text-amber-500 mt-2 text-center">
                             Add at least one more member.
                         </p>

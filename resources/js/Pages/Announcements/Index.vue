@@ -4,6 +4,9 @@ import { Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
 import SearchSelect from '@/Components/SearchSelect.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     announcements: Object,
@@ -57,8 +60,8 @@ function submitModal() {
     }
 }
 
-function deleteAnnouncement(a) {
-    if (!confirm('Delete this announcement?')) return
+async function deleteAnnouncement(a) {
+    if (!await confirm('Delete this announcement?', { confirmLabel: 'Delete', danger: true })) return
     router.delete(a.destroy_url)
 }
 

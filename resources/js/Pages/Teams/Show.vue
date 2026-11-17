@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import SearchSelect from '@/Components/SearchSelect.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     team: Object,
@@ -18,8 +21,8 @@ function addMember() {
     })
 }
 
-function removeMember(member) {
-    if (!confirm(`Remove ${member.name} from this team?`)) return
+async function removeMember(member) {
+    if (!await confirm(`Remove ${member.name} from this team?`, { confirmLabel: 'Remove', danger: true })) return
     useForm({}).delete(member.remove_url)
 }
 </script>

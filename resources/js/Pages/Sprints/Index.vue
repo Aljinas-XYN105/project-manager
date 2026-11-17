@@ -1,6 +1,9 @@
 <script setup>
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     project: Object,
@@ -11,7 +14,7 @@ const props = defineProps({
 const csrf = () => document.querySelector('meta[name=csrf-token]')?.content
 
 async function patchSprint(url, confirm_msg) {
-    if (!confirm(confirm_msg)) return
+    if (!await confirm(confirm_msg, { confirmLabel: 'Confirm' })) return
     const fd = new FormData()
     fd.append('_method', 'PATCH')
     fd.append('_token', csrf())
@@ -20,7 +23,7 @@ async function patchSprint(url, confirm_msg) {
 }
 
 async function deleteSprint(url) {
-    if (!confirm('Delete sprint? Tasks return to backlog.')) return
+    if (!await confirm('Delete sprint? Tasks return to backlog.', { confirmLabel: 'Delete', danger: true })) return
     const fd = new FormData()
     fd.append('_method', 'DELETE')
     fd.append('_token', csrf())

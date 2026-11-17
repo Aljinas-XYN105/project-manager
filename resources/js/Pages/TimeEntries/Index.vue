@@ -3,6 +3,9 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DatePicker from '@/Components/DatePicker.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
 
 const props = defineProps({
     grouped: Object,
@@ -59,8 +62,8 @@ function resumeEntry(entry) {
     router.patch(entry.resume_url, {}, { preserveScroll: true })
 }
 
-function deleteEntry(entry) {
-    if (!confirm('Delete this time entry?')) return
+async function deleteEntry(entry) {
+    if (!await confirm('Delete this time entry?', { confirmLabel: 'Delete', danger: true })) return
     router.delete(entry.destroy_url, { preserveScroll: true })
 }
 

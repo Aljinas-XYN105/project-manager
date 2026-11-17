@@ -2,6 +2,10 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useConfirm } from '@/composables/useConfirm'
+
+const { confirm } = useConfirm()
+const noTasksError = ref(false)
 
 const props = defineProps({
     project: Object,
@@ -14,8 +18,8 @@ const props = defineProps({
 
 const showBacklog = ref(false)
 
-function patchSprint(url, msg) {
-    if (!confirm(msg)) return
+async function patchSprint(url, msg) {
+    if (!await confirm(msg, { confirmLabel: 'Confirm' })) return
     router.patch(url, {}, { preserveScroll: true })
 }
 
@@ -26,7 +30,8 @@ function removeTask(url) {
 const selectedTasks = ref([])
 
 function addSelected() {
-    if (!selectedTasks.value.length) { alert('Select at least one task.'); return }
+    if (!selectedTasks.value.length) { noTasksError.value = true; return }
+    noTasksError.value = false
     router.post(props.sprint.add_task_url, { task_ids: selectedTasks.value }, { preserveScroll: true })
 }
 
@@ -181,7 +186,10 @@ const priorityClass = {
                 </div>
                 <div v-if="showBacklog" class="card overflow-hidden">
                     <div class="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
-                        <p class="text-sm text-slate-500">Select backlog tasks to add to this sprint.</p>
+                        <p class="text-sm text-slate-500">
+                            <span v-if="noTasksError" class="text-rose-500">Select at least one task.</span>
+                            <span v-else>Select backlog tasks to add to this sprint.</span>
+                        </p>
                         <button @click="addSelected" class="btn-primary btn-sm">
                             <i class="bi bi-plus-lg"></i> Add Selected
                         </button>
