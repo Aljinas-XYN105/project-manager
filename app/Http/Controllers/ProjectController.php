@@ -49,6 +49,7 @@ class ProjectController extends Controller
                 'edit_url'            => route('projects.edit', $p),
                 'sprints_url'         => route('projects.sprints.index', $p),
                 'archive_url'         => route('projects.archive', $p),
+                'can_edit'            => $request->user()->can('update', $p),
                 'can_archive'         => $request->user()->can('archive', $p),
             ]),
             'filters' => $request->only(['search', 'status', 'priority']),

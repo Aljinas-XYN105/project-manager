@@ -187,7 +187,7 @@ function archiveProject(url) {
                             <Link :href="project.url" class="dropdown-item">
                                 <i class="bi bi-eye text-slate-400"></i> View details
                             </Link>
-                            <Link :href="project.edit_url" class="dropdown-item">
+                            <Link v-if="project.can_edit" :href="project.edit_url" class="dropdown-item">
                                 <i class="bi bi-pencil text-slate-400"></i> Edit
                             </Link>
                             <Link :href="project.sprints_url" class="dropdown-item">
