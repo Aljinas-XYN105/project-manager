@@ -1216,9 +1216,15 @@ function sendBeaconClockOut() {
 
 onMounted(() => {
   try {
-    // If the page was refreshed while clocked in, the beacon set availability to 'away'.
-    // Restore it to 'available' silently so the refresh is transparent to other users.
+    const isInactive = presenceAvailability.value === 'offline' || presenceAvailability.value === 'away';
     if (sessionStorage.getItem('beacon_refresh') && presenceClockedIn.value) {
+      // Page was refreshed while clocked in — beacon set 'away', restore to 'available'
+      sessionStorage.removeItem('beacon_refresh');
+      presenceAvailability.value = 'available';
+      window.axios.patch('/me/availability', { availability: 'available' }).catch(() => {});
+    } else if (isInactive) {
+      // Stale inactive status left over from a previous session (clock-out, tab close, or
+      // manual offline). The user is clearly online now — reset to available.
       sessionStorage.removeItem('beacon_refresh');
       presenceAvailability.value = 'available';
       window.axios.patch('/me/availability', { availability: 'available' }).catch(() => {});
