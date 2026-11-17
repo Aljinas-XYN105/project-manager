@@ -55,7 +55,8 @@ function toggleMenu(id) {
     openMenus.value = { ...openMenus.value, [id]: !openMenus.value[id] }
 }
 function closeMenu(id) {
-    openMenus.value = { ...openMenus.value, [id]: false }
+    // Delay so a click on a menu item registers before the menu closes
+    setTimeout(() => { openMenus.value = { ...openMenus.value, [id]: false } }, 150)
 }
 
 function archiveProject(url) {
