@@ -121,7 +121,11 @@ class LeaveController extends Controller
             'status'        => 'pending',
         ])->load(['user', 'type']);
 
-        Notification::send($this->approversFor($user), new LeaveRequested($leave));
+        try {
+            Notification::send($this->approversFor($user), new LeaveRequested($leave));
+        } catch (\Throwable $e) {
+            \Log::warning('Leave request notification failed', ['leave_id' => $leave->id, 'error' => $e->getMessage()]);
+        }
 
         return redirect()->route('leave.index')->with('success', "Leave request for {$days} day(s) sent for approval.");
     }
@@ -216,7 +220,11 @@ class LeaveController extends Controller
             'review_note' => $data['note'] ?? null,
         ]);
 
-        $leave->user->notify(new LeaveReviewed($leave->load(['type', 'reviewer'])));
+        try {
+            $leave->user->notify(new LeaveReviewed($leave->load(['type', 'reviewer'])));
+        } catch (\Throwable $e) {
+            \Log::warning('Leave review notification failed', ['leave_id' => $leave->id, 'error' => $e->getMessage()]);
+        }
 
         return back()->with('success', "{$leave->user->name}'s leave ".($data['decision'] === 'approved' ? 'approved' : 'declined').'.');
     }
