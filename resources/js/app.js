@@ -17,11 +17,19 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Show full-page offline screen when internet is lost
+// Show full-page offline screen when internet is lost.
+// Debounce 800ms: some browsers fire a spurious 'offline' event during navigation.
+let offlineTimer = null;
 window.addEventListener('offline', () => {
-    try { sessionStorage.setItem('offlineReturnUrl', window.location.href); } catch (_) {}
-    window.location.href = '/offline';
+    clearTimeout(offlineTimer);
+    offlineTimer = setTimeout(() => {
+        if (!navigator.onLine) {
+            try { sessionStorage.setItem('offlineReturnUrl', window.location.href); } catch (_) {}
+            window.location.href = '/offline';
+        }
+    }, 800);
 });
+window.addEventListener('online', () => clearTimeout(offlineTimer));
 
 createInertiaApp({
     title: (title) => `${title} — Workzen`,

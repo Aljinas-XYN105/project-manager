@@ -678,7 +678,7 @@
                     style="background:#334155;color:#e2e8f0">
               <i class="bi bi-play-fill mr-1"></i> Still working
             </button>
-            <button @click="() => { overtimeAlertOpen = false; clearInterval(overtimeCountdownTimer); sendPresence('/attendance/clock-out', 'post') }"
+            <button @click="() => { overtimeAlertOpen = false; clearInterval(overtimeCountdownTimer); try { sessionStorage.removeItem(OVERTIME_KEY); } catch(_){} sendPresence('/attendance/clock-out', 'post') }"
                     class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                     style="background:#f59e0b;color:#1e293b">
               <i class="bi bi-box-arrow-right mr-1"></i> Clock out
@@ -1027,13 +1027,18 @@ function playAlertSound() {
   } catch(_) {}
 }
 
-function startOvertimeCountdown() {
-  overtimeAutooutSecs.value = 600;
+const OVERTIME_KEY = 'ot_autoout_at';
+
+function startOvertimeCountdown(remainingSecs = 600) {
+  overtimeAutooutSecs.value = remainingSecs;
+  // Persist the auto-out deadline so navigation doesn't reset it
+  try { sessionStorage.setItem(OVERTIME_KEY, String(Date.now() + remainingSecs * 1000)); } catch (_) {}
   clearInterval(overtimeCountdownTimer);
   overtimeCountdownTimer = setInterval(() => {
     overtimeAutooutSecs.value--;
     if (overtimeAutooutSecs.value <= 0) {
       clearInterval(overtimeCountdownTimer);
+      try { sessionStorage.removeItem(OVERTIME_KEY); } catch (_) {}
       overtimeAlertOpen.value = false;
       sendPresence('/attendance/clock-out', 'post');
     }
@@ -1043,6 +1048,7 @@ function startOvertimeCountdown() {
 function dismissOvertimeAlert() {
   overtimeAlertOpen.value = false;
   clearInterval(overtimeCountdownTimer);
+  try { sessionStorage.removeItem(OVERTIME_KEY); } catch (_) {}
   // Suppress for 2 hours
   overtimeAlertTimer = setTimeout(checkOvertime, 2 * 60 * 60 * 1000);
 }
@@ -1245,8 +1251,25 @@ onMounted(() => {
   timerPoll    = setInterval(refreshTimers, 30000);
   presenceTick = setInterval(tickPresence, 30000);
   notifPoll    = setInterval(fetchNotifs,  60000);
-  // Start overtime check after 5 minutes
-  overtimeAlertTimer = setTimeout(checkOvertime, 5 * 60 * 1000);
+  // Resume overtime countdown if one was pending before navigation
+  try {
+    const storedAt = sessionStorage.getItem(OVERTIME_KEY);
+    if (storedAt && presenceClockedIn.value) {
+      const secsLeft = Math.round((Number(storedAt) - Date.now()) / 1000);
+      if (secsLeft <= 0) {
+        sessionStorage.removeItem(OVERTIME_KEY);
+        sendPresence('/attendance/clock-out', 'post');
+      } else {
+        overtimeAlertOpen.value = true;
+        startOvertimeCountdown(secsLeft);
+      }
+    } else {
+      // Start overtime check after 5 minutes
+      overtimeAlertTimer = setTimeout(checkOvertime, 5 * 60 * 1000);
+    }
+  } catch (_) {
+    overtimeAlertTimer = setTimeout(checkOvertime, 5 * 60 * 1000);
+  }
 });
 
 onUnmounted(() => {

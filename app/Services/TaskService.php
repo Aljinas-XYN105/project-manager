@@ -126,7 +126,9 @@ class TaskService
         $allIds[] = $task->id;
 
         // Soft-delete all descendant tasks (subtasks of subtasks, etc.)
-        Task::whereIn('id', $allIds)->where('id', '!=', $task->id)->each->delete();
+        if (count($allIds) > 1) {
+            Task::whereIn('id', $allIds)->where('id', '!=', $task->id)->delete();
+        }
 
         // Null out nullable FK references so soft-deleted tasks don't appear as broken links.
         DailyReportTask::whereIn('task_id', $allIds)->update(['task_id' => null]);

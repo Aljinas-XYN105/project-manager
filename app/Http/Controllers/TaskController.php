@@ -209,10 +209,11 @@ class TaskController extends Controller
                     'id' => $l->id, 'name' => $l->name, 'color' => $l->color,
                 ]),
                 'subtasks' => ($task->subtasks ?? collect())->map(fn ($s) => [
-                    'id'       => $s->id,
-                    'title'    => $s->title,
-                    'status'   => $s->status,
-                    'show_url' => route('projects.tasks.show', $s),
+                    'id'          => $s->id,
+                    'title'       => $s->title,
+                    'status'      => $s->status,
+                    'show_url'    => route('projects.tasks.show', $s),
+                    'destroy_url' => route('tasks.destroy', $s),
                 ]),
                 'comments' => ($task->comments ?? collect())->map(fn ($c) => [
                     'id'         => $c->id,

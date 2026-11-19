@@ -187,6 +187,12 @@ async function postComment() {
 }
 
 // Subtasks
+async function deleteSubtask(sub) {
+    if (!await confirm(`Delete subtask "${sub.title}"? This cannot be undone.`, { confirmLabel: 'Delete', danger: true })) return
+    await fetch(sub.destroy_url, { method: 'DELETE', headers: csrfHeaders(false) })
+    router.reload({ only: ['task'] })
+}
+
 async function addSubtask() {
     if (!newSubtaskTitle.value.trim()) return
     subtaskError.value = ''
@@ -354,8 +360,11 @@ async function toggleTimer() {
 }
 
 // Delete task
+const deletingTask = ref(false)
 async function deleteTask() {
+    if (deletingTask.value) return
     if (!await confirm('Delete this task? This cannot be undone.', { confirmLabel: 'Delete', danger: true })) return
+    deletingTask.value = true
     router.delete(props.task.destroy_url)
 }
 
@@ -536,7 +545,7 @@ function typeBg(type) {
                     </div>
                     <div class="divide-y divide-slate-50 dark:divide-slate-800/60">
                         <div v-for="sub in task.subtasks" :key="sub.id"
-                             class="flex items-center gap-3 px-5 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                             class="flex items-center gap-3 px-5 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
                             <div class="w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
                                  :class="sub.status === 'done' ? 'bg-emerald-400 border-emerald-400' : 'border-slate-300 dark:border-slate-600'">
                                 <i v-if="sub.status === 'done'" class="bi bi-check text-white text-[9px]"></i>
@@ -549,6 +558,10 @@ function typeBg(type) {
                             <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 capitalize">
                                 {{ sub.status.replace('_', ' ') }}
                             </span>
+                            <button v-if="can_update" @click="deleteSubtask(sub)"
+                                    class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-all p-0.5 rounded">
+                                <i class="bi bi-trash text-xs"></i>
+                            </button>
                         </div>
                         <div v-if="!subtaskTotal" class="px-5 py-4 text-center">
                             <p class="text-sm text-slate-400">No subtasks yet</p>
