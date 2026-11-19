@@ -30,10 +30,13 @@ class MessageSent implements ShouldBroadcastNow
         // Also broadcast on each recipient's personal channel so AppLayout
         // can play a notification sound even when the chat window isn't open.
         $senderId = $this->message->user_id;
-        $this->message->conversation->participants()
+        $recipientIds = $this->message->conversation->participants()
             ->where('users.id', '!=', $senderId)
-            ->pluck('users.id')
-            ->each(fn ($id) => $channels[] = new PrivateChannel('App.Models.User.' . $id));
+            ->pluck('users.id');
+
+        foreach ($recipientIds as $id) {
+            $channels[] = new PrivateChannel('App.Models.User.' . $id);
+        }
 
         return $channels;
     }
