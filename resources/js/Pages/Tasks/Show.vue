@@ -373,6 +373,38 @@ function markDone() {
     router.patch(props.task.update_url, { status: 'done' }, { preserveScroll: true })
 }
 
+// Attachments
+const uploadingAttachments = ref(false)
+async function uploadFiles(files) {
+    if (!files?.length || uploadingAttachments.value) return
+    uploadingAttachments.value = true
+    try {
+        for (const file of Array.from(files)) {
+            const fd = new FormData()
+            fd.append('file', file)
+            const r = await fetch(props.task.attachments_store_url, {
+                method: 'POST',
+                headers: { 'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '') },
+                body: fd,
+            })
+            if (!r.ok) {
+                const body = await r.json().catch(() => ({}))
+                alert(body.message ?? `Upload failed (${r.status})`)
+                break
+            }
+        }
+        router.reload({ only: ['task'] })
+    } finally {
+        uploadingAttachments.value = false
+    }
+}
+
+async function deleteAttachment(att) {
+    if (!await confirm(`Delete "${att.original_name}"?`, { confirmLabel: 'Delete', danger: true })) return
+    await fetch(att.destroy_url, { method: 'DELETE', headers: csrfHeaders(false) })
+    router.reload({ only: ['task'] })
+}
+
 // Severity styles
 const sevCls = {
     blocker:  'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
@@ -752,9 +784,10 @@ function typeBg(type) {
                             Attachments
                             <span class="text-xs font-normal text-slate-400">({{ task.attachments.length }})</span>
                         </h3>
-                        <label class="btn-ghost btn-sm cursor-pointer text-xs">
-                            <i class="bi bi-plus-lg text-sm"></i> Add
-                            <input type="file" class="sr-only" multiple @change="uploadFiles($event.target.files)">
+                        <label class="btn-ghost btn-sm cursor-pointer text-xs" :class="uploadingAttachments ? 'opacity-60 pointer-events-none' : ''">
+                            <i class="bi text-sm" :class="uploadingAttachments ? 'bi-arrow-repeat animate-spin' : 'bi-plus-lg'"></i>
+                            {{ uploadingAttachments ? 'Uploading…' : 'Add' }}
+                            <input type="file" class="sr-only" multiple :disabled="uploadingAttachments" @change="uploadFiles($event.target.files)">
                         </label>
                     </div>
                     <div class="divide-y divide-slate-50 dark:divide-slate-800/60">

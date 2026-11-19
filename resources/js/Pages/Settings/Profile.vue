@@ -6,6 +6,7 @@ import SearchSelect from '@/Components/SearchSelect.vue'
 
 const props = defineProps({
     user: Object,
+    timezones: Array,
     success: String,
     update_url: String,
     my_tasks_url: String,
@@ -19,7 +20,11 @@ const profileForm = ref({
     name: props.user.name,
     email: props.user.email,
     job_title: props.user.job_title || '',
-    timezone: props.user.timezone || 'UTC',
+    phone: props.user.phone || '',
+    date_of_birth: props.user.date_of_birth || '',
+    emergency_contact_name: props.user.emergency_contact_name || '',
+    emergency_contact_phone: props.user.emergency_contact_phone || '',
+    timezone: props.user.timezone || 'Asia/Kolkata',
     avatar: null,
 })
 const avatarPreview = ref(props.user.avatar_url)
@@ -27,7 +32,6 @@ const avatarError = ref('')
 const isDragging = ref(false)
 const avatarInput = ref(null)
 const profileErrors = ref({})
-const timezones = Intl.supportedValuesOf('timeZone')
 
 function pickFile(file) {
     avatarError.value = ''
@@ -61,7 +65,16 @@ function saveProfile() {
 
 function saveProfileInertia() {
     profileErrors.value = {}
-    const data = { name: profileForm.value.name, email: profileForm.value.email, job_title: profileForm.value.job_title, timezone: profileForm.value.timezone }
+    const data = {
+        name: profileForm.value.name,
+        email: profileForm.value.email,
+        job_title: profileForm.value.job_title,
+        phone: profileForm.value.phone,
+        date_of_birth: profileForm.value.date_of_birth,
+        emergency_contact_name: profileForm.value.emergency_contact_name,
+        emergency_contact_phone: profileForm.value.emergency_contact_phone,
+        timezone: profileForm.value.timezone,
+    }
     if (profileForm.value.avatar) {
         const fd = new FormData()
         fd.append('_method', 'PATCH')
@@ -176,8 +189,35 @@ function toggleDark() {
                                 <input v-model="profileForm.job_title" type="text" class="form-input" placeholder="e.g. Senior Developer">
                             </div>
                             <div>
+                                <label class="form-label">Phone</label>
+                                <input v-model="profileForm.phone" type="tel" class="form-input" placeholder="+91 98765 43210">
+                                <p v-if="profileErrors.phone" class="form-error">{{ profileErrors.phone }}</p>
+                            </div>
+                            <div>
+                                <label class="form-label">Date of Birth</label>
+                                <input v-model="profileForm.date_of_birth" type="date" class="form-input">
+                                <p v-if="profileErrors.date_of_birth" class="form-error">{{ profileErrors.date_of_birth }}</p>
+                            </div>
+                            <div>
                                 <label class="form-label">Timezone</label>
                                 <SearchSelect v-model="profileForm.timezone" :options="timezones" placeholder="Select timezone…" />
+                            </div>
+                        </div>
+
+                        <!-- Emergency Contact (side-by-side on same row) -->
+                        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Emergency Contact</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="form-label">Contact Name</label>
+                                    <input v-model="profileForm.emergency_contact_name" type="text" class="form-input" placeholder="e.g. Jane Doe">
+                                    <p v-if="profileErrors.emergency_contact_name" class="form-error">{{ profileErrors.emergency_contact_name }}</p>
+                                </div>
+                                <div>
+                                    <label class="form-label">Contact Phone</label>
+                                    <input v-model="profileForm.emergency_contact_phone" type="tel" class="form-input" placeholder="+91 98765 43210">
+                                    <p v-if="profileErrors.emergency_contact_phone" class="form-error">{{ profileErrors.emergency_contact_phone }}</p>
+                                </div>
                             </div>
                         </div>
 
