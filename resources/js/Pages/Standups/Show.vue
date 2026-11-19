@@ -22,6 +22,7 @@ const props = defineProps({
 
 let nextId = 0
 const items = ref((props.seed_items ?? []).map((item, i) => ({ ...item, _id: nextId++ })))
+let saveTimer = null
 const carryoverDismissed = ref(false)
 
 function applyCarryover() {
@@ -111,13 +112,16 @@ function removeItem(id) {
     autoSave()
 }
 
-async function autoSave() { await save() }
+function autoSave() {
+    clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => save(), 400)
+}
 
 async function save() {
     saving.value = true
     saved.value = false
     try {
-        await fetch(props.store_url, {
+        const res = await fetch(props.store_url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content },
             body: JSON.stringify({
@@ -130,15 +134,25 @@ async function save() {
                 })),
             }),
         })
+        if (!res.ok) throw new Error(`Server error ${res.status}`)
         saved.value = true
         setTimeout(() => { saved.value = false }, 3000)
+        return true
+    } catch (e) {
+        // Refresh CSRF token on 419 so next attempt works
+        if (e.message?.includes('419')) {
+            try { await fetch('/sanctum/csrf-cookie') } catch (_) {}
+        }
+        return false
     } finally {
         saving.value = false
     }
 }
 
 async function submitStandup() {
-    await save()
+    clearTimeout(saveTimer)
+    const ok = await save()
+    if (!ok) return
     submitted.value = true
     justSubmitted.value = true
     setTimeout(() => { justSubmitted.value = false }, 5000)

@@ -1027,6 +1027,21 @@ function playAlertSound() {
   } catch(_) {}
 }
 
+function playMsgSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[880,0,0.08],[1100,0.1,0.1]].forEach(([freq,start,dur]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, ctx.currentTime + start);
+      g.gain.linearRampToValueAtTime(0.18, ctx.currentTime + start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      o.start(ctx.currentTime + start); o.stop(ctx.currentTime + start + dur + 0.05);
+    });
+  } catch(_) {}
+}
+
 const OVERTIME_KEY = 'ot_autoout_at';
 
 function startOvertimeCountdown(remainingSecs = 600) {
@@ -1071,6 +1086,7 @@ function fmtCountdown(secs) {
   return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
 }
 let presenceTick           = null;
+let chatEchoChannel        = null;
 
 const currentPresence = computed(() => presenceStatuses.value[presenceAvailability.value] ?? { dot: 'bg-slate-400', label: 'Available' });
 
@@ -1270,6 +1286,21 @@ onMounted(() => {
   } catch (_) {
     overtimeAlertTimer = setTimeout(checkOvertime, 5 * 60 * 1000);
   }
+
+  // Global chat sound: listen on the user's personal channel for new messages
+  if (window.Echo) {
+    const authId = page.props.auth?.user?.id;
+    if (authId) {
+      chatEchoChannel = window.Echo.private(`App.Models.User.${authId}`)
+        .listen('.message.sent', (data) => {
+          // Only play if not already viewing that conversation
+          const url = window.location.pathname;
+          if (!url.includes(`/chat/${data.conversation_id}`)) {
+            playMsgSound();
+          }
+        });
+    }
+  }
 });
 
 onUnmounted(() => {
@@ -1281,6 +1312,7 @@ onUnmounted(() => {
   clearInterval(notifPoll);
   clearTimeout(overtimeAlertTimer);
   clearInterval(overtimeCountdownTimer);
+  if (chatEchoChannel) chatEchoChannel.stopListening('.message.sent');
 });
 
 // Scroll active nav item into view on page navigation

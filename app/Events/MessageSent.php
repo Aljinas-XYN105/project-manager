@@ -17,14 +17,25 @@ class MessageSent implements ShouldBroadcastNow
 
     public function __construct(public readonly Message $message)
     {
-        $this->message->load(['user', 'attachments']);
+        $this->message->load(['user', 'attachments', 'conversation.participants']);
     }
 
     public function broadcastOn(): array
     {
-        return [
+        // Conversation channel (used by Chat/Show.vue for real-time updates)
+        $channels = [
             new PrivateChannel('conversation.' . $this->message->conversation_id),
         ];
+
+        // Also broadcast on each recipient's personal channel so AppLayout
+        // can play a notification sound even when the chat window isn't open.
+        $senderId = $this->message->user_id;
+        $this->message->conversation->participants()
+            ->where('users.id', '!=', $senderId)
+            ->pluck('users.id')
+            ->each(fn ($id) => $channels[] = new PrivateChannel('App.Models.User.' . $id));
+
+        return $channels;
     }
 
     public function broadcastWith(): array
