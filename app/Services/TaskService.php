@@ -179,7 +179,7 @@ class TaskService
             $remaining = Task::where('column_id', $oldColumnId)->orderBy('position')->pluck('id');
             if ($remaining->isNotEmpty()) {
                 $cases = $remaining->map(fn ($id, $i) => "WHEN {$id} THEN {$i}")->implode(' ');
-                DB::statement("UPDATE tasks SET position = CASE id {$cases} END WHERE column_id = {$oldColumnId}");
+                DB::statement("UPDATE tasks SET position = CASE id {$cases} ELSE position END WHERE column_id = {$oldColumnId}");
             }
 
             $this->activityLogService->log(
