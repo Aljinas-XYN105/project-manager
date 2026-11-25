@@ -247,7 +247,7 @@
                      :href="item.url"
                      class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
                      :class="searchFlat[searchActive] === item ? 'bg-violet-50 dark:bg-violet-900/20' : ''">
-                    <img v-if="item.avatar" :src="item.avatar" class="w-6 h-6 rounded-full" alt="">
+                    <img v-if="item.avatar" :src="item.avatar" class="w-6 h-6 rounded-full object-cover" alt="">
                     <span v-if="item.color" class="w-2.5 h-2.5 rounded-full" :style="'background:' + item.color"></span>
                     <span class="min-w-0">
                       <span class="block text-sm text-slate-800 dark:text-slate-200 truncate">{{ item.title }}</span>
@@ -497,7 +497,7 @@
                            hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150"
                     :class="userMenuOpen ? 'bg-slate-100 dark:bg-slate-800' : ''">
               <img v-if="authUser?.avatar_url" :src="authUser.avatar_url"
-                   class="w-7 h-7 rounded-full ring-2 ring-slate-200 dark:ring-slate-700 flex-shrink-0">
+                   class="w-7 h-7 rounded-full object-cover ring-2 ring-slate-200 dark:ring-slate-700 flex-shrink-0">
               <div v-else
                    class="w-7 h-7 rounded-full ring-2 ring-slate-200 dark:ring-slate-700
                           bg-gradient-to-br from-violet-500 to-indigo-600

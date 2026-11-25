@@ -18,7 +18,7 @@ export default {
             <span v-else class="w-5"></span>
             <a :href="node.show_url"
                class="flex items-center gap-3 pl-2 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-violet-400 hover:bg-violet-50/40 dark:hover:bg-violet-900/10 transition-colors">
-                <img :src="node.avatar_url || '/images/default-avatar.png'" class="w-8 h-8 rounded-full" :alt="node.name">
+                <img :src="node.avatar_url || '/images/default-avatar.png'" class="w-8 h-8 rounded-full object-cover" :alt="node.name">
                 <span>
                     <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ node.name }}</span>
                     <span class="block text-[11px] text-slate-500">{{ [node.job_title, node.department].filter(Boolean).join(' · ') || '—' }}</span>

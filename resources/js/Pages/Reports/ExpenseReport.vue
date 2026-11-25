@@ -132,7 +132,7 @@ const statusClass = {
                                 <tr v-for="e in expenses.data" :key="e.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
                                     <td class="px-5 py-3">
                                         <div class="flex items-center gap-2">
-                                            <img :src="e.avatar_url" class="w-6 h-6 rounded-full">
+                                            <img :src="e.avatar_url" class="w-6 h-6 rounded-full object-cover">
                                             <span class="text-slate-700 dark:text-slate-300">{{ e.user_name }}</span>
                                         </div>
                                     </td>

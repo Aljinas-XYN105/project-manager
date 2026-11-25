@@ -145,7 +145,7 @@ function exportPdf() {
                                     <td class="px-5 py-3 text-slate-700 dark:text-slate-300">{{ entry.date }}</td>
                                     <td class="px-5 py-3">
                                         <div class="flex items-center gap-2">
-                                            <img :src="entry.user_avatar" class="w-6 h-6 rounded-full" alt="">
+                                            <img :src="entry.user_avatar" class="w-6 h-6 rounded-full object-cover" alt="">
                                             <span class="text-slate-700 dark:text-slate-300">{{ entry.user_name }}</span>
                                         </div>
                                     </td>

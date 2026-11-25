@@ -77,7 +77,7 @@ function typeColorDot(color) {
                          class="card p-5 flex flex-col lg:flex-row lg:items-center gap-4">
                         <!-- User info -->
                         <div class="flex items-center gap-3 lg:w-64 flex-shrink-0">
-                            <img :src="r.user.avatar_url" class="w-10 h-10 rounded-full" alt="">
+                            <img :src="r.user.avatar_url" class="w-10 h-10 rounded-full object-cover" alt="">
                             <div class="min-w-0">
                                 <a :href="r.user.show_url" class="font-medium text-slate-900 dark:text-white hover:text-violet-600 truncate block">{{ r.user.name }}</a>
                                 <p class="text-xs text-slate-500 truncate">{{ r.user.department || r.user.job_title }}</p>

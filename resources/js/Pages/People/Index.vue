@@ -64,7 +64,7 @@ function search() {
                    class="card-hover p-5 flex flex-col">
                     <div class="flex items-start gap-3">
                         <div class="relative flex-shrink-0">
-                            <img :src="person.avatar_url" class="w-12 h-12 rounded-full" :alt="person.name">
+                            <img :src="person.avatar_url" class="w-12 h-12 rounded-full object-cover" :alt="person.name">
                             <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-slate-900"
                                   :class="person.dot_class"
                                   :title="person.is_on_leave ? 'On leave' : 'Available'"></span>

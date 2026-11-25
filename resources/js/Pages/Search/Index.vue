@@ -97,7 +97,7 @@ const noResults = (props.term?.length ?? 0) >= 2 && !hasResults
                     </div>
                     <Link v-for="person in people" :key="person.id" :href="person.show_url"
                           class="flex items-center gap-3 px-5 py-3 border-b border-slate-50 dark:border-slate-800 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                        <img :src="person.avatar_url" class="w-8 h-8 rounded-full" alt="">
+                        <img :src="person.avatar_url" class="w-8 h-8 rounded-full object-cover" alt="">
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-slate-900 dark:text-white">{{ person.name }}</p>
                             <p class="text-xs text-slate-500 truncate">

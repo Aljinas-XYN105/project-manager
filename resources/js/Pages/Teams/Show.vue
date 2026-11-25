@@ -54,7 +54,7 @@ async function removeMember(member) {
                 </div>
                 <div class="divide-y divide-slate-50 dark:divide-slate-700">
                     <div v-for="member in team.members" :key="member.id" class="flex items-center gap-4 px-5 py-3.5">
-                        <img :src="member.avatar_url" class="w-9 h-9 rounded-full" alt="">
+                        <img :src="member.avatar_url" class="w-9 h-9 rounded-full object-cover" alt="">
                         <div class="flex-1 min-w-0">
                             <p class="font-medium text-sm text-slate-900 dark:text-white">{{ member.name }}</p>
                             <p class="text-xs text-slate-500 truncate">{{ member.email }}</p>

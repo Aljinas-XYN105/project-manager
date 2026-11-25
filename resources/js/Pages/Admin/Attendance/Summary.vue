@@ -117,7 +117,7 @@ function saveSchedule() {
                             <!-- Member -->
                             <td class="px-5 py-3">
                                 <div class="flex items-center gap-2.5">
-                                    <img :src="row.avatar_url" class="w-7 h-7 rounded-full flex-shrink-0" alt="">
+                                    <img :src="row.avatar_url" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="">
                                     <a :href="row.show_url" class="font-medium text-slate-900 dark:text-white hover:text-violet-600 transition-colors">
                                         {{ row.user_name }}
                                     </a>

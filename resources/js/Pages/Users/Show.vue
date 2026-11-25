@@ -109,7 +109,7 @@ function statusLabel(s) {
                                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-4 mb-2">Direct reports</p>
                                 <div class="flex flex-wrap gap-1.5">
                                     <Link v-for="r in user.direct_reports" :key="r.id" :href="r.show_url" :title="r.name">
-                                        <img :src="r.avatar_url" class="w-7 h-7 rounded-full ring-2 ring-white dark:ring-slate-900" alt="">
+                                        <img :src="r.avatar_url" class="w-7 h-7 rounded-full object-cover ring-2 ring-white dark:ring-slate-900" alt="">
                                     </Link>
                                 </div>
                             </template>

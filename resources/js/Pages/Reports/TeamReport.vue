@@ -92,7 +92,7 @@ function rateColor(rate) {
                                 <tr v-for="m in members" :key="m.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
                                     <td class="px-5 py-4">
                                         <div class="flex items-center gap-3">
-                                            <img :src="m.avatar_url" class="w-8 h-8 rounded-full" alt="">
+                                            <img :src="m.avatar_url" class="w-8 h-8 rounded-full object-cover" alt="">
                                             <div>
                                                 <a :href="m.show_url" class="font-medium text-slate-900 dark:text-white hover:text-violet-600">{{ m.name }}</a>
                                                 <p class="text-xs text-slate-500">{{ m.job_title }}</p>
